@@ -1,0 +1,11 @@
+# http://doc.crates.io/manifest.html#the-project-layout
+# - Cargo.toml contains the broad dependencies description
+# - We source control Cargo.lock only for executables
+# which this project uses, so don't put in .gitignore
+[package]
+name = "mazes"
+version = "0.1.0"
+authors = ["enerqi <enerqi@enerqi>"]
+
+[dependencies]
+rand = "0.3.10"
