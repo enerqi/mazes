@@ -1,3 +1,54 @@
+// Rust concerns
+// Lifetime of the graph
+//     - Can values within the graph outlive the graph?
+//     - Can values even be referenced outside the graph?
+//
+// Graph mutability
+//     - After initialisation, is the graph immutable?
+//
+// Graph ownership
+//     - Unless it's a directed acyclic graph there is no unique owner
+//
+// Rc<RefCell<Node>>
+// + most flexible allowing mutation and sharing of nodes outside the graph and anytime
+// - slowest with runtime borrow checks
+// - annoyingly unergonomic
+//
+// Arena allocation + UnsafeCell
+// + Faster than Rc Refcell due to no runtime borrow checks
+// + Compact and efficient as vectors/indices approach. Pointers (&) arguably more direct.
+// + thread sharing tracked by borrow checker after init
+// - All nodes exist as long as the Graph which are allocated from an allocator Arena.
+// - Graph must be inited in an unsafe block. (still unergonomic in a different way).
+// - adjacency list of nodes always accessed with unsafe block due to UnsafeCell (impl ugly point).
+//
+// Vectors and indices based approach
+// + thread sharing tracked by borrow checker - unlike Rc Refcell
+//           c.f. Arc<Mutex<RefCell>>
+// + Compact, cache efficient, vector
+// - type safety on indices helps. Client can accidentally mix up between graph instances.
+// - deleting from the graph: freelist to reuse or placeholder just to tombstone
+//
+// Petgraph external Crate - uses vectors and indices
+// Deletion is done by swapping the to delete index with the last one in the Vec.
+// Max graph size is specified up front and seems to panic! when that is too big.
+//
+// Graph as Vec<LinkList<NodeIndex>> or Vec<Vec<NodeIndex>>
+// - not as compact as vectors and indices as the adjacency lists for each node need
+//   to be a linkedlist or a vec where we guess the initial size and the linkedlist
+//   is allocator trigger happy.
+// + allows parallel (multiple) edges between the same nodes
+// + easier to delete a node without worrying about vector resize or freelists
+//
+// The maze algorithms seem to use some deleting - of the links, not the N,S,E,W refs
+// I've already 'cheated' the borrow checker by using grid-coordinates for the links,
+// on the assumption that cells (nodes) are not removed once created as a grid/graph.
+// Do the refs need to be Rc RefCells?
+//
+// The square grids are composed of cells, each cell has a N, S, E, W relative to it.
+// For polar grids we have rings of concentric circles
+// Fox hex grids we have 6 directions N, S, NW, NE, SW, SE
+
 //use std::cell::{RefCell};
 //use std::rc::{Rc};
 //use maze::cell;

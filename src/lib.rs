@@ -5,11 +5,11 @@
 // `rand::Rng`, which means crate_root::rand::Rng;
 extern crate rand;
 
-// look for one of e.g.
+// look for one of
 // (1) src/grid.rs
 // (2) src/grid/mod.rs (preferred when we have sub-modules)
 // The contents of these files are now in the respective modules
-// This is a declartion
+// This is a declaration
 // e.g. maze::cell = cell.rs
 // So a module exists in the *context* of the crate root module
 // A crate = module that can be linked to and unit of compilation for the compiler
