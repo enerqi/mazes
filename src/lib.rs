@@ -3,6 +3,7 @@
 // Note we could put this in e.g. grid.rs, but then when we use it
 // from that sub-module we would `use self::rand::Rng` instead of
 // `rand::Rng`, which means crate_root::rand::Rng;
+extern crate petgraph;
 extern crate rand;
 
 // look for one of
@@ -16,6 +17,7 @@ extern crate rand;
 pub mod cell; // The cell module exists *here* and it's contents are in cell.rs  (or cell/mod.rs)
 pub mod gridcell;
 pub mod grid;
+pub mod squaregrid;
 
 // All public items within a crate gets a symbol exposed to the linker
 //
