@@ -45,7 +45,7 @@ impl SquareGrid {
     fn new(cells_count: GridIndexType) -> Result<SquareGrid, String> {
         let dim_size: GridIndexType = try!(dimension_size(cells_count));
         let nodes_count_hint = cells_count as usize;
-        let edges_count_hint = 4 * cells_count as usize - 4 * dim_size as usize;
+        let edges_count_hint = 4 * cells_count as usize - 4 * dim_size as usize; // Probably overkill, but don't want any capacity panics
 
         let mut grid = SquareGrid {
             graph_node_indices: Vec::with_capacity(nodes_count_hint),
@@ -86,9 +86,9 @@ impl SquareGrid {
                  find_neighbour_nodeindex(GridDirection::West))
             };
 
-            let this_node_data: &mut AdjacentCells = grid.graph
-                                                         .node_weight_mut(node_index.clone())
-                                                         .unwrap();
+            // let this_node_data: &mut AdjacentCells = grid.graph
+            //                                              .node_weight_mut(node_index.clone())
+            //                                              .unwrap();
         }
 
         Ok(grid)
@@ -101,16 +101,17 @@ impl SquareGrid {
         self.graph_node_indices[index]
     }
 
-
-    // The link and unlink implementation is complicated by add_edge returning an edge index
-    // which is required to later unlink the nodes. This is needed because of parallel edge support
-    // in the petgraph::Graph.
     fn link(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
-        //self.graph.add_edge(a, b, ());
+        let _ = self.graph.update_edge(a, b, ());
     }
 
     fn unlink(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
-        //self.graph.remove_edge(edge_index)
+
+        if let Some(edge_index) = self.graph.find_edge(a, b) {
+            // This will invalidate the last edge index in the graph, which is fine as we
+            // are not storing them for any reason.
+            self.graph.remove_edge(edge_index);
+        }
     }
 
     /// Cell nodes that are linked to a particular node by a passage.
@@ -170,6 +171,8 @@ fn is_valid_coordinate(coord: &GridCoordinate, dim_size: GridIndexType) -> bool 
     true
 }
 
+#[allow(non_snake_case)]
 fn to_1D_index(coord: &GridCoordinate, dim_size: GridIndexType) -> GridIndexType {
     ((coord.y * dim_size as isize) + coord.x) as GridIndexType
 }
+
