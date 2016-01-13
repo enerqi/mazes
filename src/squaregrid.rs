@@ -6,7 +6,7 @@ use rand::distributions::{IndependentSample, Range};
 pub type GridIndexType = u16;
 pub type GridGraphNodeIndex = ::petgraph::graph::NodeIndex<GridIndexType>;
 
-enum GridDirection {
+pub enum GridDirection {
     North,
     South,
     East,
@@ -66,7 +66,8 @@ impl SquareGrid {
 
             let coord = to_grid_coordinate(index, dimension_size);
 
-            // limit the lifetime of the find_neighbour_nodeindex closure so we don't get grid borrow conflict
+            // Limit the lifetime of the find_neighbour_nodeindex closure so we don't get a grid
+            // borrow conflict when mutating the adjacent_cells
             let (north_index, south_index, east_index, west_index) = {
                 let find_neighbour_nodeindex = |dir: GridDirection| -> Option<GridGraphNodeIndex> {
                     let neighbour_coord = offset_coordinate(&coord, dir);
@@ -171,5 +172,16 @@ fn to_grid_coordinate(one_dimensional_index: usize, dimension_size: GridIndexTyp
     GridCoordinate {
         x: x as isize,
         y: y as isize,
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn blah() {
     }
 }

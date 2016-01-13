@@ -6,5 +6,5 @@ use mazes::squaregrid::SquareGrid;
 
 fn main() {
 
-    let sg = SquareGrid::new(10*10);
+    let sg = SquareGrid::new(10);
 }
