@@ -1,6 +1,7 @@
 // This file is our crate root
 
 #![allow(dead_code)]
+#![allow(dead_code)]
 
 // Note we could put this in e.g. grid.rs, but then when we use it
 // from that sub-module we would `use self::rand::Rng` instead of
@@ -16,9 +17,6 @@ extern crate rand;
 // e.g. maze::cell = cell.rs
 // So a module exists in the *context* of the crate root module
 // A crate = module that can be linked to and unit of compilation for the compiler
-pub mod cell; // The cell module exists *here* and it's contents are in cell.rs  (or cell/mod.rs)
-pub mod gridcell;
-pub mod grid;
 pub mod squaregrid;
 
 // All public items within a crate gets a symbol exposed to the linker
