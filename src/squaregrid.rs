@@ -108,7 +108,9 @@ impl SquareGrid {
     }
 
     pub fn link(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
-        let _ = self.graph.update_edge(a, b, ());
+        if a != b {
+            let _ = self.graph.update_edge(a, b, ());
+        }
     }
 
     pub fn unlink(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
@@ -287,5 +289,9 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![]);
         assert_eq!(links_sorted!(c), vec![]);
+
+        // Deny cycle - self links
+        g.link(a, a);
+        assert_eq!(links_sorted!(a), vec![]);
     }
 }
