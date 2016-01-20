@@ -6,6 +6,7 @@
 // Note we could put this in e.g. grid.rs, but then when we use it
 // from that sub-module we would `use self::rand::Rng` instead of
 // `rand::Rng`, which means crate_root::rand::Rng;
+extern crate itertools;
 extern crate petgraph;
 extern crate rand;
 

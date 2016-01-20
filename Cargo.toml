@@ -8,5 +8,6 @@ version = "0.1.0"
 authors = ["enerqi <enerqi@enerqi>"]
 
 [dependencies]
+itertools = "0.4.6" # sorted trait etc..
 petgraph = "0.2.2"
 rand = "0.3.10"
