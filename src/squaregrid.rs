@@ -290,9 +290,6 @@ mod test {
         assert_eq!(links_sorted!(b), vec![a, c]);
         assert_eq!(links_sorted!(c), vec![b]);
 
-        // add the same link - ensuring we can't add parallel links
-        g.link(a, b);
-
         // a - b still linked bi-directionally after updating exist link
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a, c]);
@@ -309,9 +306,28 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![]);
         assert_eq!(links_sorted!(c), vec![]);
+    }
 
-        // Deny cycle - self links
+    #[test]
+    fn no_self_linked_cycles() {
+        let mut g = SquareGrid::new(4);
+        let a = GridGraphNodeIndex::new(0);
         g.link(a, a);
-        assert_eq!(links_sorted!(a), vec![]);
+        assert_eq!(g.links(a), vec![]);
+    }
+
+    #[test]
+    fn no_parallel_duplicated_linked_cells() {
+        let mut g = SquareGrid::new(4);
+        let a = GridGraphNodeIndex::new(0);
+        let b = GridGraphNodeIndex::new(1);
+        g.link(a, b);
+        g.link(a, b);
+        assert_eq!(g.links(a), vec![b]);
+        assert_eq!(g.links(b), vec![a]);
+
+        g.unlink(a, b);
+        assert_eq!(g.links(a), vec![]);
+        assert_eq!(g.links(b), vec![]);
     }
 }
