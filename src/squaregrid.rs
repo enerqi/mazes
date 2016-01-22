@@ -107,12 +107,20 @@ impl SquareGrid {
         self.grid_coordinate_to_node_index_lookup[index]
     }
 
+    /// Link two cells
+    /// Todo - only allow links between adjacent cells? If `b` not in `g.neighbours(a)`.
+    /// neighbours is a wasteful computation? It filters the None adjacents, that's all.
+    /// It is so small maybe it could move return an array instead of allocating a vector on the heap
+    /// then I'd have no crazy ideas about passing a pre-allocated output container.
+    ///
+    /// Panics if a cell does not exist.
     pub fn link(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
         if a != b {
             let _ = self.graph.update_edge(a, b, ());
         }
     }
 
+    /// Unlink two cells, if a link exists between them.
     pub fn unlink(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
 
         if let Some(edge_index) = self.graph.find_edge(a, b) {
@@ -137,12 +145,28 @@ impl SquareGrid {
         if let Some(adj) = self.graph.node_weight(node_index) {
             vec![adj.north, adj.south, adj.east, adj.west]
                 .iter()
-                .filter(|&maybe_adj| maybe_adj.is_some())
-                .map(|&opt| opt.unwrap().clone())
+                .filter_map(|&maybe_adj| maybe_adj.clone())
                 .collect()
         } else {
             vec![]
         }
+    }
+
+    fn is_neighbour(&self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) -> bool {
+        macro_rules! index_node_match {
+            ($opt_grid_index:expr) => (if let Some(node_index) = $opt_grid_index {
+                                           if node_index == b {
+                                               return true;
+                                           }
+                                       })
+        }
+        if let Some(adjacents_of_a) = self.graph.node_weight(a) {
+            index_node_match!(adjacents_of_a.north);
+            index_node_match!(adjacents_of_a.south);
+            index_node_match!(adjacents_of_a.east);
+            index_node_match!(adjacents_of_a.west);
+        }
+        false
     }
 }
 
