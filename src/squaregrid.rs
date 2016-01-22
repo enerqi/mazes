@@ -108,10 +108,9 @@ impl SquareGrid {
     }
 
     /// Link two cells
+    ///
     /// Todo - only allow links between adjacent cells? If `b` not in `g.neighbours(a)`.
-    /// neighbours is a wasteful computation? It filters the None adjacents, that's all.
-    /// It is so small maybe it could move return an array instead of allocating a vector on the heap
-    /// then I'd have no crazy ideas about passing a pre-allocated output container.
+    ///      - better to change the API to take an index and GridDirection
     ///
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
