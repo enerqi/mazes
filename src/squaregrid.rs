@@ -152,6 +152,12 @@ impl SquareGrid {
         }
     }
 
+    // Arguably storing adjacents - N, S, E, W is pointless if we are given a grid index
+    // it's probably quicker to calculate the valid adjacent cell indices than store them
+    // and lookup from memory. However, we are currently using a grid_coordinate_to_node_index_lookup
+    // table on the chance that node indices might not match grid coordinates in the expected
+    // natural manner...so we just match the AdjacentCells data structure.
+    // We could use `SquareGrid::neighbours` but it allocates a Vec.
     fn is_neighbour(&self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) -> bool {
         macro_rules! index_node_match {
             ($opt_grid_index:expr) => (if let Some(node_index) = $opt_grid_index {
