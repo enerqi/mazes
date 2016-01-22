@@ -66,15 +66,15 @@ impl SquareGrid {
 
         for (index, node_index) in grid.grid_coordinate_to_node_index_lookup.iter().enumerate() {
 
-            let coord = to_grid_coordinate(index, dimension_size);
+            let coord = grid.index_to_grid_coordinate(index);
 
             // Limit the lifetime of the find_neighbour_nodeindex closure so we don't get a grid
             // borrow conflict when mutating the adjacent_cells
             let (north_index, south_index, east_index, west_index) = {
                 let find_neighbour_nodeindex = |dir: GridDirection| -> Option<GridGraphNodeIndex> {
                     let neighbour_coord = offset_coordinate(&coord, dir);
-                    if is_valid_coordinate(&neighbour_coord, dimension_size) {
-                        let node_indices_index = to_1d_index(&neighbour_coord, dimension_size);
+                    if grid.is_valid_coordinate(&neighbour_coord) {
+                        let node_indices_index = grid.grid_coordinate_to_1d_index(&neighbour_coord);
                         let node_index =
                             grid.grid_coordinate_to_node_index_lookup[node_indices_index as usize];
                         Some(node_index)
@@ -108,10 +108,9 @@ impl SquareGrid {
     }
 
     /// Link two cells
+    ///
     /// Todo - only allow links between adjacent cells? If `b` not in `g.neighbours(a)`.
-    /// neighbours is a wasteful computation? It filters the None adjacents, that's all.
-    /// It is so small maybe it could move return an array instead of allocating a vector on the heap
-    /// then I'd have no crazy ideas about passing a pre-allocated output container.
+    ///      - better to change the API to take an index and GridDirection
     ///
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: GridGraphNodeIndex, b: GridGraphNodeIndex) {
@@ -174,6 +173,29 @@ impl SquareGrid {
         }
         false
     }
+
+    fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
+        let (x, y) = (coord.x, coord.y);
+        let dim_size = self.dimension_size as isize;
+        if x < 0 || y < 0 || x >= dim_size || y >= dim_size {
+            return false;
+        }
+        true
+    }
+
+    fn grid_coordinate_to_1d_index(&self, coord: &GridCoordinate) -> GridIndexType {
+        ((coord.y * self.dimension_size as isize) + coord.x) as GridIndexType
+    }
+
+    fn index_to_grid_coordinate(&self, one_dimensional_index: usize) -> GridCoordinate {
+        let dim_size = self.dimension_size as usize;
+        let y = one_dimensional_index / dim_size;
+        let x = one_dimensional_index - (y * dim_size);
+        GridCoordinate {
+            x: x as isize,
+            y: y as isize,
+        }
+    }
 }
 
 fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> GridCoordinate {
@@ -183,32 +205,6 @@ fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> GridCoordina
         GridDirection::South => GridCoordinate { x: x, y: y + 1 },
         GridDirection::East => GridCoordinate { x: x + 1, y: y },
         GridDirection::West => GridCoordinate { x: x - 1, y: y },
-    }
-}
-
-fn is_valid_coordinate(coord: &GridCoordinate, dimension_size: GridIndexType) -> bool {
-    if coord.x < 0 || coord.y < 0 {
-        return false;
-    }
-    let (x, y) = (coord.x, coord.y);
-    if x >= dimension_size as isize || y >= dimension_size as isize {
-        return false;
-    }
-    true
-}
-
-fn to_1d_index(coord: &GridCoordinate, dimension_size: GridIndexType) -> GridIndexType {
-    ((coord.y * dimension_size as isize) + coord.x) as GridIndexType
-}
-
-fn to_grid_coordinate(one_dimensional_index: usize,
-                      dimension_size: GridIndexType)
-                      -> GridCoordinate {
-    let y = one_dimensional_index / dimension_size as usize;
-    let x = one_dimensional_index - (y * dimension_size as usize);
-    GridCoordinate {
-        x: x as isize,
-        y: y as isize,
     }
 }
 
@@ -300,9 +296,6 @@ mod test {
         assert_eq!(links_sorted!(b), vec![a, c]);
         assert_eq!(links_sorted!(c), vec![b]);
 
-        // add the same link - ensuring we can't add parallel links
-        g.link(a, b);
-
         // a - b still linked bi-directionally after updating exist link
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a, c]);
@@ -319,9 +312,28 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![]);
         assert_eq!(links_sorted!(c), vec![]);
+    }
 
-        // Deny cycle - self links
+    #[test]
+    fn no_self_linked_cycles() {
+        let mut g = SquareGrid::new(4);
+        let a = GridGraphNodeIndex::new(0);
         g.link(a, a);
-        assert_eq!(links_sorted!(a), vec![]);
+        assert_eq!(g.links(a), vec![]);
+    }
+
+    #[test]
+    fn no_parallel_duplicated_linked_cells() {
+        let mut g = SquareGrid::new(4);
+        let a = GridGraphNodeIndex::new(0);
+        let b = GridGraphNodeIndex::new(1);
+        g.link(a, b);
+        g.link(a, b);
+        assert_eq!(g.links(a), vec![b]);
+        assert_eq!(g.links(b), vec![a]);
+
+        g.unlink(a, b);
+        assert_eq!(g.links(a), vec![]);
+        assert_eq!(g.links(b), vec![]);
     }
 }
