@@ -115,7 +115,7 @@ impl SquareGrid {
         CellIter {
             current_cell_number: 0,
             dimension_size: dim_size,
-            cells_count: dim_size * dim_size
+            cells_count: dim_size * dim_size,
         }
     }
 
@@ -123,7 +123,7 @@ impl SquareGrid {
         BatchIter {
             iter_type: BatchIterType::Row,
             current_index: 0,
-            dimension_size: self.dimension_size as usize
+            dimension_size: self.dimension_size as usize,
         }
     }
 
@@ -131,7 +131,7 @@ impl SquareGrid {
         BatchIter {
             iter_type: BatchIterType::Column,
             current_index: 0,
-            dimension_size: self.dimension_size as usize
+            dimension_size: self.dimension_size as usize,
         }
     }
 
@@ -157,7 +157,7 @@ impl SquareGrid {
 pub struct CellIter {
     current_cell_number: usize,
     dimension_size: usize,
-    cells_count: usize
+    cells_count: usize,
 }
 impl Iterator for CellIter {
     type Item = GridCoordinate;
@@ -166,8 +166,7 @@ impl Iterator for CellIter {
             let coord = index_to_grid_coordinate(self.dimension_size, self.current_cell_number);
             self.current_cell_number += 1;
             Some(coord)
-        }
-        else {
+        } else {
             None
         }
     }
@@ -175,7 +174,7 @@ impl Iterator for CellIter {
 
 enum BatchIterType {
     Row,
-    Column
+    Column,
 }
 pub struct BatchIter {
     iter_type: BatchIterType,
@@ -187,12 +186,15 @@ impl Iterator for BatchIter {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_index < self.dimension_size {
             let coords = (0..self.dimension_size)
-                                 .into_iter()
-                                 .map(|i| match self.iter_type {
-                                    BatchIterType::Row    => GridCoordinate::new(i as isize, self.current_index as isize),
-                                    BatchIterType::Column => GridCoordinate::new(self.current_index as isize, i as isize)
-                                  })
-                                 .collect();
+                             .into_iter()
+                             .map(|i| {
+                                 if let BatchIterType::Row = self.iter_type {
+                                     GridCoordinate::new(i as isize, self.current_index as isize)
+                                 } else {
+                                     GridCoordinate::new(self.current_index as isize, i as isize)
+                                 }
+                             })
+                             .collect();
             self.current_index += 1;
             Some(coords)
         } else {
@@ -272,24 +274,26 @@ mod test {
     fn cell_iter() {
         let g = SquareGrid::new(2);
         assert_eq!(g.iter().collect::<Vec<GridCoordinate>>(),
-                   vec![GridCoordinate::new(0,0), GridCoordinate::new(1,0),
-                        GridCoordinate::new(0,1), GridCoordinate::new(1,1)]);
+                   vec![GridCoordinate::new(0, 0),
+                        GridCoordinate::new(1, 0),
+                        GridCoordinate::new(0, 1),
+                        GridCoordinate::new(1, 1)]);
     }
 
     #[test]
     fn row_iter() {
         let g = SquareGrid::new(2);
         assert_eq!(g.iter_row().collect::<Vec<Vec<GridCoordinate>>>(),
-                   vec![vec![GridCoordinate::new(0,0), GridCoordinate::new(1,0)],
-                        vec![GridCoordinate::new(0,1), GridCoordinate::new(1,1)]]);
+                   vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(1, 0)],
+                        vec![GridCoordinate::new(0, 1), GridCoordinate::new(1, 1)]]);
     }
 
     #[test]
     fn column_iter() {
         let g = SquareGrid::new(2);
         assert_eq!(g.iter_column().collect::<Vec<Vec<GridCoordinate>>>(),
-                   vec![vec![GridCoordinate::new(0,0), GridCoordinate::new(0,1)],
-                        vec![GridCoordinate::new(1,0), GridCoordinate::new(1,1)]]);
+                   vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(0, 1)],
+                        vec![GridCoordinate::new(1, 0), GridCoordinate::new(1, 1)]]);
     }
 
     #[test]
