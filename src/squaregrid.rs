@@ -1,17 +1,8 @@
 use petgraph::{Graph, Undirected};
+use petgraph::graph;
+use petgraph::graph::IndexType;
 use rand;
 use rand::distributions::{IndependentSample, Range};
-
-
-pub type GridIndexType = u16;
-pub type GridGraphNodeIndex = ::petgraph::graph::NodeIndex<GridIndexType>;
-
-enum GridDirection {
-    North,
-    South,
-    East,
-    West,
-}
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -24,16 +15,25 @@ impl GridCoordinate {
     }
 }
 
-pub struct SquareGrid {
+pub struct SquareGrid<GridIndexType: IndexType> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: GridIndexType,
 }
-impl SquareGrid {
-    pub fn new(dimension_size: GridIndexType) -> SquareGrid {
 
-        let cells_count = dimension_size * dimension_size;
-        let nodes_count_hint = cells_count as usize;
-        let edges_count_hint = 4 * cells_count as usize - 4 * dimension_size as usize; // Probably overkill, but don't want any capacity panics
+enum GridDirection {
+    North,
+    South,
+    East,
+    West,
+}
+
+impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
+    pub fn new(dimension_size: GridIndexType) -> SquareGrid<GridIndexType> {
+
+        let dim_size = dimension_size.index();
+        let cells_count = dim_size * dim_size;
+        let nodes_count_hint = cells_count;
+        let edges_count_hint = 4 * cells_count - 4 * dim_size; // Probably overkill, but don't want any capacity panics
 
         let mut grid = SquareGrid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
@@ -47,11 +47,11 @@ impl SquareGrid {
     }
 
     pub fn random_cell(&self) -> GridCoordinate {
-        let range_end_exclusive = self.dimension_size as usize * self.dimension_size as usize;
+        let range_end_exclusive = self.dimension_size.index() * self.dimension_size.index();
         let random_pos = Range::new(0, range_end_exclusive);
         let mut rng = rand::thread_rng();
         let index = random_pos.ind_sample(&mut rng);
-        index_to_grid_coordinate(self.dimension_size as usize, index)
+        index_to_grid_coordinate(self.dimension_size.index(), index)
     }
 
     /// Link two cells
@@ -85,7 +85,7 @@ impl SquareGrid {
             .edges(self.grid_coordinate_graph_index(&coord))
             .map(|index_edge_data_pair| {
                 let grid_node_index = index_edge_data_pair.0.clone();
-                index_to_grid_coordinate(self.dimension_size as usize, grid_node_index.index())
+                index_to_grid_coordinate(self.dimension_size.index(), grid_node_index.index())
             })
             .collect()
     }
@@ -111,7 +111,7 @@ impl SquareGrid {
     }
 
     pub fn iter(&self) -> CellIter {
-        let dim_size = self.dimension_size as usize;
+        let dim_size = self.dimension_size.index();
         CellIter {
             current_cell_number: 0,
             dimension_size: dim_size,
@@ -123,7 +123,7 @@ impl SquareGrid {
         BatchIter {
             iter_type: BatchIterType::Row,
             current_index: 0,
-            dimension_size: self.dimension_size as usize,
+            dimension_size: self.dimension_size.index(),
         }
     }
 
@@ -131,7 +131,7 @@ impl SquareGrid {
         BatchIter {
             iter_type: BatchIterType::Column,
             current_index: 0,
-            dimension_size: self.dimension_size as usize,
+            dimension_size: self.dimension_size.index(),
         }
     }
 
@@ -141,16 +141,16 @@ impl SquareGrid {
 
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
         let (x, y) = (coord.x, coord.y);
-        let dim_size = self.dimension_size as isize;
+        let dim_size = self.dimension_size.index() as isize;
         if x < 0 || y < 0 || x >= dim_size || y >= dim_size {
             return false;
         }
         true
     }
 
-    fn grid_coordinate_graph_index(&self, coord: &GridCoordinate) -> GridGraphNodeIndex {
-        let grid_index_raw = ((coord.y * self.dimension_size as isize) + coord.x) as usize;
-        GridGraphNodeIndex::new(grid_index_raw)
+    fn grid_coordinate_graph_index(&self, coord: &GridCoordinate) -> graph::NodeIndex<GridIndexType> {
+        let grid_index_raw = ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize;
+        graph::NodeIndex::<GridIndexType>::new(grid_index_raw)
     }
 }
 
@@ -229,9 +229,11 @@ mod test {
     use super::*;
     use itertools::Itertools; // a trait
 
+    type SmallGrid = SquareGrid<u8>;
+
     #[test]
     fn neighbour_cells() {
-        let g = SquareGrid::new(10);
+        let g = SmallGrid::new(10);
 
         let check_expected_neighbours = |coord, vec_expected_neighbours: Vec<GridCoordinate>| {
             let node_indices = g.neighbours(coord)
@@ -261,7 +263,7 @@ mod test {
 
     #[test]
     fn random_cell() {
-        let g = SquareGrid::new(4);
+        let g = SmallGrid::new(4);
         let cells_count = 4 * 4;
         for _ in 0..1000 {
             let coord = g.random_cell();
@@ -272,7 +274,7 @@ mod test {
 
     #[test]
     fn cell_iter() {
-        let g = SquareGrid::new(2);
+        let g = SmallGrid::new(2);
         assert_eq!(g.iter().collect::<Vec<GridCoordinate>>(),
                    vec![GridCoordinate::new(0, 0),
                         GridCoordinate::new(1, 0),
@@ -282,7 +284,7 @@ mod test {
 
     #[test]
     fn row_iter() {
-        let g = SquareGrid::new(2);
+        let g = SmallGrid::new(2);
         assert_eq!(g.iter_row().collect::<Vec<Vec<GridCoordinate>>>(),
                    vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(1, 0)],
                         vec![GridCoordinate::new(0, 1), GridCoordinate::new(1, 1)]]);
@@ -290,7 +292,7 @@ mod test {
 
     #[test]
     fn column_iter() {
-        let g = SquareGrid::new(2);
+        let g = SmallGrid::new(2);
         assert_eq!(g.iter_column().collect::<Vec<Vec<GridCoordinate>>>(),
                    vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(0, 1)],
                         vec![GridCoordinate::new(1, 0), GridCoordinate::new(1, 1)]]);
@@ -298,18 +300,13 @@ mod test {
 
     #[test]
     fn linking_cells() {
-        let mut g = SquareGrid::new(4);
+        let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 1);
         let b = GridCoordinate::new(0, 2);
         let c = GridCoordinate::new(0, 3);
 
         // I'd rather use a closure, but it needs to borrow the graph immutably until
-        // it goes out of scope
-        // Passing the graph in allows me to use a plain function:
-        // let links_sorted = |n: GridGraphNodeIndex, g: &SquareGrid| -> Vec<GridGraphNodeIndex> {
-        //     g.links(n).into_iter().sorted()
-        // };
-        // but it's uglier in that I need to explicitly pass in the SquareGrid ref all the time
+        // it goes out of scope and it's ugly to pass the grid into each function call
         macro_rules! links_sorted {
             ($x:expr) => (g.links($x).into_iter().sorted())
         }
@@ -370,7 +367,7 @@ mod test {
 
     #[test]
     fn no_self_linked_cycles() {
-        let mut g = SquareGrid::new(4);
+        let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 0);
         g.link(a, a);
         assert_eq!(g.links(a), vec![]);
@@ -378,7 +375,7 @@ mod test {
 
     #[test]
     fn no_parallel_duplicated_linked_cells() {
-        let mut g = SquareGrid::new(4);
+        let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 0);
         let b = GridCoordinate::new(0, 1);
         g.link(a, b);
