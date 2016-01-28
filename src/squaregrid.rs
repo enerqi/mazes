@@ -269,6 +269,30 @@ mod test {
     }
 
     #[test]
+    fn cell_iter() {
+        let g = SquareGrid::new(2);
+        assert_eq!(g.iter().collect::<Vec<GridCoordinate>>(),
+                   vec![GridCoordinate::new(0,0), GridCoordinate::new(1,0),
+                        GridCoordinate::new(0,1), GridCoordinate::new(1,1)]);
+    }
+
+    #[test]
+    fn row_iter() {
+        let g = SquareGrid::new(2);
+        assert_eq!(g.iter_row().collect::<Vec<Vec<GridCoordinate>>>(),
+                   vec![vec![GridCoordinate::new(0,0), GridCoordinate::new(1,0)],
+                        vec![GridCoordinate::new(0,1), GridCoordinate::new(1,1)]]);
+    }
+
+    #[test]
+    fn column_iter() {
+        let g = SquareGrid::new(2);
+        assert_eq!(g.iter_column().collect::<Vec<Vec<GridCoordinate>>>(),
+                   vec![vec![GridCoordinate::new(0,0), GridCoordinate::new(0,1)],
+                        vec![GridCoordinate::new(1,0), GridCoordinate::new(1,1)]]);
+    }
+
+    #[test]
     fn linking_cells() {
         let mut g = SquareGrid::new(4);
         let a = GridCoordinate::new(0, 1);
