@@ -215,10 +215,10 @@ fn index_to_grid_coordinate(dimension_size: usize, one_dimensional_index: usize)
 fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> GridCoordinate {
     let (x, y) = (coord.x, coord.y);
     match dir {
-        GridDirection::North => GridCoordinate { x: x, y: y - 1 },
-        GridDirection::South => GridCoordinate { x: x, y: y + 1 },
-        GridDirection::East => GridCoordinate { x: x + 1, y: y },
-        GridDirection::West => GridCoordinate { x: x - 1, y: y },
+        GridDirection::North => GridCoordinate { y: y - 1, ..*coord },
+        GridDirection::South => GridCoordinate { y: y + 1, ..*coord },
+        GridDirection::East => GridCoordinate { x: x + 1, ..*coord },
+        GridDirection::West => GridCoordinate { x: x - 1, ..*coord },
     }
 }
 
