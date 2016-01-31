@@ -1,14 +1,12 @@
-// This file is our crate root
-
 #![allow(dead_code)]
-#![allow(dead_code)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
 
-// Note we could put this in e.g. grid.rs, but then when we use it
-// from that sub-module we would `use self::rand::Rng` instead of
-// `rand::Rng`, which means crate_root::rand::Rng;
-extern crate itertools;
 extern crate petgraph;
 extern crate rand;
+
+#[cfg(test)]
+extern crate itertools;
 
 // look for one of
 // (1) src/grid.rs

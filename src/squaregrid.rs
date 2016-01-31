@@ -148,7 +148,9 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         true
     }
 
-    fn grid_coordinate_graph_index(&self, coord: &GridCoordinate) -> graph::NodeIndex<GridIndexType> {
+    fn grid_coordinate_graph_index(&self,
+                                   coord: &GridCoordinate)
+                                   -> graph::NodeIndex<GridIndexType> {
         let grid_index_raw = ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize;
         graph::NodeIndex::<GridIndexType>::new(grid_index_raw)
     }
