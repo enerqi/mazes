@@ -3,6 +3,8 @@ use petgraph::graph;
 use petgraph::graph::IndexType;
 use rand;
 use rand::distributions::{IndependentSample, Range};
+use std::fmt;
+use std::iter;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -15,16 +17,17 @@ impl GridCoordinate {
     }
 }
 
-pub struct SquareGrid<GridIndexType: IndexType> {
-    graph: Graph<(), (), Undirected, GridIndexType>,
-    dimension_size: GridIndexType,
-}
-
-enum GridDirection {
+#[derive(Copy, Clone)]
+pub enum GridDirection {
     North,
     South,
     East,
     West,
+}
+
+pub struct SquareGrid<GridIndexType: IndexType> {
+    graph: Graph<(), (), Undirected, GridIndexType>,
+    dimension_size: GridIndexType,
 }
 
 impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
@@ -46,8 +49,12 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         grid
     }
 
+    pub fn size(&self) -> usize {
+        self.dimension_size.index() * self.dimension_size.index()
+    }
+
     pub fn random_cell(&self) -> GridCoordinate {
-        let range_end_exclusive = self.dimension_size.index() * self.dimension_size.index();
+        let range_end_exclusive = self.size();
         let random_pos = Range::new(0, range_end_exclusive);
         let mut rng = rand::thread_rng();
         let index = random_pos.ind_sample(&mut rng);
@@ -103,6 +110,27 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
             .collect()
     }
 
+    pub fn neighbours_at_directions(&self,
+                                    coord: &GridCoordinate,
+                                    dirs: &Vec<GridDirection>)
+                                    -> Vec<Option<GridCoordinate>> {
+        dirs.iter()
+            .map(|direction| self.neighbour_at_direction(coord, direction.clone()))
+            .collect()
+    }
+
+    pub fn neighbour_at_direction(&self,
+                                  coord: &GridCoordinate,
+                                  direction: GridDirection)
+                                  -> Option<GridCoordinate> {
+        let neighbour_coord = offset_coordinate(coord, direction.clone());
+        if self.is_valid_coordinate(&neighbour_coord) {
+            Some(neighbour_coord)
+        } else {
+            None
+        }
+    }
+
     /// Are two cells in the grid linked?
     pub fn is_linked(&self, a: GridCoordinate, b: GridCoordinate) -> bool {
         let a_index = self.grid_coordinate_graph_index(&a);
@@ -153,6 +181,39 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                                    -> graph::NodeIndex<GridIndexType> {
         let grid_index_raw = ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize;
         graph::NodeIndex::<GridIndexType>::new(grid_index_raw)
+    }
+}
+
+impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        // we could try to make an educated guess for the capacity of the string
+        let mut output = "+".to_string();
+        // have to explictly convert to String from &str
+        let maze_top: String = iter::repeat("---+").take(self.dimension_size.index()).collect();
+        output.push_str(&maze_top);
+        output.push_str("\n");
+
+        // for row in self.iter_row() {
+
+        //     let top = "|";
+        //     let bottom = "+";
+        //     for &cell_coord in row {
+
+        //         let body = "   "; // 3 spaces
+        //         let east_boundary =
+        //             if self.is_linked(cell_coord,
+        //                               self.neighbour_at_direction(&cell_coord,
+        //                                                           GridDirection::East)) {
+        //                 " "
+        //             } else {
+        //                 "|"
+        //             };
+        //     }
+        // }
+
+
+        Ok(())
     }
 }
 
@@ -261,6 +322,42 @@ mod test {
 
         // Some place with 4 neighbours inside the grid
         check_expected_neighbours(gc(1, 1), vec![gc(0, 1), gc(1, 0), gc(2, 1), gc(1, 2)]);
+    }
+
+    #[test]
+    fn neighbours_at_dirs() {
+        let g = SmallGrid::new(2);
+        let gc = |x, y| GridCoordinate::new(x, y);
+
+        let check_neighbours = |coord, dirs, vec_neighbour_opts: Vec<Option<GridCoordinate>>| {
+            let neighbour_options = g.neighbours_at_directions(&coord, &dirs);
+            assert_eq!(neighbour_options, vec_neighbour_opts);
+        };
+        check_neighbours(gc(0, 0), vec![], vec![]);
+        check_neighbours(gc(0, 0), vec![GridDirection::North], vec![None]);
+        check_neighbours(gc(0, 0), vec![GridDirection::West], vec![None]);
+        check_neighbours(gc(0, 0),
+                         vec![GridDirection::West, GridDirection::North],
+                         vec![None, None]);
+        check_neighbours(gc(0, 0),
+                         vec![GridDirection::East, GridDirection::South],
+                         vec![Some(gc(1, 0)), Some(gc(0, 1))]);
+
+        check_neighbours(gc(1, 1), vec![], vec![]);
+        check_neighbours(gc(1, 1), vec![GridDirection::South], vec![None]);
+        check_neighbours(gc(1, 1), vec![GridDirection::East], vec![None]);
+        check_neighbours(gc(1, 1),
+                         vec![GridDirection::South, GridDirection::East],
+                         vec![None, None]);
+        check_neighbours(gc(1, 1),
+                         vec![GridDirection::West, GridDirection::North],
+                         vec![Some(gc(0, 1)), Some(gc(1, 0))]);
+    }
+
+    #[test]
+    fn grid_size() {
+        let g = SmallGrid::new(10);
+        assert_eq!(g.size(), 100);
     }
 
     #[test]

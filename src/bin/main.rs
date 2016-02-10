@@ -7,7 +7,9 @@
 extern crate mazes;
 
 use mazes::squaregrid::SquareGrid;
+use mazes::binary_tree_maze;
 
 fn main() {
-    let sg = SquareGrid::<u8>::new(10);
+    let mut sg = SquareGrid::<u8>::new(10);
+    binary_tree_maze::apply(&mut sg);
 }
