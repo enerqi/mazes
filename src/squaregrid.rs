@@ -188,29 +188,36 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         // we could try to make an educated guess for the capacity of the string
-        let mut output = "+".to_string();
+        let columns_count = self.dimension_size.index();
         // have to explictly convert to String from &str
-        let maze_top: String = iter::repeat("---+").take(self.dimension_size.index()).collect();
-        output.push_str(&maze_top);
-        output.push_str("\n");
+        let mut output = "+".to_string() + &iter::repeat("---+").take(columns_count).collect::<String>() + "\n";
 
-        // for row in self.iter_row() {
+//         for row in self.iter_row() {
 
-        //     let top = "|";
-        //     let bottom = "+";
-        //     for &cell_coord in row {
+//             let mut top = "|".to_owned(); // middle really
+//             let bottom = "+";
+//             for cell_coord in row.into_iter() {
 
-        //         let body = "   "; // 3 spaces
-        //         let east_boundary =
-        //             if self.is_linked(cell_coord,
-        //                               self.neighbour_at_direction(&cell_coord,
-        //                                                           GridDirection::East)) {
-        //                 " "
-        //             } else {
-        //                 "|"
-        //             };
-        //     }
-        // }
+//                 // each cell will simply use the southern wall of the cell above
+//                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
+//                 // its eastern boundary ('|'), and its southern boundary ('+---+')
+
+//                 let body = "   "; // 3 spaces
+//                 let east_boundary =
+//                     if self.is_linked(cell_coord.clone(),
+//                                       self.neighbour_at_direction(&cell_coord,
+//                                                                   GridDirection::East)) {
+//                         " "
+//                     } else {
+//                         "|"
+//                     };
+//                 top.push_str(body);
+//                 top.push_str(east_boundary);
+
+// //                let south_boundary =
+
+//             }
+//         }
 
 
         Ok(())
