@@ -2,7 +2,7 @@ use petgraph::{Graph, Undirected};
 use petgraph::graph;
 use petgraph::graph::IndexType;
 use rand;
-use rand::distributions::{IndependentSample, Range};
+use rand::Rng;
 use std::fmt;
 use std::iter;
 
@@ -54,10 +54,8 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn random_cell(&self) -> GridCoordinate {
-        let range_end_exclusive = self.size();
-        let random_pos = Range::new(0, range_end_exclusive);
         let mut rng = rand::thread_rng();
-        let index = random_pos.ind_sample(&mut rng);
+        let index = rng.gen::<usize>() % self.size();
         index_to_grid_coordinate(self.dimension_size.index(), index)
     }
 
@@ -187,40 +185,55 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
-        // we could try to make an educated guess for the capacity of the string
+        // Start by special case rendering the text for the north most boundary
         let columns_count = self.dimension_size.index();
-        // have to explictly convert to String from &str
-        let mut output = "+".to_string() + &iter::repeat("---+").take(columns_count).collect::<String>() + "\n";
+        let mut output = "+".to_string() +          // have to explictly convert to String from &str
+                         &iter::repeat("---+").take(columns_count).collect::<String>() +
+                         "\n";
 
-//         for row in self.iter_row() {
+        for row in self.iter_row() {
 
-//             let mut top = "|".to_owned(); // middle really
-//             let bottom = "+";
-//             for cell_coord in row.into_iter() {
+            let corner = "+";
 
-//                 // each cell will simply use the southern wall of the cell above
-//                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
-//                 // its eastern boundary ('|'), and its southern boundary ('+---+')
+            // Starts of by special case rendering the west most boundary of the row
+            // The top section of the cell is done by the previous row.
+            let mut row_middle_section_render = "|".to_owned();
+            let mut row_bottom_section_render = "+".to_owned();
 
-//                 let body = "   "; // 3 spaces
-//                 let east_boundary =
-//                     if self.is_linked(cell_coord.clone(),
-//                                       self.neighbour_at_direction(&cell_coord,
-//                                                                   GridDirection::East)) {
-//                         " "
-//                     } else {
-//                         "|"
-//                     };
-//                 top.push_str(body);
-//                 top.push_str(east_boundary);
+            for cell_coord in row.into_iter() {
 
-// //                let south_boundary =
+                let render_cell_side = |direction, passage_clear_text, blocking_wall_text| {
+                    self.neighbour_at_direction(&cell_coord, direction)
+                        .map_or(blocking_wall_text, |neighbour_coord| {
+                            if self.is_linked(cell_coord.clone(), neighbour_coord) {
+                                passage_clear_text
+                            }
+                            else {
+                                blocking_wall_text
+                            }
+                        })
+                };
 
-//             }
-//         }
+                // Each cell will simply use the southern wall of the cell above
+                // it as its own northern wall, so we only need to worry about the cell’s body (room space),
+                // its eastern boundary ('|'), and its southern boundary ('---+') minus the south west corner.
+                let body = "   "; // 3 spaces
+                let east_boundary = render_cell_side(GridDirection::East, " ", "|");
+                row_middle_section_render.push_str(body);
+                row_middle_section_render.push_str(east_boundary);
 
+                let south_boundary = render_cell_side(GridDirection::South, "   ", "---");
+                row_bottom_section_render.push_str(south_boundary);
+                row_bottom_section_render.push_str(corner);
+            }
 
-        Ok(())
+            output.push_str(row_middle_section_render.as_ref());
+            output.push_str("\n");
+            output.push_str(row_bottom_section_render.as_ref());
+            output.push_str("\n");
+        }
+
+        write!(f, "{}", output)
     }
 }
 
