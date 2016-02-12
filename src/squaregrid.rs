@@ -185,14 +185,24 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
-        let wall_vert = String::from("│");
+        const WALL_LR: &'static str = "───";
+        const WALL_UD: &'static str = "│";
+        const WALL_LD: &'static str = "┐";
+        const WALL_RU: &'static str = "└";
+        const WALL_LU: &'static str = "┘";
+        const WALL_RD: &'static str = "┌";
+        const WALL_LRU: &'static str = "┴";
+        const WALL_LRD: &'static str = "┬";
+        const WALL_LRUD: &'static str = "┼";
+        const WALL_RUD: &'static str = "├";
+        const WALL_LUD: &'static str = "┤";
 
         // Start by special case rendering the text for the north most boundary
         let columns_count = self.dimension_size.index();
         let rows_count = columns_count;
-        let top_boundary_last_cell: String = "───".to_string() + &'\u{2510}'.to_string();
-        let mut output = '\u{250C}'.to_string() +
-                         &iter::repeat("───".to_string() + &'\u{252C}'.to_string())
+        let top_boundary_last_cell = String::from(WALL_LR) + WALL_LD;
+        let mut output = String::from(WALL_RD) +
+                         &iter::repeat(String::from(WALL_LR) + WALL_LRD)
                               .take(columns_count - 1)
                               .collect::<String>() +
                          &top_boundary_last_cell + "\n";
@@ -202,18 +212,18 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
             let is_last_row = index_row == (rows_count - 1);
 
             let corner = if is_last_row {
-                '\u{2514}'.to_string()
+                WALL_RU
             } else {
-                '\u{253C}'.to_string()
-            }; // ┼ "+";
+                WALL_LRUD
+            };
 
             // Starts of by special case rendering the west most boundary of the row
             // The top section of the cell is done by the previous row.
-            let mut row_middle_section_render = '\u{2502}'.to_string();
+            let mut row_middle_section_render = String::from(WALL_UD);
             let mut row_bottom_section_render = if index_row == (rows_count - 1) {
-                '\u{2514}'.to_string()
+                WALL_RU.to_string()
             } else {
-                '\u{251C}'.to_string()
+                WALL_RUD.to_string()
             };
 
             for (index_column, cell_coord) in row.into_iter().enumerate() {
@@ -233,23 +243,23 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
                 // its eastern boundary ('|'), and its southern boundary ('---+') minus the south west corner.
                 let body = "   "; // 3 spaces
-                let east_boundary = render_cell_side(GridDirection::East, " ", &wall_vert);
+                let east_boundary = render_cell_side(GridDirection::East, " ", WALL_UD);
                 row_middle_section_render.push_str(body);
                 row_middle_section_render.push_str(east_boundary);
 
-                let south_boundary = render_cell_side(GridDirection::South, "   ", "───");
+                let south_boundary = render_cell_side(GridDirection::South, "   ", WALL_LR);
                 row_bottom_section_render.push_str(south_boundary);
 
                 let is_last_column = index_column == (columns_count - 1);
                 if is_last_row {
                     if is_last_column {
-                        row_bottom_section_render.push_str('\u{2518}'.to_string().as_ref());
+                        row_bottom_section_render.push_str(WALL_LU);
                     } else {
-                        row_bottom_section_render.push_str('\u{2534}'.to_string().as_ref());
+                        row_bottom_section_render.push_str(WALL_LRU);
                     }
                 } else {
                     if is_last_column {
-                        row_bottom_section_render.push_str('\u{2524}'.to_string().as_ref());
+                        row_bottom_section_render.push_str(WALL_LUD);
                     } else {
                         row_bottom_section_render.push_str(corner.as_ref());
                     }
