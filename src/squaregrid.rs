@@ -165,6 +165,12 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
+    fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
+        self.neighbour_at_direction(coord, direction)
+            .map_or(false,
+                    |neighbour_coord| self.is_linked(coord.clone(), neighbour_coord))
+    }
+
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
         let (x, y) = (coord.x, coord.y);
         let dim_size = self.dimension_size.index() as isize;
@@ -185,7 +191,12 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
-        const WALL_LR: &'static str = "───";
+        const WALL_L: &'static str = "╴";
+        const WALL_R: &'static str = "╶";
+        const WALL_U: &'static str = "╵";
+        const WALL_D: &'static str = "╷";
+        const WALL_LR_3: &'static str = "───";
+        const WALL_LR: &'static str = "─";
         const WALL_UD: &'static str = "│";
         const WALL_LD: &'static str = "┐";
         const WALL_RU: &'static str = "└";
@@ -197,15 +208,28 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         const WALL_RUD: &'static str = "├";
         const WALL_LUD: &'static str = "┤";
 
-        // Start by special case rendering the text for the north most boundary
         let columns_count = self.dimension_size.index();
         let rows_count = columns_count;
-        let top_boundary_last_cell = String::from(WALL_LR) + WALL_LD;
-        let mut output = String::from(WALL_RD) +
-                         &iter::repeat(String::from(WALL_LR) + WALL_LRD)
-                              .take(columns_count - 1)
-                              .collect::<String>() +
-                         &top_boundary_last_cell + "\n";
+
+        // Start by special case rendering the text for the north most boundary
+        let first_grid_row: &Vec<GridCoordinate> = &self.iter_row().take(1).collect::<Vec<Vec<GridCoordinate>>>()[0];
+        let mut output = String::from(WALL_RD);
+        for (index, coord) in first_grid_row.iter().enumerate() {
+            output.push_str(WALL_LR_3);
+            let is_east_open = self.is_neighbour_linked(&coord, GridDirection::East);
+            if is_east_open {
+                output.push_str(WALL_LR);
+            }
+            else {
+                let is_last_cell = index == columns_count-1;
+                if is_last_cell {
+                    output.push_str(WALL_LD);
+                } else {
+                    output.push_str(WALL_LRD);
+                }
+            }
+        }
+        output.push_str("\n");
 
         for (index_row, row) in self.iter_row().enumerate() {
 
@@ -214,11 +238,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
             // Starts of by special case rendering the west most boundary of the row
             // The top section of the cell is done by the previous row.
             let mut row_middle_section_render = String::from(WALL_UD);
-            let mut row_bottom_section_render = if index_row == (rows_count - 1) {
-                WALL_RU.to_string()
-            } else {
-                WALL_RUD.to_string()
-            };
+            let mut row_bottom_section_render = String::from("");
 
             for (index_column, cell_coord) in row.into_iter().enumerate() {
 
@@ -232,6 +252,10 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                             }
                         })
                 };
+                let is_first_column = index_column == 0;
+                let is_last_column = index_column == (columns_count - 1);
+                let east_open = self.is_neighbour_linked(&cell_coord, GridDirection::East);
+                let south_open = self.is_neighbour_linked(&cell_coord, GridDirection::South);
 
                 // Each cell will simply use the southern wall of the cell above
                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
@@ -241,51 +265,75 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 row_middle_section_render.push_str(body);
                 row_middle_section_render.push_str(east_boundary);
 
-                let south_boundary = render_cell_side(GridDirection::South, "   ", WALL_LR);
+                if is_first_column {
+                    row_bottom_section_render = if is_last_row {
+                        String::from(WALL_RU)
+                    } else {
+                        if south_open {
+                            String::from(WALL_UD)
+                        } else {
+                            String::from(WALL_RUD)
+                        }
+                    };
+                }
+                let south_boundary = render_cell_side(GridDirection::South, "   ", WALL_LR_3);
                 row_bottom_section_render.push_str(south_boundary);
 
-                let is_last_column = index_column == (columns_count - 1);
+                let corner = match (is_last_row, is_last_column) {
+                    (true, true) => WALL_LU,
+                    (true, false) => {
+                        if east_open {
+                            WALL_LR
+                        } else {
+                            WALL_LRU
+                        }
+                    }
+                    (false, true) => {
+                        if south_open {
+                            WALL_UD
+                        } else {
+                            WALL_LUD
+                        }
+                    }
+                    (false, false) => {
+                        let access_se_from_east =
+                            self.neighbour_at_direction(&cell_coord, GridDirection::East)
+                                .map_or(false,
+                                        |c| self.is_neighbour_linked(&c, GridDirection::South));
+                        let access_se_from_south =
+                            self.neighbour_at_direction(&cell_coord, GridDirection::South)
+                                .map_or(false,
+                                        |c| self.is_neighbour_linked(&c, GridDirection::East));
+                        let show_right_section = !access_se_from_east;
+                        let show_down_section = !access_se_from_south;
+                        let show_up_section = !east_open;
+                        let show_left_section = !south_open;
 
-
-
-                let is_neighbour_linked = |direction| {
-                    self.neighbour_at_direction(&cell_coord, direction)
-                        .map_or(false, |neighbour_coord| {
-                            self.is_linked(cell_coord.clone(), neighbour_coord)
-                        })
+                        match (show_left_section,
+                               show_right_section,
+                               show_up_section,
+                               show_down_section) {
+                            (true, true, true, true) => WALL_LRUD,
+                            (true, true, true, false) => WALL_LRU,
+                            (true, true, false, true) => WALL_LRD,
+                            (true, false, true, true) => WALL_LUD,
+                            (false, true, true, true) => WALL_RUD,
+                            (true, true, false, false) => WALL_LR,
+                            (false, false, true, true) => WALL_UD,
+                            (false, true, true, false) => WALL_RU,
+                            (true, false, false, true) => WALL_LD,
+                            (true, false, true, false) => WALL_LU,
+                            (false, true, false, true) => WALL_RD,
+                            (true, false, false, false) => WALL_L,
+                            (false, true, false, false) => WALL_R,
+                            (false, false, true, false) => WALL_U,
+                            (false, false, false, true) => WALL_D,
+                            _ => " ",
+                        }
+                    }
                 };
-                let east_open = is_neighbour_linked(GridDirection::East);
-                let south_open = is_neighbour_linked(GridDirection::South);
-                let corner = if is_last_row {
-                    WALL_RU
-                } else if is_last_column {
-                    if south_open {
-                        WALL_UD
-                    } else {
-                        WALL_LUD
-                    }
-                } else {
-                    match (east_open, south_open) {
-                        (true, true) => WALL_RD,
-                        (true, false) => WALL_LRD,
-                        (false, true) => WALL_RUD,
-                        (false, false) => WALL_LRUD,
-                    }
-                };
 
-                if is_last_row {
-                    if is_last_column {
-                        row_bottom_section_render.push_str(WALL_LU);
-                    } else {
-                        row_bottom_section_render.push_str(WALL_LRU);
-                    }
-                } else {
-                    if is_last_column {
-                        row_bottom_section_render.push_str(WALL_LUD);
-                    } else {
-                        row_bottom_section_render.push_str(corner.as_ref());
-                    }
-                }
+                row_bottom_section_render.push_str(corner.as_ref());
             }
 
             output.push_str(row_middle_section_render.as_ref());

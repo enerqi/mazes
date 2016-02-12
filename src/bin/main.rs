@@ -10,7 +10,7 @@ use mazes::squaregrid::SquareGrid;
 use mazes::binary_tree_maze;
 
 fn main() {
-    let mut sg = SquareGrid::<u16>::new(25);
+    let mut sg = SquareGrid::<u16>::new(27);
     binary_tree_maze::apply(&mut sg);
     println!("{}", sg);
 }
