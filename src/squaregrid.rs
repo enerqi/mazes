@@ -211,12 +211,6 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
 
             let is_last_row = index_row == (rows_count - 1);
 
-            let corner = if is_last_row {
-                WALL_RU
-            } else {
-                WALL_LRUD
-            };
-
             // Starts of by special case rendering the west most boundary of the row
             // The top section of the cell is done by the previous row.
             let mut row_middle_section_render = String::from(WALL_UD);
@@ -251,6 +245,34 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 row_bottom_section_render.push_str(south_boundary);
 
                 let is_last_column = index_column == (columns_count - 1);
+
+
+
+                let is_neighbour_linked = |direction| {
+                    self.neighbour_at_direction(&cell_coord, direction)
+                        .map_or(false, |neighbour_coord| {
+                            self.is_linked(cell_coord.clone(), neighbour_coord)
+                        })
+                };
+                let east_open = is_neighbour_linked(GridDirection::East);
+                let south_open = is_neighbour_linked(GridDirection::South);
+                let corner = if is_last_row {
+                    WALL_RU
+                } else if is_last_column {
+                    if south_open {
+                        WALL_UD
+                    } else {
+                        WALL_LUD
+                    }
+                } else {
+                    match (east_open, south_open) {
+                        (true, true) => WALL_RD,
+                        (true, false) => WALL_LRD,
+                        (false, true) => WALL_RUD,
+                        (false, false) => WALL_LRUD,
+                    }
+                };
+
                 if is_last_row {
                     if is_last_column {
                         row_bottom_section_render.push_str(WALL_LU);
