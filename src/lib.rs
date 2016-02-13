@@ -16,7 +16,7 @@ extern crate itertools;
 // e.g. maze::cell = cell.rs
 // So a module exists in the *context* of the crate root module
 // A crate = module that can be linked to and unit of compilation for the compiler
-pub mod binary_tree_maze;
+pub mod generators;
 pub mod squaregrid;
 
 // All public items within a crate gets a symbol exposed to the linker

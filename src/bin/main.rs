@@ -7,10 +7,18 @@
 extern crate mazes;
 
 use mazes::squaregrid::SquareGrid;
-use mazes::binary_tree_maze;
+use mazes::generators;
 
 fn main() {
-    let mut sg = SquareGrid::<u16>::new(27);
-    binary_tree_maze::apply(&mut sg);
+    let mut sg = SquareGrid::<u16>::new(20);
+    generators::binary_tree(&mut sg);
     println!("{}", sg);
+
+    println!("");
+    println!("");
+    println!("");
+
+    let mut sg_2 = SquareGrid::<u16>::new(20);
+    generators::sidewinder(&mut sg_2);
+    println!("{}", sg_2);
 }
