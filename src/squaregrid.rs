@@ -110,7 +110,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     pub fn neighbours_at_directions(&self,
                                     coord: &GridCoordinate,
-                                    dirs: &Vec<GridDirection>)
+                                    dirs: &[GridDirection])
                                     -> Vec<Option<GridCoordinate>> {
         dirs.iter()
             .map(|direction| self.neighbour_at_direction(coord, direction.clone()))
@@ -212,7 +212,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         let rows_count = columns_count;
 
         // Start by special case rendering the text for the north most boundary
-        let first_grid_row: &Vec<GridCoordinate> = &self.iter_row().take(1).collect::<Vec<Vec<GridCoordinate>>>()[0];
+        let first_grid_row: &Vec<GridCoordinate> = &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
             output.push_str(WALL_LR_3);
@@ -458,29 +458,36 @@ mod test {
         let g = SmallGrid::new(2);
         let gc = |x, y| GridCoordinate::new(x, y);
 
-        let check_neighbours = |coord, dirs, vec_neighbour_opts: Vec<Option<GridCoordinate>>| {
-            let neighbour_options = g.neighbours_at_directions(&coord, &dirs);
+        let check_neighbours = |coord, dirs: &[GridDirection], vec_neighbour_opts: &[Option<GridCoordinate>]| {
+            let neighbour_options = g.neighbours_at_directions(&coord, dirs);
+
+            // comparing an array slice with a vector. how does rust auto convert the vector to &[T]?
+            // PartialEq<&[B]> for Vec<A> where A: PartialEq<B> ? Borrow<[T]> for Vec<T> ?
+            // No, the expressions have references applied, which then auto deref magic etc.
+            // macro_rules! assert_eq {
+            // ($left:expr , $right:expr) => ({
+            //     match (&($left), &($right)) {
             assert_eq!(neighbour_options, vec_neighbour_opts);
         };
-        check_neighbours(gc(0, 0), vec![], vec![]);
-        check_neighbours(gc(0, 0), vec![GridDirection::North], vec![None]);
-        check_neighbours(gc(0, 0), vec![GridDirection::West], vec![None]);
+        check_neighbours(gc(0, 0), &[], &[]);
+        check_neighbours(gc(0, 0), &[GridDirection::North], &[None]);
+        check_neighbours(gc(0, 0), &[GridDirection::West], &[None]);
         check_neighbours(gc(0, 0),
-                         vec![GridDirection::West, GridDirection::North],
-                         vec![None, None]);
+                         &[GridDirection::West, GridDirection::North],
+                         &[None, None]);
         check_neighbours(gc(0, 0),
-                         vec![GridDirection::East, GridDirection::South],
-                         vec![Some(gc(1, 0)), Some(gc(0, 1))]);
+                         &[GridDirection::East, GridDirection::South],
+                         &[Some(gc(1, 0)), Some(gc(0, 1))]);
 
-        check_neighbours(gc(1, 1), vec![], vec![]);
-        check_neighbours(gc(1, 1), vec![GridDirection::South], vec![None]);
-        check_neighbours(gc(1, 1), vec![GridDirection::East], vec![None]);
+        check_neighbours(gc(1, 1), &[], &[]);
+        check_neighbours(gc(1, 1), &[GridDirection::South], &[None]);
+        check_neighbours(gc(1, 1), &[GridDirection::East], &[None]);
         check_neighbours(gc(1, 1),
-                         vec![GridDirection::South, GridDirection::East],
-                         vec![None, None]);
+                         &[GridDirection::South, GridDirection::East],
+                         &[None, None]);
         check_neighbours(gc(1, 1),
-                         vec![GridDirection::West, GridDirection::North],
-                         vec![Some(gc(0, 1)), Some(gc(1, 0))]);
+                         &[GridDirection::West, GridDirection::North],
+                         &[Some(gc(0, 1)), Some(gc(1, 0))]);
     }
 
     #[test]

@@ -1,28 +1,31 @@
 
 use petgraph::graph::IndexType;
 use rand;
-use rand::Rng;
+use rand::{Rng, ThreadRng};
 use squaregrid::{SquareGrid, GridDirection, GridCoordinate};
 
-/// Apply the binary tree maze algorithm to a grid
-/// It works simply by visiting each cell in the grid and choosing to carve a passage either north or east.
-///
+/// Apply the binary tree maze generation algorithm to a grid
+/// It works simply by visiting each cell in the grid and choosing to carve a passage
+/// in one of two perpendicular directions.
+/// Once picked, the two perpendicular directions are constant for the entire maze generation process,
+/// otherwise we'd have a good way for generating many areas with no way in or out. We would not be
+/// generating a perfect maze.
 pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
     let mut rng = rand::thread_rng();
+    let neighbours_to_check = two_perpendicular_directions(&mut rng);
 
     for cell_coord in grid.iter() {
 
-        // Get the neighbours to the north and east of this cell
+        // Get the neighbours perpendicular to this cell
         let neighbours = grid.neighbours_at_directions(&cell_coord,
-                                                       &vec![GridDirection::North,
-                                                             GridDirection::East])
+                                                       &neighbours_to_check)
                              .into_iter()
                              .filter_map(|coord_maybe| coord_maybe)
-                             .collect::<Vec<GridCoordinate>>();
+                             .collect::<Vec<_>>();
 
-        // Randomly choose the north or east neighbour and create a passage to it
+        // Unless there are no neighbours, randomly choose a neighbour to connect.
         if !neighbours.is_empty() {
 
             let link_coord = if neighbours.len() > 1 {
@@ -34,6 +37,11 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
             grid.link(cell_coord, link_coord);
         }
     }
+}
+
+fn two_perpendicular_directions(rng: &mut ThreadRng) -> [GridDirection; 2] {
+    [if rng.gen() { GridDirection::North } else { GridDirection::South },
+     if rng.gen() { GridDirection::East } else { GridDirection::West }]
 }
 
 pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
