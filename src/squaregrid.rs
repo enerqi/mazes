@@ -212,16 +212,16 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         let rows_count = columns_count;
 
         // Start by special case rendering the text for the north most boundary
-        let first_grid_row: &Vec<GridCoordinate> = &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
+        let first_grid_row: &Vec<GridCoordinate> =
+            &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
             output.push_str(WALL_LR_3);
             let is_east_open = self.is_neighbour_linked(&coord, GridDirection::East);
             if is_east_open {
                 output.push_str(WALL_LR);
-            }
-            else {
-                let is_last_cell = index == columns_count-1;
+            } else {
+                let is_last_cell = index == columns_count - 1;
                 if is_last_cell {
                     output.push_str(WALL_LD);
                 } else {
@@ -458,7 +458,9 @@ mod test {
         let g = SmallGrid::new(2);
         let gc = |x, y| GridCoordinate::new(x, y);
 
-        let check_neighbours = |coord, dirs: &[GridDirection], vec_neighbour_opts: &[Option<GridCoordinate>]| {
+        let check_neighbours = |coord,
+                                dirs: &[GridDirection],
+                                vec_neighbour_opts: &[Option<GridCoordinate>]| {
             let neighbour_options = g.neighbours_at_directions(&coord, dirs);
 
             // comparing an array slice with a vector. how does rust auto convert the vector to &[T]?
@@ -488,6 +490,24 @@ mod test {
         check_neighbours(gc(1, 1),
                          &[GridDirection::West, GridDirection::North],
                          &[Some(gc(0, 1)), Some(gc(1, 0))]);
+    }
+
+    #[test]
+    fn neighbour_at_dir() {
+        let g = SmallGrid::new(2);
+        let gc = |x, y| GridCoordinate::new(x, y);
+        let check_neighbour = |coord, dir: GridDirection, expected| {
+            assert_eq!(g.neighbour_at_direction(&coord, dir), expected);
+        };
+        check_neighbour(gc(0, 0), GridDirection::North, None);
+        check_neighbour(gc(0, 0), GridDirection::South, Some(gc(0, 1)));
+        check_neighbour(gc(0, 0), GridDirection::East, Some(gc(1, 0)));
+        check_neighbour(gc(0, 0), GridDirection::West, None);
+
+        check_neighbour(gc(1, 1), GridDirection::North, Some(gc(1, 0)));
+        check_neighbour(gc(1, 1), GridDirection::South, None);
+        check_neighbour(gc(1, 1), GridDirection::East, None);
+        check_neighbour(gc(1, 1), GridDirection::West, Some(gc(0, 1)));
     }
 
     #[test]
