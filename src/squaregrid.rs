@@ -4,7 +4,6 @@ use petgraph::graph::IndexType;
 use rand;
 use rand::Rng;
 use std::fmt;
-use std::iter;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -17,7 +16,7 @@ impl GridCoordinate {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum GridDirection {
     North,
     South,
