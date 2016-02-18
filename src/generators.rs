@@ -89,7 +89,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         let mut run = vec![];
 
         for coord in &coordinates_line {
-            run.push(coord.clone());
+            run.push(coord);
 
             let next_in_run_cell = grid.neighbour_at_direction(&coord, next_in_run_direction);
             let at_run_end_boundary = next_in_run_cell.is_none();
@@ -108,11 +108,11 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 let close_out_dir = grid.neighbour_at_direction(&run_member,
                                                                 run_close_out_direction);
                 if let Some(close_out_coord) = close_out_dir {
-                    grid.link(run_member.clone(), close_out_coord);
+                    grid.link(*run_member, close_out_coord);
                 }
                 run.clear();
             } else {
-                grid.link(coord.clone(), next_in_run_cell.unwrap());
+                grid.link(*coord, next_in_run_cell.unwrap());
             }
         }
     }

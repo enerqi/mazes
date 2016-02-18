@@ -18,7 +18,7 @@ fn main() {
     println!("");
     println!("");
 
-    let mut sg_2 = SquareGrid::<u16>::new(20);
+    let mut sg_2 = SquareGrid::<u16>::new(50);
     generators::sidewinder(&mut sg_2);
     println!("{}", sg_2);
 }

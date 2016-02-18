@@ -88,7 +88,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.graph
             .edges(self.grid_coordinate_graph_index(&coord))
             .map(|index_edge_data_pair| {
-                let grid_node_index = index_edge_data_pair.0.clone();
+                let grid_node_index = index_edge_data_pair.0;
                 index_to_grid_coordinate(self.dimension_size.index(), grid_node_index.index())
             })
             .collect()
@@ -112,7 +112,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                                     dirs: &[GridDirection])
                                     -> Vec<Option<GridCoordinate>> {
         dirs.iter()
-            .map(|direction| self.neighbour_at_direction(coord, direction.clone()))
+            .map(|direction| self.neighbour_at_direction(coord, *direction))
             .collect()
     }
 
@@ -120,7 +120,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                                   coord: &GridCoordinate,
                                   direction: GridDirection)
                                   -> Option<GridCoordinate> {
-        let neighbour_coord = offset_coordinate(coord, direction.clone());
+        let neighbour_coord = offset_coordinate(coord, direction);
         if self.is_valid_coordinate(&neighbour_coord) {
             Some(neighbour_coord)
         } else {
@@ -167,7 +167,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
         self.neighbour_at_direction(coord, direction)
             .map_or(false,
-                    |neighbour_coord| self.is_linked(coord.clone(), neighbour_coord))
+                    |neighbour_coord| self.is_linked(*coord, neighbour_coord))
     }
 
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
@@ -244,7 +244,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 let render_cell_side = |direction, passage_clear_text, blocking_wall_text| {
                     self.neighbour_at_direction(&cell_coord, direction)
                         .map_or(blocking_wall_text, |neighbour_coord| {
-                            if self.is_linked(cell_coord.clone(), neighbour_coord) {
+                            if self.is_linked(cell_coord, neighbour_coord) {
                                 passage_clear_text
                             } else {
                                 blocking_wall_text
@@ -267,13 +267,12 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 if is_first_column {
                     row_bottom_section_render = if is_last_row {
                         String::from(WALL_RU)
+                    } else if south_open {
+                        String::from(WALL_UD)
                     } else {
-                        if south_open {
-                            String::from(WALL_UD)
-                        } else {
-                            String::from(WALL_RUD)
-                        }
+                        String::from(WALL_RUD)
                     };
+
                 }
                 let south_boundary = render_cell_side(GridDirection::South, "   ", WALL_LR_3);
                 row_bottom_section_render.push_str(south_boundary);
