@@ -4,6 +4,9 @@
 
 extern crate petgraph;
 extern crate rand;
+extern crate sdl2;
+extern crate sdl2_image;
+extern crate sdl2_ttf;
 
 #[cfg(test)]
 extern crate itertools;
@@ -18,6 +21,7 @@ extern crate itertools;
 // A crate = module that can be linked to and unit of compilation for the compiler
 pub mod generators;
 pub mod squaregrid;
+mod sdl;
 
 // All public items within a crate gets a symbol exposed to the linker
 //
