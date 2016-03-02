@@ -52,6 +52,10 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.dimension_size.index() * self.dimension_size.index()
     }
 
+    pub fn dimension(&self) -> usize {
+        self.dimension_size.index()
+    }
+
     pub fn random_cell(&self) -> GridCoordinate {
         let mut rng = rand::thread_rng();
         let index = rng.gen::<usize>() % self.size();

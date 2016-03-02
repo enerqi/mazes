@@ -44,7 +44,7 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let window_height = 720;
     let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_width, window_height);
     let window = window_builder.position_centered()
-                               .borderless()
+                               //.borderless()
                                .resizable()
                                .build()
                                .unwrap();
@@ -90,6 +90,14 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         renderer.set_draw_color(blue);
         renderer.draw_line(Point::new(0, window_height as i32 / 2),
                            Point::new(window_width as i32, window_height as i32 / 2));
+
+
+        // A limitation of drawing to something that we are showing on the screen is surely that the OS
+        // may not want to show a window with a stupidly large pixel size, whereas an image file can
+        // be at a much large scale. The window can still be shown and closed though.
+        let cell_size_pixels = 10;
+        let img_width = cell_size_pixels * grid.dimension();
+        let img_height = cell_size_pixels * grid.dimension();
 
         renderer.present();
     }
