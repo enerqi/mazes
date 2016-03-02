@@ -12,6 +12,7 @@ Playing with the rust programming language and maze generation.
 ## Rust Core
 
 ![Rust api docs](https://doc.rust-lang.org/std/)
+
 ![Rust By Example](http://rustbyexample.com/)
 
 ## SDL2
