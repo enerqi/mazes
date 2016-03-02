@@ -10,6 +10,7 @@ use std::env;
 
 use mazes::squaregrid::SquareGrid;
 use mazes::generators;
+use mazes::renderers;
 
 fn main() {
 
@@ -30,4 +31,6 @@ fn main() {
     let mut sg_2 = SquareGrid::<u16>::new(grid_size);
     generators::sidewinder(&mut sg_2);
     println!("{}", sg_2);
+
+    renderers::render_square_grid(&mut sg_2);
 }

@@ -20,6 +20,7 @@ extern crate itertools;
 // So a module exists in the *context* of the crate root module
 // A crate = module that can be linked to and unit of compilation for the compiler
 pub mod generators;
+pub mod renderers;
 pub mod squaregrid;
 mod sdl;
 
@@ -28,4 +29,3 @@ mod sdl;
 // Multi file crates are like a giant file in disguise (cf #include), but the scoping
 // rules create neat little boxes - each module gets its own symbol table even when
 // in the same file
-

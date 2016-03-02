@@ -1,7 +1,7 @@
 use petgraph::graph::IndexType;
 use rand;
 use rand::{Rng, ThreadRng};
-use squaregrid::{SquareGrid, GridDirection};
+use squaregrid::{GridDirection, SquareGrid};
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -80,9 +80,13 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
-        (GridDirection::East, rand_vertical_direction(&mut rng), grid.iter_row())
+        (GridDirection::East,
+         rand_vertical_direction(&mut rng),
+         grid.iter_row())
     } else {
-        (GridDirection::South, rand_horizontal_direction(&mut rng), grid.iter_column())
+        (GridDirection::South,
+         rand_horizontal_direction(&mut rng),
+         grid.iter_column())
     };
 
     for coordinates_line in batch_iter {
@@ -98,8 +102,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                     .is_none();
 
             let should_close_out = at_run_end_boundary ||
-                                   (!at_close_out_direction_boundary &&
-                                    rng.gen()); // coin flip
+                                   (!at_close_out_direction_boundary && rng.gen()); // coin flip
 
             if should_close_out {
                 let sample = rng.gen::<usize>() % run.len();
