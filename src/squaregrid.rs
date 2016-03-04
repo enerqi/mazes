@@ -168,7 +168,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
-    fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
+    pub fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
         self.neighbour_at_direction(coord, direction)
             .map_or(false,
                     |neighbour_coord| self.is_linked(*coord, neighbour_coord))

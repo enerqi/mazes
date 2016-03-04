@@ -5,7 +5,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 
 use sdl;
-use squaregrid::SquareGrid;
+use squaregrid::{GridDirection, SquareGrid};
 
 
 pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
@@ -98,6 +98,30 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         let cell_size_pixels = 10;
         let img_width = cell_size_pixels * grid.dimension();
         let img_height = cell_size_pixels * grid.dimension();
+
+        for cell in grid.iter() {
+            let column = cell.x as usize;
+            let row = cell.y as usize;
+
+            let x1 = (column * cell_size_pixels) as i32;
+            let y1 = (row * cell_size_pixels) as i32;
+            let x2 = ((column + 1) * cell_size_pixels) as i32;
+            let y2 = ((row + 1) * cell_size_pixels) as i32;
+
+            if !grid.is_neighbour_linked(&cell, GridDirection::North) {
+                renderer.draw_line(Point::new(x1, y1), Point::new(x2, y2));
+            }
+            if !grid.is_neighbour_linked(&cell, GridDirection::West) {
+                renderer.draw_line(Point::new(x1, y1), Point::new(x1, y2));
+            }
+
+            if !grid.is_neighbour_linked(&cell, GridDirection::East) {
+                renderer.draw_line(Point::new(x2, y1), Point::new(x2, y2));
+            }
+            if !grid.is_neighbour_linked(&cell, GridDirection::South) {
+                renderer.draw_line(Point::new(x1, y2), Point::new(x2, y2));
+            }
+        }
 
         renderer.present();
     }
