@@ -46,6 +46,7 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let window = window_builder.position_centered()
                                //.borderless()
                                .resizable()
+                               //.opengl()
                                .build()
                                .unwrap();
     let mut renderer = window.renderer()
@@ -75,22 +76,9 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         renderer.set_draw_color(white);
         renderer.clear();
 
-        // Test rectangle
-        let rect = Rect::new(window_width as i32 / 4,
-                             window_height as i32 / 4,
-                             window_width / 2,
-                             window_height / 2)
-                       .ok()
-                       .expect("sdl create rect failed")
-                       .expect("width or height must not be 0");
-        renderer.set_draw_color(green);
-        renderer.fill_rect(rect);
-
-        // Test Line
+        let scale = 1.0;
+        renderer.set_scale(scale, scale);
         renderer.set_draw_color(blue);
-        renderer.draw_line(Point::new(0, window_height as i32 / 2),
-                           Point::new(window_width as i32, window_height as i32 / 2));
-
 
         // A limitation of drawing to something that we are showing on the screen is surely that the OS
         // may not want to show a window with a stupidly large pixel size, whereas an image file can
@@ -108,10 +96,11 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
             let x2 = ((column + 1) * cell_size_pixels) as i32;
             let y2 = ((row + 1) * cell_size_pixels) as i32;
 
-            if !grid.is_neighbour_linked(&cell, GridDirection::North) {
-                renderer.draw_line(Point::new(x1, y1), Point::new(x2, y2));
+            // special cases north and west to handle first row and column.
+            if grid.neighbour_at_direction(&cell, GridDirection::North).is_none() {
+                renderer.draw_line(Point::new(x1, y1), Point::new(x2, y1));
             }
-            if !grid.is_neighbour_linked(&cell, GridDirection::West) {
+            if grid.neighbour_at_direction(&cell, GridDirection::West).is_none() {
                 renderer.draw_line(Point::new(x1, y1), Point::new(x1, y2));
             }
 
@@ -122,6 +111,12 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 renderer.draw_line(Point::new(x1, y2), Point::new(x2, y2));
             }
         }
+
+        // why is the cpu maxed when vsync should be on? Number of lines I guess.
+        // 1% CPU with 400 cells?, 2% 900 cells, 3.2% 1600 cells, 4.5% 2500 cells,
+        // 7.5% 4900 cells, 9% 6400, 10.5% 8100, 13% 10,000. Max single core = 13% @ 4.2GHz.
+        // draw_lines() can be used to avoid a context swap but all the lines in one batch must be connected
+        // Need to check the FPS, assuming 60Hz until doing 10K line draws.
 
         renderer.present();
     }

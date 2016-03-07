@@ -22,15 +22,15 @@ fn main() {
 
     let mut sg = SquareGrid::<u16>::new(grid_size);
     generators::binary_tree(&mut sg);
-    println!("{}", sg);
+    // println!("{}", sg);
 
-    println!("");
-    println!("");
-    println!("");
+    // println!("");
+    // println!("");
+    // println!("");
 
     let mut sg_2 = SquareGrid::<u16>::new(grid_size);
     generators::sidewinder(&mut sg_2);
-    println!("{}", sg_2);
+    //println!("{}", sg_2);
 
     renderers::render_square_grid(&mut sg_2);
 }
