@@ -117,6 +117,7 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         // 7.5% 4900 cells, 9% 6400, 10.5% 8100, 13% 10,000. Max single core = 13% @ 4.2GHz.
         // draw_lines() can be used to avoid a context swap but all the lines in one batch must be connected
         // Need to check the FPS, assuming 60Hz until doing 10K line draws.
+        // oh...and it's not a release build...10,000 = ~7.0% CPU usage. 16,900 celss ~11% and won't fit on screen.
 
         renderer.present();
     }
