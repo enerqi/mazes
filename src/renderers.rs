@@ -53,7 +53,7 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     // When the render target has been set/created the draw_line/fill_rect etc calls are directed to that
     // render target.
     //
-    // # drawing every pixel yourself in sfotware and then doing one big blit (software doom etc.)
+    // # drawing every pixel yourself in software and then doing one big blit (software doom etc.)
     // - single sdlTexture to represent the screen
     // - texture access streaming (frequent content change of the texture)
     // - create surface or [u8] as RGBA buffer block of pixels (can convert if need to from other formats)
@@ -72,6 +72,21 @@ pub fn render_square_grid<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     // - texture access static
     // (or createTextureFromSurface as these two steps)
     // (it's annoying that the rust api makes it hard to draw a line to a surface)
+    //
+    // # Blit surfaces and modify individual pixels in the framebuffer.
+    //   Round trips--reading data back from textures--can be painfully expensive; generally you want to be pushing data in one direction always.
+    //   You are probably best off, in this case, keeping everything in software until the final push to the screen, so we'll combine the two previous techniques.
+    //  - create 'screen' texture
+    //  - create screen surface
+    //  - compose the final framebuffer into the sdl_surface.
+    //  - update texture from screen surface
+    //  - render clear && render copy 'screen' texture && render present
+
+
+    // N.B.
+    // SDL_TEXTUREACCESS_STATIC changes rarely, not lockable
+    // SDL_TEXTUREACCESS_STREAMING changes frequently, lockable
+    // SDL_TEXTUREACCESS_TARGET can be used as a render target
 
 
     let sdl_setup = sdl::init();
