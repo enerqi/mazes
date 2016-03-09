@@ -11,9 +11,9 @@ build = "build.rs"
 [dependencies]
 petgraph = "0.2.2"
 rand = "0.3.10"
-sdl2 = "0.13.0"
-sdl2_image = "1.0.0"
-sdl2_ttf = "0.14.0"
+sdl2 = "0.16.0"
+sdl2_image = "1.1.0"
+sdl2_ttf = "0.15.0"
 
 clippy = { version = "*", optional = true }
 
