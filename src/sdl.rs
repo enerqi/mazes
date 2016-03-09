@@ -1,17 +1,6 @@
-
-// Do I really want sdl2? It can render an image to the screen but what about
-// to a file?
-
-use std::path::Path;
-
 use sdl2;
-use sdl2::pixels::Color;
-use sdl2::rect::Rect;
-use sdl2::surface::Surface;
-use sdl2::render::{Renderer, Texture};
-use sdl2_image::{self, INIT_JPG, INIT_PNG, LoadSurface, LoadTexture};
+use sdl2_image::{self, INIT_JPG, INIT_PNG};
 use sdl2_ttf;
-use sdl2_ttf::Font;
 
 pub struct SdlSetup {
     pub sdl_context: sdl2::Sdl,
