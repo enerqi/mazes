@@ -25,23 +25,26 @@ const BLUE: Color = Color::RGB(0, 0, 0xff);
 const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
 
 
-pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>)
+pub struct RenderOptions<'path> {
+    show_on_screen: bool,
+    output_file: Option<&'path Path>,
+    cell_side_pixels_length: u8,
+}
+impl<'path> RenderOptions<'path> {
+    pub fn new(show_on_screen: bool, output_file: Option<&Path>, cell_side_pixels_length: u8) -> RenderOptions {
+        RenderOptions {
+            show_on_screen: show_on_screen,
+            output_file: output_file,
+            cell_side_pixels_length: cell_side_pixels_length,
+        }
+    }
+}
+
+
+pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
     where GridIndexType: IndexType
 {
     let sdl_setup = sdl::init();
-
-    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", INITIAL_W, INITIAL_H);
-    let window = window_builder.position_centered()
-                               .resizable()
-                               .allow_highdpi()
-                               .build()
-                               .unwrap();
-    let mut renderer = window.renderer()
-                             .present_vsync()
-                             .accelerated()
-                             .target_texture()
-                             .build()
-                             .unwrap();
 
     // We are limited to one renderer per window it seems, at least with the current rust bindings.
     // We want a hardware accelerated window for displaying a maze that uses a texture for performance,
@@ -60,9 +63,6 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>)
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
     software_renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
-    renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
-
-    draw_maze(&mut software_renderer, &grid);
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -71,35 +71,23 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>)
     // the #defines at e.g. https://github.com/spurious/SDL-mirror/blob/master/include/SDL_hints.h
     hint::set("SDL_RENDER_SCALE_QUALITY", "1");
 
+    draw_maze(&mut software_renderer, &grid, &options);
+
     // Getting the surface from the renderer drops the renderer.
     let maze_surface: Surface = software_renderer.into_surface().expect("Failed to get surface from software renderer");
 
     // WTF: the trait `sdl2_image::SaveSurface` is not implemented for the type `sdl2::surface::Surface<'_>`
     //(&maze_surface as &sdl2_image::SaveSurface).save(&Path::new("./maze_render.png")).expect("Failed to save surface as PNG");
-    maze_surface.save_bmp(&Path::new("./maze_render.bmp")).expect("Failed to save surface as BMP");
+    if let Some(file_path) = options.output_file {
+        maze_surface.save_bmp(file_path).expect("Failed to save surface as BMP");
+    }
 
-    let screen_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
-
-    let mut events = sdl_setup.sdl_context.event_pump().unwrap();
-    'running: loop {
-        for event in events.poll_iter() {
-            match event {
-                Event::Quit{..} => break 'running,
-                Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => break 'running,
-                _ => continue,
-
-                // handle redrawing the texture when the windows gets bigger and can show more?
-            }
-        }
-
-        renderer.set_draw_color(WHITE);
-        renderer.clear();
-        renderer.copy(&screen_texture, None, None);
-        renderer.present();
+    if options.show_on_screen {
+        show_maze_on_screen(maze_surface, sdl_setup);
     }
 }
 
-fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>)
+fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
     where GridIndexType: IndexType
 {
     // clear the texture background to white
@@ -109,7 +97,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>)
     // Set the maze wall colour.
     r.set_draw_color(BLUE);
 
-    let cell_size_pixels = 10;
+    let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels * grid.dimension();  // usize usize
     let img_height = cell_size_pixels * grid.dimension();
     let (max_width, max_height) = match r.logical_size() { (w, h) => (w as usize, h as usize) };
@@ -143,9 +131,44 @@ fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>)
     }
 }
 
+fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", INITIAL_W, INITIAL_H);
+    let window = window_builder.position_centered()
+                               .resizable()
+                               .allow_highdpi()
+                               .build()
+                               .unwrap();
+    let mut renderer = window.renderer()
+                             .present_vsync()
+                             .accelerated()
+                             .target_texture()
+                             .build()
+                             .unwrap();
+
+    renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
+
+    let screen_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
+
+    let mut events = sdl_setup.sdl_context.event_pump().unwrap();
+    'running: loop {
+        for event in events.poll_iter() {
+            match event {
+                Event::Quit{..} => break 'running,
+                Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => break 'running,
+                _ => continue,
+            }
+        }
+
+        renderer.set_draw_color(WHITE);
+        renderer.clear();
+        renderer.copy(&screen_texture, None, None);
+        renderer.present();
+    }
+}
+
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
                                        t: Texture,
-                                       grid: &SquareGrid<GridIndexType>)
+                                       grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
                                        -> Texture
     where GridIndexType: IndexType
 {
@@ -154,7 +177,7 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
      .expect("This platform doesn't support render targets")
      .set(t).unwrap(); // Returns the old render target if the function is successful, which we ignore.
 
-    draw_maze(r, &grid);
+    draw_maze(r, &grid, &options);
 
     // Reseting gives us back ownership of the updated texture and restores the default render target
     let updated_texture: Option<Texture> = r.render_target().unwrap().reset().unwrap();
