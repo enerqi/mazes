@@ -30,3 +30,5 @@ Playing with the rust programming language and maze generation.
 ![itertools docs](https://bluss.github.io/rust-itertools/doc/itertools/index.html)
 
 ![petgraph docs](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html)
+
+![num docs](https://rust-num.github.io/num/num/index.html)
