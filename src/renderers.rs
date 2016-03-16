@@ -13,10 +13,8 @@ use sdl2_image;
 use sdl;
 use squaregrid::{GridDirection, SquareGrid};
 
-const INITIAL_W: u32 = 1920;
-const INITIAL_H: u32 = 1080;
-const LOGICAL_W: u32 = 1920;
-const LOGICAL_H: u32 = 1080;
+const WINDOW_W: u32 = 1920;
+const WINDOW_H: u32 = 1080;
 const BLACK: Color = Color::RGB(0, 0, 0);
 const WHITE: Color = Color::RGB(0xff, 0xff, 0xff);
 const RED: Color = Color::RGB(0xff, 0, 0);
@@ -46,6 +44,21 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
 {
     let sdl_setup = sdl::init();
 
+    // Logically eg. 20x20 grid === 200 x 200 pixels + 32 on the sides (232x232).
+    // scaled to whatever the window size is, which maybe a different aspect ratio.
+    let (logical_w, logical_h) = logical_maze_rendering_dimensions(&grid, &options);
+
+    // The image size can happily be the logical width and height. It will not be lossy as all pixels are drawn
+    // and there will not be any visualisation issues
+    let (image_w, image_h) = (logical_w, logical_h);
+
+    // The visualisation window size can be whatever size we want. If it uses auto scaling by setting a logical size
+    // we can easily have aspect ratio issues unless the logical size is the same aspect ratio as the image
+    // If we convert a large surface to a texture it will probably have that weird aspect ratio (probably not a power of 2)
+    // Specifically: when we copy the texture to the framebuffer, we do not do any rectangle clipping, the texture is
+    // stretched over the output window.
+
+
     // We are limited to one renderer per window it seems, at least with the current rust bindings.
     // We want a hardware accelerated window for displaying a maze that uses a texture for performance,
     // but we want a software surface with the maze drawn to it so that we can use sdl2_image save_surface
@@ -56,13 +69,13 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    let software_surface = Surface::new(LOGICAL_W, LOGICAL_H, PixelFormatEnum::RGB888).expect("Surface creation failed.");
+    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
     let mut software_renderer = Renderer::from_surface(software_surface).expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
-    software_renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
+    software_renderer.set_logical_size(logical_w, logical_h).unwrap();
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -132,7 +145,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>, 
 }
 
 fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
-    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", INITIAL_W, INITIAL_H);
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", WINDOW_W, WINDOW_H);
     let window = window_builder.position_centered()
                                .resizable()
                                .allow_highdpi()
@@ -145,7 +158,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
                              .build()
                              .unwrap();
 
-    renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
+    // renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
 
     let screen_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
 
@@ -164,6 +177,16 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
         renderer.copy(&screen_texture, None, None);
         renderer.present();
     }
+}
+
+fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>, options: &RenderOptions) -> (u32, u32)
+    where GridIndexType: IndexType
+{
+    let cell_size_pixels = options.cell_side_pixels_length as usize;
+    let img_width = cell_size_pixels * grid.dimension();
+    let img_height = cell_size_pixels * grid.dimension();
+
+    (32 + img_width as u32 , 32 + img_height as u32)
 }
 
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,

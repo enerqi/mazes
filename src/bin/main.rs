@@ -34,7 +34,7 @@ Options:
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
-    flag_grid_size: u64,
+    flag_grid_size: u32,
     cmd_render: bool,
     cmd_binary: bool,
     cmd_sidewinder: bool,
@@ -53,13 +53,13 @@ fn main() {
                              .and_then(|d| d.decode())
                              .unwrap_or_else(|e| e.exit());
 
-    let grid_size = args.flag_grid_size as u32;
+    let grid_size = args.flag_grid_size;
     let any_render_option = args.cmd_text || args.cmd_image;
 
     // Do whatever defaults we want if not given a specific 'render' command
-    let mut do_image_render = !args.cmd_render || args.cmd_image ||
+    let do_image_render = !args.cmd_render || args.cmd_image ||
                               (!any_render_option && grid_size >= 25);
-    let mut do_text_render = args.cmd_render &&
+    let do_text_render = args.cmd_render &&
                              (args.cmd_text || (!any_render_option && grid_size < 25));
 
     let mut maze_grid = SquareGrid::<u32>::new(grid_size);
