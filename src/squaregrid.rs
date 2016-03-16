@@ -1,6 +1,6 @@
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
-use petgraph::graph::IndexType;
+use petgraph::graph::IndexType; // Todo pub use this indextype?
 use rand;
 use rand::Rng;
 use std::fmt;
@@ -363,6 +363,19 @@ impl Iterator for CellIter {
         } else {
             None
         }
+    }
+}
+
+// Converting the Grid into an iterator (CellIter - the default most sensible)
+// This form is useful if you have the SquareGrid by value and take a reference to it
+// but seems unhelpful when you already have a reference then we need to do &*grid which
+// it just plain uglier than `grid.iter()`
+impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<GridIndexType> {
+    type Item = GridCoordinate;
+    type IntoIter = CellIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
