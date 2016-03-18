@@ -56,6 +56,35 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             distances.push(Zero::zero());
         }
 
+        // Wonder how this compares with standard Dijkstra shortest path tree algorithm
+        // We don't have any weights on the edges/links to consider.
+        //
+        // push start_coordinate onto frontier set/vec/list
+        // while frontier not empty
+        //   new_frontier_set = []
+        //   for cell in frontier
+        //      for each linked cell
+        //          ignore if already visited (distance number of that gridcoordinate != 0 && ! start)
+        //          otherwise
+        //          distance of cell = distance[cell] + 1
+        //          add to new_frontier_set
+        //   swap the frontier set to be that of the new_frontier_set
+
+        // does it need to be a set? Can it be a Vec?
+        // if a Vec can we implicitly convert the Vec index into a key?
+        // the use of a set like structure stops the frontier expanding into itself sideways instead of outwards
+        // A Vec would only work if GridCoordinate is put into a Vec Set of fixed capacity. A plain array might be better in that case.
+        // For some workloads the Set could be a brute force vec search for cache efficiency.
+        // The ruby code uses a list/vec as the set only exists to remove dupes...maybe the dupes would not matter and it's more efficient to
+        // ignore them? The set would simply save on checks for whether a distance is already set.
+        // The distances structure acts as a visited set aswell as a storer of the floodfill distances.
+        use std::collections::HashSet;
+        use std::hash::BuildHasherDefault;
+        use fnv::FnvHasher;
+        let fnv = BuildHasherDefault::<FnvHasher>::default();
+        let mut set = HashSet::<GridCoordinate, _>::with_capacity_and_hasher(cells_count/4, fnv);
+
+
         DijkstraDistances {
             grid: grid,
             start_coordinate: start_coordinate.clone(),

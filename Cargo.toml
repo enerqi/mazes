@@ -10,6 +10,7 @@ build = "build.rs"
 
 [dependencies]
 docopt = "0.6.78"
+fnv = "1.0.2"
 num = "0.1.31"
 petgraph = "0.2.2"
 rand = "0.3.10"

@@ -2,6 +2,7 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
+extern crate fnv;
 extern crate num;
 extern crate petgraph;
 extern crate rand;
