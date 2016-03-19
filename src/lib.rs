@@ -2,8 +2,7 @@
 
 // TODO infrastructure:
 // - public docs
-// - quickcheck experiments
-// - bench experiments (nightly)
+// - quickcheck experiments?
 
 #![allow(dead_code, missing_docs)]
 #![warn(variant_size_differences)]

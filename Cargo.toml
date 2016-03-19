@@ -8,16 +8,16 @@ homepage = "https://github.com/enerqi/mazes.git"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-docopt = "0.6.78"
-fnv = "1.0.2"
-num = "0.1.31"
-petgraph = "0.2.3"
-rand = "0.3.10"
-rustc-serialize = "0.3.18"
-sdl2 = "0.16.0"
-sdl2_image = "1.1.0"
-sdl2_ttf = "0.15.0"
-smallvec = "0.1.6"
+docopt = "^0.6.78"
+fnv = "^1.0.2"
+num = "^0.1.31"
+petgraph = "^0.2.3"
+rand = "^0.3.10"
+rustc-serialize = "^0.3.18"
+sdl2 = "^0.16.0"
+sdl2_image = "^1.1.0"
+sdl2_ttf = "^0.15.0"
+smallvec = "^0.1.6"
 
 clippy = { version = "*", optional = true }
 quickcheck = { version = "*", optional = true }
@@ -33,3 +33,19 @@ test = []
 
 [[bin]]
 name = "mazes_driver"
+test = false
+bench = false
+
+[[bench]]
+name = "generators"
+path = "./benches/generators.rs"
+test = false
+bench = true
+doc = false
+
+[[bench]]
+name = "grid"
+path = "./benches/grid.rs"
+test = false
+bench = true
+doc = false
