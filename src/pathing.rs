@@ -44,7 +44,7 @@ struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
 {
     grid: &'a SquareGrid<GridIndexType>,
     start_coordinate: GridCoordinate,
-    distances: Vec<MaxDistanceT>,  // This could be a vec_map, but all the keys should always be used so not really worth it.
+    distances: Vec<MaxDistanceT>, /* This could be a vec_map, but all the keys should always be used so not really worth it. */
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
@@ -83,7 +83,7 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         // The ruby code uses a list/vec as the set only exists to remove dupes...maybe the dupes would not matter and it's more efficient to
         // ignore them? The set would simply save on checks for whether a distance is already set.
         // The distances structure acts as a visited set aswell as a storer of the floodfill distances.
-        //let mut set = fnv_hashset::<GridCoordinate>(cells_count/4);
+        // let mut set = fnv_hashset::<GridCoordinate>(cells_count/4);
 
         // also consider
         // arrayvec - vector with fixed capacity, can be on stack. ArrayVec and ArrayString.
@@ -108,6 +108,6 @@ fn fnv_hashset<T: Hash + Eq>(capacity: usize) -> HashSet<T, BuildHasherDefault<F
 #[cfg(test)]
 mod tests {
 
-    //use super::*;
+    // use super::*;
 
 }

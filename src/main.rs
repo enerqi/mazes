@@ -57,9 +57,9 @@ fn main() {
 
     // Do whatever defaults we want if not given a specific 'render' command
     let do_image_render = !args.cmd_render || args.cmd_image ||
-                              (!any_render_option && grid_size >= 25);
+                          (!any_render_option && grid_size >= 25);
     let do_text_render = args.cmd_render &&
-                             (args.cmd_text || (!any_render_option && grid_size < 25));
+                         (args.cmd_text || (!any_render_option && grid_size < 25));
 
     let mut maze_grid = SquareGrid::<u32>::new(grid_size);
 
@@ -77,8 +77,7 @@ fn main() {
     if do_text_render {
         if args.flag_text_out.is_empty() {
             println!("{}", maze_grid);
-        }
-        else {
+        } else {
             write_text_to_file(&format!("{}", maze_grid), &args.flag_text_out)
                 .expect(&format!("Failed to write maze to text file {}", args.flag_text_out));
         }

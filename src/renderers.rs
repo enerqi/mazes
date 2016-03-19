@@ -28,7 +28,10 @@ pub struct RenderOptions<'path> {
     cell_side_pixels_length: u8,
 }
 impl<'path> RenderOptions<'path> {
-    pub fn new(show_on_screen: bool, output_file: Option<&Path>, cell_side_pixels_length: u8) -> RenderOptions {
+    pub fn new(show_on_screen: bool,
+               output_file: Option<&Path>,
+               cell_side_pixels_length: u8)
+               -> RenderOptions {
         RenderOptions {
             show_on_screen: show_on_screen,
             output_file: output_file,
@@ -68,8 +71,10 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
-    let mut software_renderer = Renderer::from_surface(software_surface).expect("Software renderer creation failed.");
+    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
+                               .expect("Surface creation failed.");
+    let mut software_renderer = Renderer::from_surface(software_surface)
+                                    .expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
@@ -86,10 +91,11 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     draw_maze(&mut software_renderer, &grid, &options);
 
     // Getting the surface from the renderer drops the renderer.
-    let maze_surface: Surface = software_renderer.into_surface().expect("Failed to get surface from software renderer");
+    let maze_surface: Surface =
+        software_renderer.into_surface().expect("Failed to get surface from software renderer");
 
     // WTF: the trait `sdl2_image::SaveSurface` is not implemented for the type `sdl2::surface::Surface<'_>`
-    //(&maze_surface as &sdl2_image::SaveSurface).save(&Path::new("./maze_render.png")).expect("Failed to save surface as PNG");
+    // (&maze_surface as &sdl2_image::SaveSurface).save(&Path::new("./maze_render.png")).expect("Failed to save surface as PNG");
     if let Some(file_path) = options.output_file {
         maze_surface.save_bmp(file_path).expect("Failed to save surface as BMP");
     }
@@ -99,7 +105,9 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     }
 }
 
-fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
+fn draw_maze<GridIndexType>(r: &mut Renderer,
+                            grid: &SquareGrid<GridIndexType>,
+                            options: &RenderOptions)
     where GridIndexType: IndexType
 {
     // clear the texture background to white
@@ -112,10 +120,20 @@ fn draw_maze<GridIndexType>(r: &mut Renderer, grid: &SquareGrid<GridIndexType>, 
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels * grid.dimension();  // usize usize
     let img_height = cell_size_pixels * grid.dimension();
-    let (max_width, max_height) = match r.logical_size() { (w, h) => (w as usize, h as usize) };
+    let (max_width, max_height) = match r.logical_size() {
+        (w, h) => (w as usize, h as usize),
+    };
 
-    let x_centering_offset = if img_width  < max_width { (max_width - img_width)/2 } else { 0 };
-    let y_centering_offset = if img_height < max_height { (max_height - img_height)/2 } else { 0 };
+    let x_centering_offset = if img_width < max_width {
+        (max_width - img_width) / 2
+    } else {
+        0
+    };
+    let y_centering_offset = if img_height < max_height {
+        (max_height - img_height) / 2
+    } else {
+        0
+    };
 
     for cell in grid.iter() {
         let column = cell.x as usize;
@@ -165,7 +183,9 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
     'running: loop {
         for event in events.poll_iter() {
             match event {
-                Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => break 'running,
+                Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => {
+                    break 'running
+                }
                 _ => continue,
             }
         }
@@ -177,26 +197,30 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
     }
 }
 
-fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>, options: &RenderOptions) -> (u32, u32)
+fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
+                                                    options: &RenderOptions)
+                                                    -> (u32, u32)
     where GridIndexType: IndexType
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels * grid.dimension();
     let img_height = cell_size_pixels * grid.dimension();
 
-    (32 + img_width as u32 , 32 + img_height as u32)
+    (32 + img_width as u32, 32 + img_height as u32)
 }
 
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
                                        t: Texture,
-                                       grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
+                                       grid: &SquareGrid<GridIndexType>,
+                                       options: &RenderOptions)
                                        -> Texture
     where GridIndexType: IndexType
 {
     // Setup to draw to the given texture. The texture is moved/owned by the `set` call.
     r.render_target()
      .expect("This platform doesn't support render targets")
-     .set(t).unwrap(); // Returns the old render target if the function is successful, which we ignore.
+     .set(t)
+     .unwrap(); // Returns the old render target if the function is successful, which we ignore.
 
     draw_maze(r, &grid, &options);
 
@@ -205,8 +229,7 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
     updated_texture.unwrap()
 }
 
-
-//// Research Notes
+// Research Notes
 //
 // For a non-text based view of a maze we need a GUI window if
 // we want to see anything live.
@@ -216,7 +239,7 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
 // could be hidden I guess?
 // - sdl_context -> video_subsystem -> window_builder
 // - window_builder options:
-//   - *hidden*, fullscreen, opengl enabled, borderless, resizable
+// - *hidden*, fullscreen, opengl enabled, borderless, resizable
 //
 // sdl2_image provides:
 // trait SaveSurface for Surface (save as PNG only)
@@ -256,23 +279,23 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
 // - render present
 // Examples:
 // - https://github.com/AngryLawyer/rust-sdl2/blob/master/examples/renderer-texture.rs shows streaming texture
-//   but does not draw any lines, just messes with a mutable [u8] buffer.
+// but does not draw any lines, just messes with a mutable [u8] buffer.
 //
 // # blitting multiple "sprites" to the screen (treating surfaces as sprites, not pixel buffers)
-//   textures tend to be static once uploaded
+// textures tend to be static once uploaded
 // - create texture(s) one per sprite etc. +
 // - texture access static
 // (or createTextureFromSurface as these two steps)
 // (it's annoying that the rust api makes it hard to draw a line to a surface)
 //
 // # Blit surfaces and modify individual pixels in the framebuffer.
-//   Round trips--reading data back from textures--can be painfully expensive; generally you want to be pushing data in one direction always.
-//   You are probably best off, in this case, keeping everything in software until the final push to the screen, so we'll combine the two previous techniques.
-//  - create 'screen' texture
-//  - create screen surface
-//  - compose the final framebuffer into the sdl_surface.
-//  - update texture from screen surface
-//  - render clear && render copy 'screen' texture && render present
+// Round trips--reading data back from textures--can be painfully expensive; generally you want to be pushing data in one direction always.
+// You are probably best off, in this case, keeping everything in software until the final push to the screen, so we'll combine the two previous techniques.
+// - create 'screen' texture
+// - create screen surface
+// - compose the final framebuffer into the sdl_surface.
+// - update texture from screen surface
+// - render clear && render copy 'screen' texture && render present
 // N.B.
 // SDL_TEXTUREACCESS_STATIC changes rarely, not lockable
 // SDL_TEXTUREACCESS_STREAMING changes frequently, lockable
@@ -295,3 +318,4 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
 // is but we could then SDL_RenderSetLogicalSize(sdlRenderer, 640, 480); for example.
 // The app works with a given logical size but sdl scales it on the GPU, even handling scaling
 // with different aspect ratios and letterboxing the difference.
+//

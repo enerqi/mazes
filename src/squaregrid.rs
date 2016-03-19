@@ -617,16 +617,20 @@ mod tests {
         }
 
         // Testing `is_neighbour_linked` for all directions
-        let all_dirs = [GridDirection::North, GridDirection::South,
-                        GridDirection::East, GridDirection::West];
+        let all_dirs = [GridDirection::North,
+                        GridDirection::South,
+                        GridDirection::East,
+                        GridDirection::West];
 
-        let directional_links_check = |grid: &SmallGrid, coord: &GridCoordinate,
+        let directional_links_check = |grid: &SmallGrid,
+                                       coord: &GridCoordinate,
                                        expected_dirs_linked: &[GridDirection]| {
 
-            let expected_complement: SmallVec<[GridDirection; 4]> = all_dirs.iter()
-                .cloned()
-                .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
-                .collect();
+            let expected_complement: SmallVec<[GridDirection; 4]> =
+                all_dirs.iter()
+                        .cloned()
+                        .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
+                        .collect();
             for exp_dir in expected_dirs_linked {
                 assert!(grid.is_neighbour_linked(coord, *exp_dir));
             }
