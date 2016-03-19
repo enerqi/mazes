@@ -5,7 +5,6 @@ extern crate docopt;
 extern crate mazes;
 extern crate rustc_serialize;
 
-use std::env;
 use std::io::prelude::*;
 use std::io;
 use std::fs::File;

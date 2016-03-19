@@ -3,6 +3,7 @@ use petgraph::graph;
 use petgraph::graph::IndexType; // Todo pub use this indextype?
 use rand;
 use rand::Rng;
+use smallvec::SmallVec;
 use std::fmt;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
@@ -15,8 +16,10 @@ impl GridCoordinate {
         GridCoordinate { x: x, y: y }
     }
 }
+pub type CoordinateSmallVec = SmallVec<[GridCoordinate; 4]>;
+pub type CoordinateOptionSmallVec = SmallVec<[Option<GridCoordinate>; 4]>;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum GridDirection {
     North,
     South,
@@ -88,7 +91,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     /// Cell nodes that are linked to a particular node by a passage.
-    pub fn links(&self, coord: GridCoordinate) -> Vec<GridCoordinate> {
+    pub fn links(&self, coord: GridCoordinate) -> CoordinateSmallVec {
         self.graph
             .edges(self.grid_coordinate_graph_index(&coord))
             .map(|index_edge_data_pair| {
@@ -100,21 +103,22 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours(&self, coord: GridCoordinate) -> Vec<GridCoordinate> {
+    pub fn neighbours(&self, coord: GridCoordinate) -> CoordinateSmallVec {
 
-        vec![offset_coordinate(&coord, GridDirection::North),
-             offset_coordinate(&coord, GridDirection::South),
-             offset_coordinate(&coord, GridDirection::East),
-             offset_coordinate(&coord, GridDirection::West)]
+        [offset_coordinate(&coord, GridDirection::North),
+         offset_coordinate(&coord, GridDirection::South),
+         offset_coordinate(&coord, GridDirection::East),
+         offset_coordinate(&coord, GridDirection::West)]
             .into_iter()
             .filter(|adjacent_coord| self.is_valid_coordinate(adjacent_coord))
+            .cloned()
             .collect()
     }
 
     pub fn neighbours_at_directions(&self,
                                     coord: &GridCoordinate,
                                     dirs: &[GridDirection])
-                                    -> Vec<Option<GridCoordinate>> {
+                                    -> CoordinateOptionSmallVec {
         dirs.iter()
             .map(|direction| self.neighbour_at_direction(coord, *direction))
             .collect()
@@ -364,6 +368,12 @@ impl Iterator for CellIter {
             None
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let lower_bound = self.cells_count - self.current_cell_number;
+        let upper_bound = lower_bound;
+        (lower_bound, Some(upper_bound))
+    }
 }
 
 // Converting the Grid into an iterator (CellIter - the default most sensible)
@@ -408,6 +418,12 @@ impl Iterator for BatchIter {
             None
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let lower_bound = self.dimension_size - self.current_index;
+        let upper_bound = lower_bound;
+        (lower_bound, Some(upper_bound))
+    }
 }
 
 fn index_to_grid_coordinate(dimension_size: usize, one_dimensional_index: usize) -> GridCoordinate {
@@ -435,37 +451,44 @@ mod test {
 
     use super::*;
     use itertools::Itertools; // a trait
+    use smallvec::SmallVec;
 
     type SmallGrid = SquareGrid<u8>;
+
+    // Compare a smallvec to e.g. a vec! or &[T].
+    // SmallVec really ruins the syntax ergonomics, hence this macro
+    // The compiler often succeeds in automatically adding the correct & and derefs (*) but not here
+    macro_rules! assert_smallvec_eq {
+        ($x:expr, $y:expr) => (assert_eq!(&*$x, &*$y))
+    }
 
     #[test]
     fn neighbour_cells() {
         let g = SmallGrid::new(10);
 
-        let check_expected_neighbours = |coord, vec_expected_neighbours: Vec<GridCoordinate>| {
-            let node_indices = g.neighbours(coord)
-                                .into_iter()
-                                .sorted();
-            let expected_indices = vec_expected_neighbours.into_iter()
-                                                          .sorted();
+        let check_expected_neighbours = |coord, expected_neighbours: &[GridCoordinate]| {
+            let node_indices: Vec<GridCoordinate> = g.neighbours(coord).iter().cloned().sorted();
+            let expected_indices: Vec<GridCoordinate> = expected_neighbours.into_iter()
+                                                                           .cloned()
+                                                                           .sorted();
             assert_eq!(node_indices, expected_indices);
         };
         let gc = |x, y| GridCoordinate::new(x, y);
 
         // corners
-        check_expected_neighbours(gc(0, 0), vec![gc(1, 0), gc(0, 1)]);
-        check_expected_neighbours(gc(9, 0), vec![gc(8, 0), gc(9, 1)]);
-        check_expected_neighbours(gc(0, 9), vec![gc(0, 8), gc(1, 9)]);
-        check_expected_neighbours(gc(9, 9), vec![gc(9, 8), gc(8, 9)]);
+        check_expected_neighbours(gc(0, 0), &[gc(1, 0), gc(0, 1)]);
+        check_expected_neighbours(gc(9, 0), &[gc(8, 0), gc(9, 1)]);
+        check_expected_neighbours(gc(0, 9), &[gc(0, 8), gc(1, 9)]);
+        check_expected_neighbours(gc(9, 9), &[gc(9, 8), gc(8, 9)]);
 
         // side element examples
-        check_expected_neighbours(gc(1, 0), vec![gc(0, 0), gc(1, 1), gc(2, 0)]);
-        check_expected_neighbours(gc(0, 1), vec![gc(0, 0), gc(0, 2), gc(1, 1)]);
-        check_expected_neighbours(gc(0, 8), vec![gc(1, 8), gc(0, 7), gc(0, 9)]);
-        check_expected_neighbours(gc(9, 8), vec![gc(9, 7), gc(9, 9), gc(8, 8)]);
+        check_expected_neighbours(gc(1, 0), &[gc(0, 0), gc(1, 1), gc(2, 0)]);
+        check_expected_neighbours(gc(0, 1), &[gc(0, 0), gc(0, 2), gc(1, 1)]);
+        check_expected_neighbours(gc(0, 8), &[gc(1, 8), gc(0, 7), gc(0, 9)]);
+        check_expected_neighbours(gc(9, 8), &[gc(9, 7), gc(9, 9), gc(8, 8)]);
 
         // Some place with 4 neighbours inside the grid
-        check_expected_neighbours(gc(1, 1), vec![gc(0, 1), gc(1, 0), gc(2, 1), gc(1, 2)]);
+        check_expected_neighbours(gc(1, 1), &[gc(0, 1), gc(1, 0), gc(2, 1), gc(1, 2)]);
     }
 
     #[test]
@@ -475,16 +498,11 @@ mod test {
 
         let check_neighbours = |coord,
                                 dirs: &[GridDirection],
-                                vec_neighbour_opts: &[Option<GridCoordinate>]| {
-            let neighbour_options = g.neighbours_at_directions(&coord, dirs);
+                                neighbour_opts: &[Option<GridCoordinate>]| {
 
-            // comparing an array slice with a vector. how does rust auto convert the vector to &[T]?
-            // PartialEq<&[B]> for Vec<A> where A: PartialEq<B> ? Borrow<[T]> for Vec<T> ?
-            // No, the expressions have references applied, which then auto deref magic etc.
-            // macro_rules! assert_eq {
-            // ($left:expr , $right:expr) => ({
-            //     match (&($left), &($right)) {
-            assert_eq!(neighbour_options, vec_neighbour_opts);
+            let neighbour_options: CoordinateOptionSmallVec = g.neighbours_at_directions(&coord,
+                                                                                         dirs);
+            assert_eq!(&*neighbour_options, neighbour_opts);
         };
         check_neighbours(gc(0, 0), &[], &[]);
         check_neighbours(gc(0, 0), &[GridDirection::North], &[None]);
@@ -532,6 +550,12 @@ mod test {
     }
 
     #[test]
+    fn grid_dimension() {
+        let g = SmallGrid::new(10);
+        assert_eq!(g.dimension(), 10);
+    }
+
+    #[test]
     fn random_cell() {
         let g = SmallGrid::new(4);
         let cells_count = 4 * 4;
@@ -546,26 +570,26 @@ mod test {
     fn cell_iter() {
         let g = SmallGrid::new(2);
         assert_eq!(g.iter().collect::<Vec<GridCoordinate>>(),
-                   vec![GridCoordinate::new(0, 0),
-                        GridCoordinate::new(1, 0),
-                        GridCoordinate::new(0, 1),
-                        GridCoordinate::new(1, 1)]);
+                   &[GridCoordinate::new(0, 0),
+                     GridCoordinate::new(1, 0),
+                     GridCoordinate::new(0, 1),
+                     GridCoordinate::new(1, 1)]);
     }
 
     #[test]
     fn row_iter() {
         let g = SmallGrid::new(2);
         assert_eq!(g.iter_row().collect::<Vec<Vec<GridCoordinate>>>(),
-                   vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(1, 0)],
-                        vec![GridCoordinate::new(0, 1), GridCoordinate::new(1, 1)]]);
+                   &[&[GridCoordinate::new(0, 0), GridCoordinate::new(1, 0)],
+                     &[GridCoordinate::new(0, 1), GridCoordinate::new(1, 1)]]);
     }
 
     #[test]
     fn column_iter() {
         let g = SmallGrid::new(2);
         assert_eq!(g.iter_column().collect::<Vec<Vec<GridCoordinate>>>(),
-                   vec![vec![GridCoordinate::new(0, 0), GridCoordinate::new(0, 1)],
-                        vec![GridCoordinate::new(1, 0), GridCoordinate::new(1, 1)]]);
+                   &[&[GridCoordinate::new(0, 0), GridCoordinate::new(0, 1)],
+                     &[GridCoordinate::new(1, 0), GridCoordinate::new(1, 1)]]);
     }
 
     #[test]
@@ -575,14 +599,39 @@ mod test {
         let b = GridCoordinate::new(0, 2);
         let c = GridCoordinate::new(0, 3);
 
-        // I'd rather use a closure, but it needs to borrow the graph immutably until
-        // it goes out of scope and it's ugly to pass the grid into each function call
+        // Testing the expected grid `links`
+        let sorted_links = |grid: &SmallGrid, coord| -> Vec<GridCoordinate> {
+            grid.links(coord).iter().cloned().sorted()
+        };
         macro_rules! links_sorted {
-            ($x:expr) => (g.links($x).into_iter().sorted())
+            ($x:expr) => (sorted_links(&g, $x))
         }
+
         // Testing that the order of the arguments to `is_linked` does not matter
         macro_rules! bi_check_linked {
             ($x:expr, $y:expr) => (g.is_linked($x, $y) && g.is_linked($y, $x))
+        }
+
+        // Testing `is_neighbour_linked` for all directions
+        let all_dirs = [GridDirection::North, GridDirection::South,
+                        GridDirection::East, GridDirection::West];
+
+        let directional_links_check = |grid: &SmallGrid, coord: &GridCoordinate,
+                                       expected_dirs_linked: &[GridDirection]| {
+
+            let expected_complement: SmallVec<[GridDirection; 4]> = all_dirs.iter()
+                .cloned()
+                .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
+                .collect();
+            for exp_dir in expected_dirs_linked {
+                assert!(grid.is_neighbour_linked(coord, *exp_dir));
+            }
+            for not_exp_dir in expected_complement.iter() {
+                assert!(!grid.is_neighbour_linked(coord, *not_exp_dir));
+            }
+        };
+        macro_rules! check_directional_links {
+            ($coord:expr, $expected:expr) => (directional_links_check(&g, &$coord, &$expected))
         }
 
         // a, b and c start with no links
@@ -592,12 +641,18 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![]);
         assert_eq!(links_sorted!(c), vec![]);
+        check_directional_links!(a, []);
+        check_directional_links!(b, []);
+        check_directional_links!(c, []);
 
         g.link(a, b);
         // a - b linked bi-directionally
         assert!(bi_check_linked!(a, b));
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a]);
+        check_directional_links!(a, [GridDirection::South]);
+        check_directional_links!(b, [GridDirection::North]);
+        check_directional_links!(c, []);
 
         g.link(b, c);
         // a - b still linked bi-directionally after linking b - c
@@ -616,6 +671,10 @@ mod test {
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a, c]);
 
+        check_directional_links!(a, [GridDirection::South]);
+        check_directional_links!(b, [GridDirection::North, GridDirection::South]);
+        check_directional_links!(c, [GridDirection::North]);
+
         // a - b unlinked
         // b still linked to c bi-directionally
         g.unlink(a, b);
@@ -624,6 +683,9 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![c]);
         assert_eq!(links_sorted!(c), vec![b]);
+        check_directional_links!(a, []);
+        check_directional_links!(b, [GridDirection::South]);
+        check_directional_links!(c, [GridDirection::North]);
 
         // a, b and c start all unlinked again
         g.unlink(b, c);
@@ -633,6 +695,9 @@ mod test {
         assert_eq!(links_sorted!(a), vec![]);
         assert_eq!(links_sorted!(b), vec![]);
         assert_eq!(links_sorted!(c), vec![]);
+        check_directional_links!(a, []);
+        check_directional_links!(b, []);
+        check_directional_links!(c, []);
     }
 
     #[test]
@@ -640,7 +705,7 @@ mod test {
         let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 0);
         g.link(a, a);
-        assert_eq!(g.links(a), vec![]);
+        assert!(g.links(a).is_empty());
     }
 
     #[test]
@@ -650,11 +715,11 @@ mod test {
         let b = GridCoordinate::new(0, 1);
         g.link(a, b);
         g.link(a, b);
-        assert_eq!(g.links(a), vec![b]);
-        assert_eq!(g.links(b), vec![a]);
+        assert_smallvec_eq!(g.links(a), &[b]);
+        assert_smallvec_eq!(g.links(b), &[a]);
 
         g.unlink(a, b);
-        assert_eq!(g.links(a), vec![]);
-        assert_eq!(g.links(b), vec![]);
+        assert_smallvec_eq!(g.links(a), &[]);
+        assert_smallvec_eq!(g.links(b), &[]);
     }
 }

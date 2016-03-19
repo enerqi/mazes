@@ -8,7 +8,6 @@ use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point};
 use sdl2::render::{Renderer, Texture};
 use sdl2::surface::Surface;
-use sdl2_image;
 
 use sdl;
 use squaregrid::{GridDirection, SquareGrid};

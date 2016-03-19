@@ -28,6 +28,11 @@
 // - Weak (requires downgrading an RC<T>) pointer or RC<T>
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
+
+use std::collections::HashSet;
+use std::hash::{BuildHasherDefault, Hash};
+
+use fnv::FnvHasher;
 use num::traits::{FromPrimitive, Unsigned, Zero};
 use petgraph::graph::IndexType;
 
@@ -39,7 +44,7 @@ struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
 {
     grid: &'a SquareGrid<GridIndexType>,
     start_coordinate: GridCoordinate,
-    distances: Vec<MaxDistanceT>,
+    distances: Vec<MaxDistanceT>,  // This could be a vec_map, but all the keys should always be used so not really worth it.
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
@@ -78,12 +83,14 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         // The ruby code uses a list/vec as the set only exists to remove dupes...maybe the dupes would not matter and it's more efficient to
         // ignore them? The set would simply save on checks for whether a distance is already set.
         // The distances structure acts as a visited set aswell as a storer of the floodfill distances.
-        use std::collections::HashSet;
-        use std::hash::BuildHasherDefault;
-        use fnv::FnvHasher;
-        let fnv = BuildHasherDefault::<FnvHasher>::default();
-        let mut set = HashSet::<GridCoordinate, _>::with_capacity_and_hasher(cells_count/4, fnv);
+        //let mut set = fnv_hashset::<GridCoordinate>(cells_count/4);
 
+        // also consider
+        // arrayvec - vector with fixed capacity, can be on stack. ArrayVec and ArrayString.
+        // smallvec - some items on the stack. E.g. let mut v = SmallVec::<[_; 16]>::new();
+        // std::collections::VecDeque (growable ringbuffer)
+        // std::collections::binary_heap (priority queue)
+        // vec_map - integer index key into a Vec but more formal
 
         DijkstraDistances {
             grid: grid,
@@ -91,4 +98,16 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             distances: distances,
         }
     }
+}
+
+fn fnv_hashset<T: Hash + Eq>(capacity: usize) -> HashSet<T, BuildHasherDefault<FnvHasher>> {
+    let fnv = BuildHasherDefault::<FnvHasher>::default();
+    HashSet::<T, _>::with_capacity_and_hasher(capacity, fnv)
+}
+
+#[cfg(test)]
+mod test {
+
+    //use super::*;
+
 }

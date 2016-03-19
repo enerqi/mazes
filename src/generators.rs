@@ -1,7 +1,9 @@
 use petgraph::graph::IndexType;
 use rand;
 use rand::{Rng, ThreadRng};
-use squaregrid::{GridDirection, SquareGrid};
+use smallvec::SmallVec;
+
+use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, SquareGrid};
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -19,9 +21,9 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
         // Get the neighbours perpendicular to this cell
         let neighbours = grid.neighbours_at_directions(&cell_coord, &neighbours_to_check)
-                             .into_iter()
-                             .filter_map(|coord_maybe| coord_maybe)
-                             .collect::<Vec<_>>();
+                             .iter()
+                             .filter_map(|coord_maybe| *coord_maybe)
+                             .collect::<CoordinateSmallVec>();
 
         // Unless there are no neighbours, randomly choose a neighbour to connect.
         if !neighbours.is_empty() {
@@ -90,7 +92,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     };
 
     for coordinates_line in batch_iter {
-        let mut run = vec![];
+        let mut run = SmallVec::<[&GridCoordinate; 12]>::new(); // 1/5000 chance to get a run of 12 coin flips
 
         for coord in &coordinates_line {
             run.push(coord);
