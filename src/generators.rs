@@ -28,10 +28,10 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         // Unless there are no neighbours, randomly choose a neighbour to connect.
         if !neighbours.is_empty() {
 
-            let link_coord = match neighbours.len() {
-                1 => unsafe { *neighbours.get_unchecked(0) }, // * unsafe stuff doesn't get auto deref
-                2 => unsafe { *neighbours.get_unchecked(rng.gen::<usize>() % 2) },
-                _ => panic!("Should only have a maximum of 2 neighbours to check."),
+            let neighbours_count = neighbours.len();
+            let link_coord = match neighbours_count {
+                1 => neighbours[0],
+                _ => neighbours[rng.gen::<usize>() % neighbours_count],
             };
 
             grid.link(cell_coord, link_coord);

@@ -14,7 +14,7 @@ pub fn init() -> SdlSetup {
     let sdl_context: sdl2::Sdl = sdl2::init().unwrap();
     let video_subsystem: sdl2::VideoSubsystem = sdl_context.video().unwrap();
     let timer_subsystem = sdl_context.timer().unwrap();
-    let ttf_context = sdl2_ttf::init().ok().expect("Failed to init true type fonts");
+    let ttf_context = sdl2_ttf::init().expect("Failed to init true type fonts");
     sdl2_image::init(INIT_PNG | INIT_JPG).unwrap();
 
     SdlSetup {

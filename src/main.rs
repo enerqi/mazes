@@ -19,9 +19,9 @@ use mazes::renderers;
 const USAGE: &'static str = "Mazes
 
 Usage:
-    mazes -h | --help
-    mazes [--grid-size=<n>]
-    mazes render (binary|sidewinder) [text --text-out=<path>] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
+    mazes_driver -h | --help
+    mazes_driver [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path>] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
 
 Options:
     -h --help           Show this screen.
@@ -63,24 +63,24 @@ fn main() {
 
     let mut maze_grid = SquareGrid::<u32>::new(grid_size);
 
-    if !args.cmd_render {
-        generators::sidewinder(&mut maze_grid);
-    } else {
+    if args.cmd_render {
         if args.cmd_binary {
             generators::binary_tree(&mut maze_grid);
         }
         if args.cmd_sidewinder {
             generators::sidewinder(&mut maze_grid);
         }
+    } else {
+        generators::sidewinder(&mut maze_grid);
     }
 
     if do_text_render {
-        if !args.flag_text_out.is_empty() {
-            write_text_to_file(&format!("{}", maze_grid), &args.flag_text_out)
-                .ok().expect(&format!("Failed to write maze to text file {}", args.flag_text_out));
+        if args.flag_text_out.is_empty() {
+            println!("{}", maze_grid);
         }
         else {
-            println!("{}", maze_grid);
+            write_text_to_file(&format!("{}", maze_grid), &args.flag_text_out)
+                .expect(&format!("Failed to write maze to text file {}", args.flag_text_out));
         }
     }
     if do_image_render {
@@ -94,7 +94,7 @@ fn main() {
                                                         !is_image_path_set,
                                                         out_image_path,
                                                         args.flag_cell_pixels);
-        renderers::render_square_grid(&mut maze_grid, &render_opts);
+        renderers::render_square_grid(&maze_grid, &render_opts);
     }
 }
 

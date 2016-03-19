@@ -1,4 +1,17 @@
-#![allow(dead_code)]
+//! **mazes** is a maze generation, visualisation and route finding library.
+
+// TODO infrastructure:
+// - public docs
+// - quickcheck experiments
+// - bench experiments (nightly)
+
+#![allow(dead_code, missing_docs)]
+#![warn(variant_size_differences)]
+#![deny(missing_debug_implementations, missing_copy_implementations,
+        trivial_casts, trivial_numeric_casts,
+        unsafe_code,
+        unused_extern_crates, unused_import_braces, unused_qualifications)]
+
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 

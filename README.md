@@ -32,3 +32,10 @@ Playing with the rust programming language and maze generation.
 ![petgraph docs](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html)
 
 ![num docs](https://rust-num.github.io/num/num/index.html)
+
+
+# License
+
+Dual-licensed to be compatible with the Rust project.
+
+Licensed under the Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0 or the MIT license http://opensource.org/licenses/MIT, at your option. This file may not be copied, modified, or distributed except according to those terms.

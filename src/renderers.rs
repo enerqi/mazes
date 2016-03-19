@@ -5,7 +5,7 @@ use sdl2;
 use sdl2::event::Event;
 use sdl2::hint;
 use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::{Point};
+use sdl2::rect::Point;
 use sdl2::render::{Renderer, Texture};
 use sdl2::surface::Surface;
 
@@ -21,7 +21,7 @@ const GREEN: Color = Color::RGB(0, 0xff, 0);
 const BLUE: Color = Color::RGB(0, 0, 0xff);
 const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
 
-
+#[derive(Debug)]
 pub struct RenderOptions<'path> {
     show_on_screen: bool,
     output_file: Option<&'path Path>,
@@ -165,8 +165,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
     'running: loop {
         for event in events.poll_iter() {
             match event {
-                Event::Quit{..} => break 'running,
-                Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => break 'running,
+                Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => break 'running,
                 _ => continue,
             }
         }

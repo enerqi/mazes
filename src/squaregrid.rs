@@ -27,6 +27,7 @@ pub enum GridDirection {
     West,
 }
 
+#[derive(Debug)]
 pub struct SquareGrid<GridIndexType: IndexType> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: GridIndexType,
@@ -352,6 +353,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct CellIter {
     current_cell_number: usize,
     dimension_size: usize,
@@ -389,10 +391,12 @@ impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<GridIndexType
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 enum BatchIterType {
     Row,
     Column,
 }
+#[derive(Debug, Copy, Clone)]
 pub struct BatchIter {
     iter_type: BatchIterType,
     current_index: usize,
@@ -447,7 +451,7 @@ fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> GridCoordina
 
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     use super::*;
     use itertools::Itertools; // a trait

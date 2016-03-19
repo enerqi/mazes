@@ -94,7 +94,7 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
 
         DijkstraDistances {
             grid: grid,
-            start_coordinate: start_coordinate.clone(),
+            start_coordinate: *start_coordinate,
             distances: distances,
         }
     }
@@ -106,7 +106,7 @@ fn fnv_hashset<T: Hash + Eq>(capacity: usize) -> HashSet<T, BuildHasherDefault<F
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     //use super::*;
 
