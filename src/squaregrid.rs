@@ -144,6 +144,16 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.graph.find_edge(a_index, b_index).is_some()
     }
 
+    pub fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
+        self.neighbour_at_direction(coord, direction)
+            .map_or(false,
+                    |neighbour_coord| self.is_linked(*coord, neighbour_coord))
+    }
+
+    pub fn grid_coordinate_to_index(&self, coord:&GridCoordinate) -> usize {
+        ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize
+    }
+
     pub fn iter(&self) -> CellIter {
         let dim_size = self.dimension_size.index();
         CellIter {
@@ -173,12 +183,6 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
-    pub fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
-        self.neighbour_at_direction(coord, direction)
-            .map_or(false,
-                    |neighbour_coord| self.is_linked(*coord, neighbour_coord))
-    }
-
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
         let (x, y) = (coord.x, coord.y);
         let dim_size = self.dimension_size.index() as isize;
@@ -191,7 +195,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     fn grid_coordinate_graph_index(&self,
                                    coord: &GridCoordinate)
                                    -> graph::NodeIndex<GridIndexType> {
-        let grid_index_raw = ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize;
+        let grid_index_raw = self.grid_coordinate_to_index(coord);
         graph::NodeIndex::<GridIndexType>::new(grid_index_raw)
     }
 }
@@ -557,6 +561,11 @@ mod tests {
     fn grid_dimension() {
         let g = SmallGrid::new(10);
         assert_eq!(g.dimension(), 10);
+    }
+
+    #[test]
+    fn grid_coordinate_as_index() {
+        //grid_coordinate_to_index
     }
 
     #[test]

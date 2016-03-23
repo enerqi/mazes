@@ -31,16 +31,17 @@
 
 use std::collections::HashSet;
 use std::hash::{BuildHasherDefault, Hash};
+use std::ops::Add;
 
 use fnv::FnvHasher;
-use num::traits::{FromPrimitive, Unsigned, Zero};
+use num::traits::{Unsigned, Zero, One};
 use petgraph::graph::IndexType;
 
 use squaregrid::{GridCoordinate, SquareGrid};
 
 
 struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
-    where MaxDistanceT: FromPrimitive + Zero + Unsigned
+    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy
 {
     grid: &'a SquareGrid<GridIndexType>,
     start_coordinate: GridCoordinate,
@@ -48,7 +49,7 @@ struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
-    where MaxDistanceT: FromPrimitive + Zero + Unsigned
+    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy
 {
     pub fn new(grid: &'a SquareGrid<GridIndexType>,
                start_coordinate: &GridCoordinate)
@@ -56,7 +57,7 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
 
         // All cells are by default 0 zero distance from the start until we process the grid.
         let cells_count = grid.size();
-        let mut distances = Vec::with_capacity(cells_count);
+        let mut distances: Vec<MaxDistanceT> = Vec::with_capacity(cells_count);
         for _ in 0..cells_count {
             distances.push(Zero::zero());
         }
@@ -74,6 +75,27 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         //          distance of cell = distance[cell] + 1
         //          add to new_frontier_set
         //   swap the frontier set to be that of the new_frontier_set
+        let mut frontier = vec![*start_coordinate];
+        while !frontier.is_empty() {
+
+            let mut new_frontier = vec![];
+            for cell_coord in &frontier {
+
+                let distance_to_cell: MaxDistanceT = distances[grid.grid_coordinate_to_index(cell_coord)].clone();
+
+                let links = grid.links(*cell_coord);
+                for link in &*links {
+
+                    let gc_index = grid.grid_coordinate_to_index(link);
+                    if distances[gc_index] != Zero::zero() {
+
+                        distances[gc_index] = distance_to_cell + One::one();
+                        new_frontier.push(*link);
+                    }
+                }
+            }
+            frontier = new_frontier;
+        }
 
         // does it need to be a set? Can it be a Vec?
         // if a Vec can we implicitly convert the Vec index into a key?
@@ -91,6 +113,7 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         // std::collections::VecDeque (growable ringbuffer)
         // std::collections::binary_heap (priority queue)
         // vec_map - integer index key into a Vec but more formal
+        // linear_map - brute force vector map
 
         DijkstraDistances {
             grid: grid,
