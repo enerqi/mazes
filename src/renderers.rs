@@ -118,8 +118,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     r.set_draw_color(BLUE);
 
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels * grid.dimension();  // usize usize
-    let img_height = cell_size_pixels * grid.dimension();
+    let img_width = cell_size_pixels * grid.dimension() as usize;
+    let img_height = cell_size_pixels * grid.dimension() as usize;
     let (max_width, max_height) = match r.logical_size() {
         (w, h) => (w as usize, h as usize),
     };
@@ -203,10 +203,10 @@ fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexT
     where GridIndexType: IndexType
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels * grid.dimension();
-    let img_height = cell_size_pixels * grid.dimension();
+    let img_width = cell_size_pixels as u32 * grid.dimension();
+    let img_height = cell_size_pixels as u32 * grid.dimension();
 
-    (32 + img_width as u32, 32 + img_height as u32)
+    (32 + img_width, 32 + img_height)
 }
 
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,

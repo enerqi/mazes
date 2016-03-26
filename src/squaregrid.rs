@@ -8,11 +8,11 @@ use std::fmt;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub struct GridCoordinate {
-    pub x: isize, // todo refactor to i32. even 1 billion x 1 billion is a stupid size
-    pub y: isize, // and always pass GC by value/copy
+    pub x: u32,
+    pub y: u32,
 }
 impl GridCoordinate {
-    pub fn new(x: isize, y: isize) -> GridCoordinate {
+    pub fn new(x: u32, y: u32) -> GridCoordinate {
         GridCoordinate { x: x, y: y }
     }
 }
@@ -36,13 +36,13 @@ pub enum CellLinkError {
 #[derive(Debug)]
 pub struct SquareGrid<GridIndexType: IndexType> {
     graph: Graph<(), (), Undirected, GridIndexType>,
-    dimension_size: GridIndexType,
+    dimension_size: u32,
 }
 
 impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
-    pub fn new(dimension_size: GridIndexType) -> SquareGrid<GridIndexType> {
+    pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType> {
 
-        let dim_size = dimension_size.index();
+        let dim_size = dimension_size as usize;
         let cells_count = dim_size * dim_size;
         let nodes_count_hint = cells_count;
         let edges_count_hint = 4 * cells_count - 4 * dim_size; // Probably overkill, but don't want any capacity panics
@@ -59,17 +59,17 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn size(&self) -> usize {
-        self.dimension_size.index() * self.dimension_size.index()
+        self.dimension_size as usize * self.dimension_size as usize
     }
 
-    pub fn dimension(&self) -> usize {
-        self.dimension_size.index()
+    pub fn dimension(&self) -> u32 {
+        self.dimension_size
     }
 
     pub fn random_cell(&self) -> GridCoordinate {
         let mut rng = rand::thread_rng();
         let index = rng.gen::<usize>() % self.size();
-        index_to_grid_coordinate(self.dimension_size.index(), index)
+        index_to_grid_coordinate(self.dimension_size, index)
     }
 
     /// Link two cells
@@ -86,7 +86,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                 (Some(a_index), Some(b_index)) => {
                     let _ = self.graph.update_edge(a_index, b_index, ());
                     Ok(())
-                },
+                }
                 _ => Err(CellLinkError::InvalidGridCoordinate),
             }
         } else {
@@ -118,15 +118,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         if let Some(graph_node_index) = self.grid_coordinate_graph_index(&coord) {
 
             let linked_cells = self.graph
-                .edges(graph_node_index)
-                .map(|index_edge_data_pair| {
-                    let grid_node_index = index_edge_data_pair.0;
-                    index_to_grid_coordinate(self.dimension_size.index(), grid_node_index.index())
-                })
-                .collect();
+                                   .edges(graph_node_index)
+                                   .map(|index_edge_data_pair| {
+                                       let grid_node_index = index_edge_data_pair.0;
+                                       index_to_grid_coordinate(self.dimension_size,
+                                                                grid_node_index.index())
+                                   })
+                                   .collect();
             Some(linked_cells)
-        }
-        else {
+        } else {
             None
         }
     }
@@ -140,8 +140,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
          offset_coordinate(&coord, GridDirection::East),
          offset_coordinate(&coord, GridDirection::West)]
             .into_iter()
-            .filter(|adjacent_coord| self.is_valid_coordinate(adjacent_coord))
-            .cloned()
+            .filter(|adjacent_coord_opt: &&Option<GridCoordinate>| {
+                if let Some(adjacent_coord) = **adjacent_coord_opt {
+                    self.is_valid_coordinate(&adjacent_coord)
+                } else {
+                    false
+                }
+            })
+            .map(|some_valid_coord| some_valid_coord.unwrap())
             .collect()
     }
 
@@ -158,12 +164,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                                   coord: &GridCoordinate,
                                   direction: GridDirection)
                                   -> Option<GridCoordinate> {
-        let neighbour_coord = offset_coordinate(coord, direction);
-        if self.is_valid_coordinate(&neighbour_coord) {
-            Some(neighbour_coord)
-        } else {
-            None
-        }
+        let neighbour_coord_opt = offset_coordinate(coord, direction);
+
+        neighbour_coord_opt.and_then(|neighbour_coord| {
+            if self.is_valid_coordinate(&neighbour_coord) {
+                Some(neighbour_coord)
+            } else {
+                None
+            }
+        })
     }
 
     /// Are two cells in the grid linked?
@@ -172,8 +181,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         let b_index_opt = self.grid_coordinate_graph_index(&b);
         if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
             self.graph.find_edge(a_index, b_index).is_some()
-        }
-        else {
+        } else {
             false
         }
     }
@@ -186,21 +194,20 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
-    pub fn grid_coordinate_to_index(&self, coord:&GridCoordinate) -> Option<usize> {
+    pub fn grid_coordinate_to_index(&self, coord: &GridCoordinate) -> Option<usize> {
         if self.is_valid_coordinate(coord) {
-            Some(((coord.y * self.dimension_size.index() as isize) + coord.x) as usize)
-        }
-        else {
+            Some((coord.y as usize * self.dimension_size as usize) + coord.x as usize)
+        } else {
             None
         }
     }
 
     pub fn iter(&self) -> CellIter {
-        let dim_size = self.dimension_size.index();
+        let dim_size = self.dimension_size;
         CellIter {
             current_cell_number: 0,
             dimension_size: dim_size,
-            cells_count: dim_size * dim_size,
+            cells_count: self.size(),
         }
     }
 
@@ -208,7 +215,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         BatchIter {
             iter_type: BatchIterType::Row,
             current_index: 0,
-            dimension_size: self.dimension_size.index(),
+            dimension_size: self.dimension_size,
         }
     }
 
@@ -216,7 +223,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         BatchIter {
             iter_type: BatchIterType::Column,
             current_index: 0,
-            dimension_size: self.dimension_size.index(),
+            dimension_size: self.dimension_size,
         }
     }
 
@@ -226,12 +233,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
-        let (x, y) = (coord.x, coord.y);
-        let dim_size = self.dimension_size.index() as isize;
-        if x < 0 || y < 0 || x >= dim_size || y >= dim_size {
-            return false;
-        }
-        true
+        coord.x < self.dimension_size && coord.y < self.dimension_size
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
@@ -264,7 +266,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         const WALL_RUD: &'static str = "├";
         const WALL_LUD: &'static str = "┤";
 
-        let columns_count = self.dimension_size.index();
+        let columns_count = self.dimension_size;
         let rows_count = columns_count;
 
         // Start by special case rendering the text for the north most boundary
@@ -277,7 +279,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
             if is_east_open {
                 output.push_str(WALL_LR);
             } else {
-                let is_last_cell = index == columns_count - 1;
+                let is_last_cell = index == (columns_count - 1) as usize;
                 if is_last_cell {
                     output.push_str(WALL_LD);
                 } else {
@@ -289,7 +291,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
 
         for (index_row, row) in self.iter_row().enumerate() {
 
-            let is_last_row = index_row == (rows_count - 1);
+            let is_last_row = index_row == (rows_count - 1) as usize;
 
             // Starts of by special case rendering the west most boundary of the row
             // The top section of the cell is done by the previous row.
@@ -309,7 +311,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                         })
                 };
                 let is_first_column = index_column == 0;
-                let is_last_column = index_column == (columns_count - 1);
+                let is_last_column = index_column == (columns_count - 1) as usize;
                 let east_open = self.is_neighbour_linked(&cell_coord, GridDirection::East);
                 let south_open = self.is_neighbour_linked(&cell_coord, GridDirection::South);
 
@@ -404,7 +406,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
 #[derive(Debug, Copy, Clone)]
 pub struct CellIter {
     current_cell_number: usize,
-    dimension_size: usize,
+    dimension_size: u32,
     cells_count: usize,
 }
 impl Iterator for CellIter {
@@ -447,8 +449,8 @@ enum BatchIterType {
 #[derive(Debug, Copy, Clone)]
 pub struct BatchIter {
     iter_type: BatchIterType,
-    current_index: usize,
-    dimension_size: usize,
+    current_index: u32,
+    dimension_size: u32,
 }
 impl Iterator for BatchIter {
     type Item = Vec<GridCoordinate>;
@@ -456,11 +458,11 @@ impl Iterator for BatchIter {
         if self.current_index < self.dimension_size {
             let coords = (0..self.dimension_size)
                              .into_iter()
-                             .map(|i| {
+                             .map(|i: u32| {
                                  if let BatchIterType::Row = self.iter_type {
-                                     GridCoordinate::new(i as isize, self.current_index as isize)
+                                     GridCoordinate::new(i, self.current_index)
                                  } else {
-                                     GridCoordinate::new(self.current_index as isize, i as isize)
+                                     GridCoordinate::new(self.current_index, i)
                                  }
                              })
                              .collect();
@@ -472,28 +474,40 @@ impl Iterator for BatchIter {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let lower_bound = self.dimension_size - self.current_index;
+        let lower_bound = (self.dimension_size - self.current_index) as usize;
         let upper_bound = lower_bound;
         (lower_bound, Some(upper_bound))
     }
 }
 
-fn index_to_grid_coordinate(dimension_size: usize, one_dimensional_index: usize) -> GridCoordinate {
-    let y = one_dimensional_index / dimension_size;
-    let x = one_dimensional_index - (y * dimension_size);
+fn index_to_grid_coordinate(dimension_size: u32, one_dimensional_index: usize) -> GridCoordinate {
+    let y = one_dimensional_index / dimension_size as usize;
+    let x = one_dimensional_index - (y * dimension_size as usize);
     GridCoordinate {
-        x: x as isize,
-        y: y as isize,
+        x: x as u32,
+        y: y as u32,
     }
 }
 
-fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> GridCoordinate {
+fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
     let (x, y) = (coord.x, coord.y);
     match dir {
-        GridDirection::North => GridCoordinate { y: y - 1, ..*coord },
-        GridDirection::South => GridCoordinate { y: y + 1, ..*coord },
-        GridDirection::East => GridCoordinate { x: x + 1, ..*coord },
-        GridDirection::West => GridCoordinate { x: x - 1, ..*coord },
+        GridDirection::North => {
+            if y > 0 {
+                Some(GridCoordinate { y: y - 1, ..*coord })
+            } else {
+                None
+            }
+        }
+        GridDirection::South => Some(GridCoordinate { y: y + 1, ..*coord }),
+        GridDirection::East => Some(GridCoordinate { x: x + 1, ..*coord }),
+        GridDirection::West => {
+            if x > 0 {
+                Some(GridCoordinate { x: x - 1, ..*coord })
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -504,6 +518,7 @@ mod tests {
     use super::*;
     use itertools::Itertools; // a trait
     use smallvec::SmallVec;
+    use std::u32;
 
     type SmallGrid = SquareGrid<u8>;
 
@@ -611,19 +626,17 @@ mod tests {
     fn grid_coordinate_as_index() {
         let g = SmallGrid::new(3);
         let gc = |x, y| GridCoordinate::new(x, y);
-        let coords = &[gc(0,0), gc(1,0), gc(2,0),
-                       gc(0,1), gc(1,1), gc(2,1),
-                       gc(0,2), gc(1,2), gc(2,2)];
+        let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
+                       gc(1, 2), gc(2, 2)];
         let indices: Vec<Option<usize>> = coords.iter()
-            .map(|coord| g.grid_coordinate_to_index(coord))
-            .collect();
+                                                .map(|coord| g.grid_coordinate_to_index(coord))
+                                                .collect();
         let expected = (0..9).map(|n| Some(n)).collect::<Vec<Option<usize>>>();
         assert_eq!(expected, indices);
 
-        assert_eq!(g.grid_coordinate_to_index(&gc(0,-1)), None);
-        assert_eq!(g.grid_coordinate_to_index(&gc(-1,0)), None);
-        assert_eq!(g.grid_coordinate_to_index(&gc(2,3)), None);
-        assert_eq!(g.grid_coordinate_to_index(&gc(3,2)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(2, 3)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(3, 2)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(u32::MAX, u32::MAX)), None);
     }
 
     #[test]
@@ -632,8 +645,8 @@ mod tests {
         let cells_count = 4 * 4;
         for _ in 0..1000 {
             let coord = g.random_cell();
-            assert!(coord.x >= 0 && coord.x < cells_count);
-            assert!(coord.y >= 0 && coord.y < cells_count);
+            assert!(coord.x < cells_count);
+            assert!(coord.y < cells_count);
         }
     }
 
