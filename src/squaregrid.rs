@@ -80,8 +80,8 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: GridCoordinate, b: GridCoordinate) -> Result<(), CellLinkError> {
         if a != b {
-            let a_index_opt = self.grid_coordinate_graph_index(&a);
-            let b_index_opt = self.grid_coordinate_graph_index(&b);
+            let a_index_opt = self.grid_coordinate_graph_index(a);
+            let b_index_opt = self.grid_coordinate_graph_index(b);
             match (a_index_opt, b_index_opt) {
                 (Some(a_index), Some(b_index)) => {
                     let _ = self.graph.update_edge(a_index, b_index, ());
@@ -97,8 +97,8 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     /// Unlink two cells, if the grid coordinates are valid and a link exists between them.
     /// Returns true if an unlink occurred.
     pub fn unlink(&mut self, a: GridCoordinate, b: GridCoordinate) -> bool {
-        let a_index_opt = self.grid_coordinate_graph_index(&a);
-        let b_index_opt = self.grid_coordinate_graph_index(&b);
+        let a_index_opt = self.grid_coordinate_graph_index(a);
+        let b_index_opt = self.grid_coordinate_graph_index(b);
 
         if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
             if let Some(edge_index) = self.graph.find_edge(a_index, b_index) {
@@ -115,7 +115,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     /// Cell nodes that are linked to a particular node by a passage.
     pub fn links(&self, coord: GridCoordinate) -> Option<CoordinateSmallVec> {
 
-        if let Some(graph_node_index) = self.grid_coordinate_graph_index(&coord) {
+        if let Some(graph_node_index) = self.grid_coordinate_graph_index(coord) {
 
             let linked_cells = self.graph
                                    .edges(graph_node_index)
@@ -135,14 +135,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: GridCoordinate) -> CoordinateSmallVec {
 
-        [offset_coordinate(&coord, GridDirection::North),
-         offset_coordinate(&coord, GridDirection::South),
-         offset_coordinate(&coord, GridDirection::East),
-         offset_coordinate(&coord, GridDirection::West)]
+        [offset_coordinate(coord, GridDirection::North),
+         offset_coordinate(coord, GridDirection::South),
+         offset_coordinate(coord, GridDirection::East),
+         offset_coordinate(coord, GridDirection::West)]
             .into_iter()
             .filter(|adjacent_coord_opt: &&Option<GridCoordinate>| {
                 if let Some(adjacent_coord) = **adjacent_coord_opt {
-                    self.is_valid_coordinate(&adjacent_coord)
+                    self.is_valid_coordinate(adjacent_coord)
                 } else {
                     false
                 }
@@ -152,7 +152,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn neighbours_at_directions(&self,
-                                    coord: &GridCoordinate,
+                                    coord: GridCoordinate,
                                     dirs: &[GridDirection])
                                     -> CoordinateOptionSmallVec {
         dirs.iter()
@@ -161,13 +161,13 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn neighbour_at_direction(&self,
-                                  coord: &GridCoordinate,
+                                  coord: GridCoordinate,
                                   direction: GridDirection)
                                   -> Option<GridCoordinate> {
         let neighbour_coord_opt = offset_coordinate(coord, direction);
 
         neighbour_coord_opt.and_then(|neighbour_coord| {
-            if self.is_valid_coordinate(&neighbour_coord) {
+            if self.is_valid_coordinate(neighbour_coord) {
                 Some(neighbour_coord)
             } else {
                 None
@@ -177,8 +177,8 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Are two cells in the grid linked?
     pub fn is_linked(&self, a: GridCoordinate, b: GridCoordinate) -> bool {
-        let a_index_opt = self.grid_coordinate_graph_index(&a);
-        let b_index_opt = self.grid_coordinate_graph_index(&b);
+        let a_index_opt = self.grid_coordinate_graph_index(a);
+        let b_index_opt = self.grid_coordinate_graph_index(b);
         if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
             self.graph.find_edge(a_index, b_index).is_some()
         } else {
@@ -186,15 +186,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         }
     }
 
-    pub fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
+    pub fn is_neighbour_linked(&self, coord: GridCoordinate, direction: GridDirection) -> bool {
         self.neighbour_at_direction(coord, direction)
             .map_or(false,
-                    |neighbour_coord| self.is_linked(*coord, neighbour_coord))
+                    |neighbour_coord| self.is_linked(coord, neighbour_coord))
     }
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
-    pub fn grid_coordinate_to_index(&self, coord: &GridCoordinate) -> Option<usize> {
+    pub fn grid_coordinate_to_index(&self, coord: GridCoordinate) -> Option<usize> {
         if self.is_valid_coordinate(coord) {
             Some((coord.y as usize * self.dimension_size as usize) + coord.x as usize)
         } else {
@@ -232,14 +232,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
-    fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
+    fn is_valid_coordinate(&self, coord: GridCoordinate) -> bool {
         coord.x < self.dimension_size && coord.y < self.dimension_size
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
     /// Returns None if the grid coordinate is invalid (out of the grid's dimensions).
     fn grid_coordinate_graph_index(&self,
-                                   coord: &GridCoordinate)
+                                   coord: GridCoordinate)
                                    -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
         grid_index_raw_opt.map(|index| graph::NodeIndex::<GridIndexType>::new(index))
@@ -275,7 +275,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
             output.push_str(WALL_LR_3);
-            let is_east_open = self.is_neighbour_linked(&coord, GridDirection::East);
+            let is_east_open = self.is_neighbour_linked(*coord, GridDirection::East);
             if is_east_open {
                 output.push_str(WALL_LR);
             } else {
@@ -301,7 +301,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
             for (index_column, cell_coord) in row.into_iter().enumerate() {
 
                 let render_cell_side = |direction, passage_clear_text, blocking_wall_text| {
-                    self.neighbour_at_direction(&cell_coord, direction)
+                    self.neighbour_at_direction(cell_coord, direction)
                         .map_or(blocking_wall_text, |neighbour_coord| {
                             if self.is_linked(cell_coord, neighbour_coord) {
                                 passage_clear_text
@@ -312,8 +312,8 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 };
                 let is_first_column = index_column == 0;
                 let is_last_column = index_column == (columns_count - 1) as usize;
-                let east_open = self.is_neighbour_linked(&cell_coord, GridDirection::East);
-                let south_open = self.is_neighbour_linked(&cell_coord, GridDirection::South);
+                let east_open = self.is_neighbour_linked(cell_coord, GridDirection::East);
+                let south_open = self.is_neighbour_linked(cell_coord, GridDirection::South);
 
                 // Each cell will simply use the southern wall of the cell above
                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
@@ -354,13 +354,13 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                     }
                     (false, false) => {
                         let access_se_from_east =
-                            self.neighbour_at_direction(&cell_coord, GridDirection::East)
+                            self.neighbour_at_direction(cell_coord, GridDirection::East)
                                 .map_or(false,
-                                        |c| self.is_neighbour_linked(&c, GridDirection::South));
+                                        |c| self.is_neighbour_linked(c, GridDirection::South));
                         let access_se_from_south =
-                            self.neighbour_at_direction(&cell_coord, GridDirection::South)
+                            self.neighbour_at_direction(cell_coord, GridDirection::South)
                                 .map_or(false,
-                                        |c| self.is_neighbour_linked(&c, GridDirection::East));
+                                        |c| self.is_neighbour_linked(c, GridDirection::East));
                         let show_right_section = !access_se_from_east;
                         let show_down_section = !access_se_from_south;
                         let show_up_section = !east_open;
@@ -489,21 +489,21 @@ fn index_to_grid_coordinate(dimension_size: u32, one_dimensional_index: usize) -
     }
 }
 
-fn offset_coordinate(coord: &GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
+fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
     let (x, y) = (coord.x, coord.y);
     match dir {
         GridDirection::North => {
             if y > 0 {
-                Some(GridCoordinate { y: y - 1, ..*coord })
+                Some(GridCoordinate { y: y - 1, ..coord })
             } else {
                 None
             }
         }
-        GridDirection::South => Some(GridCoordinate { y: y + 1, ..*coord }),
-        GridDirection::East => Some(GridCoordinate { x: x + 1, ..*coord }),
+        GridDirection::South => Some(GridCoordinate { y: y + 1, ..coord }),
+        GridDirection::East => Some(GridCoordinate { x: x + 1, ..coord }),
         GridDirection::West => {
             if x > 0 {
-                Some(GridCoordinate { x: x - 1, ..*coord })
+                Some(GridCoordinate { x: x - 1, ..coord })
             } else {
                 None
             }
@@ -567,7 +567,7 @@ mod tests {
                                 dirs: &[GridDirection],
                                 neighbour_opts: &[Option<GridCoordinate>]| {
 
-            let neighbour_options: CoordinateOptionSmallVec = g.neighbours_at_directions(&coord,
+            let neighbour_options: CoordinateOptionSmallVec = g.neighbours_at_directions(coord,
                                                                                          dirs);
             assert_eq!(&*neighbour_options, neighbour_opts);
         };
@@ -597,7 +597,7 @@ mod tests {
         let g = SmallGrid::new(2);
         let gc = |x, y| GridCoordinate::new(x, y);
         let check_neighbour = |coord, dir: GridDirection, expected| {
-            assert_eq!(g.neighbour_at_direction(&coord, dir), expected);
+            assert_eq!(g.neighbour_at_direction(coord, dir), expected);
         };
         check_neighbour(gc(0, 0), GridDirection::North, None);
         check_neighbour(gc(0, 0), GridDirection::South, Some(gc(0, 1)));
@@ -628,15 +628,15 @@ mod tests {
         let gc = |x, y| GridCoordinate::new(x, y);
         let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
                        gc(1, 2), gc(2, 2)];
-        let indices: Vec<Option<usize>> = coords.iter()
-                                                .map(|coord| g.grid_coordinate_to_index(coord))
+        let indices: Vec<Option<usize>> = coords.into_iter()
+                                                .map(|coord| g.grid_coordinate_to_index(*coord))
                                                 .collect();
         let expected = (0..9).map(|n| Some(n)).collect::<Vec<Option<usize>>>();
         assert_eq!(expected, indices);
 
-        assert_eq!(g.grid_coordinate_to_index(&gc(2, 3)), None);
-        assert_eq!(g.grid_coordinate_to_index(&gc(3, 2)), None);
-        assert_eq!(g.grid_coordinate_to_index(&gc(u32::MAX, u32::MAX)), None);
+        assert_eq!(g.grid_coordinate_to_index(gc(2, 3)), None);
+        assert_eq!(g.grid_coordinate_to_index(gc(3, 2)), None);
+        assert_eq!(g.grid_coordinate_to_index(gc(u32::MAX, u32::MAX)), None);
     }
 
     #[test]
@@ -703,7 +703,7 @@ mod tests {
                         GridDirection::West];
 
         let directional_links_check = |grid: &SmallGrid,
-                                       coord: &GridCoordinate,
+                                       coord: GridCoordinate,
                                        expected_dirs_linked: &[GridDirection]| {
 
             let expected_complement: SmallVec<[GridDirection; 4]> =
@@ -719,7 +719,7 @@ mod tests {
             }
         };
         macro_rules! check_directional_links {
-            ($coord:expr, $expected:expr) => (directional_links_check(&g, &$coord, &$expected))
+            ($coord:expr, $expected:expr) => (directional_links_check(&g, $coord, &$expected))
         }
 
         // a, b and c start with no links

@@ -145,17 +145,17 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         let y2 = (((row + 1) * cell_size_pixels) + y_centering_offset) as i32;
 
         // special cases north and west to handle first row and column.
-        if grid.neighbour_at_direction(&cell, GridDirection::North).is_none() {
+        if grid.neighbour_at_direction(cell, GridDirection::North).is_none() {
             r.draw_line(Point::new(x1, y1), Point::new(x2, y1)).unwrap();
         }
-        if grid.neighbour_at_direction(&cell, GridDirection::West).is_none() {
+        if grid.neighbour_at_direction(cell, GridDirection::West).is_none() {
             r.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
-        if !grid.is_neighbour_linked(&cell, GridDirection::East) {
+        if !grid.is_neighbour_linked(cell, GridDirection::East) {
             r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
         }
-        if !grid.is_neighbour_linked(&cell, GridDirection::South) {
+        if !grid.is_neighbour_linked(cell, GridDirection::South) {
             r.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
         }
     }

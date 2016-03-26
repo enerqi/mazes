@@ -20,7 +20,7 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     for cell_coord in grid.iter() {
 
         // Get the neighbours perpendicular to this cell
-        let neighbours = grid.neighbours_at_directions(&cell_coord, &neighbours_to_check)
+        let neighbours = grid.neighbours_at_directions(cell_coord, &neighbours_to_check)
                              .iter()
                              .filter_map(|coord_maybe| *coord_maybe)
                              .collect::<CoordinateSmallVec>();
@@ -97,10 +97,10 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         for coord in &coordinates_line {
             run.push(coord);
 
-            let next_in_run_cell = grid.neighbour_at_direction(&coord, next_in_run_direction);
+            let next_in_run_cell = grid.neighbour_at_direction(*coord, next_in_run_direction);
             let at_run_end_boundary = next_in_run_cell.is_none();
             let at_close_out_direction_boundary =
-                grid.neighbour_at_direction(&coord, run_close_out_direction)
+                grid.neighbour_at_direction(*coord, run_close_out_direction)
                     .is_none();
 
             let should_close_out = at_run_end_boundary ||
@@ -110,7 +110,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 let sample = rng.gen::<usize>() % run.len();
                 let run_member = run[sample];
 
-                let close_out_dir = grid.neighbour_at_direction(&run_member,
+                let close_out_dir = grid.neighbour_at_direction(*run_member,
                                                                 run_close_out_direction);
                 if let Some(close_out_coord) = close_out_dir {
                     grid.link(*run_member, close_out_coord)
