@@ -81,12 +81,13 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             let mut new_frontier = vec![];
             for cell_coord in &frontier {
 
-                let distance_to_cell: MaxDistanceT = distances[grid.grid_coordinate_to_index(cell_coord)].clone();
+                let cell_index = grid.grid_coordinate_to_index(cell_coord).expect("Frontier cell has an invalid cell coordinate");
+                let distance_to_cell: MaxDistanceT = distances[cell_index].clone();
 
-                let links = grid.links(*cell_coord);
+                let links = grid.links(*cell_coord).expect("Source cell has an invalid cell coordinate.");
                 for link in &*links {
 
-                    let gc_index = grid.grid_coordinate_to_index(link);
+                    let gc_index = grid.grid_coordinate_to_index(link).expect("Linked cell has an invalid cell coordinate");
                     if distances[gc_index] != Zero::zero() {
 
                         distances[gc_index] = distance_to_cell + One::one();

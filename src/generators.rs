@@ -34,7 +34,7 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 _ => neighbours[rng.gen::<usize>() % neighbours_count],
             };
 
-            grid.link(cell_coord, link_coord);
+            grid.link(cell_coord, link_coord).expect("Failed to link a cell to its neighbour");
         }
     }
 }
@@ -113,11 +113,11 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 let close_out_dir = grid.neighbour_at_direction(&run_member,
                                                                 run_close_out_direction);
                 if let Some(close_out_coord) = close_out_dir {
-                    grid.link(*run_member, close_out_coord);
+                    grid.link(*run_member, close_out_coord).expect("Failed to link a cell to close out a run.");
                 }
                 run.clear();
             } else {
-                grid.link(*coord, next_in_run_cell.unwrap());
+                grid.link(*coord, next_in_run_cell.unwrap()).expect("Failed to link a cell to the next cell in a run.");
             }
         }
     }

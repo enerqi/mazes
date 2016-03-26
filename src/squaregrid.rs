@@ -8,8 +8,8 @@ use std::fmt;
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub struct GridCoordinate {
-    pub x: isize,
-    pub y: isize,
+    pub x: isize, // todo refactor to i32. even 1 billion x 1 billion is a stupid size
+    pub y: isize, // and always pass GC by value/copy
 }
 impl GridCoordinate {
     pub fn new(x: isize, y: isize) -> GridCoordinate {
@@ -25,6 +25,12 @@ pub enum GridDirection {
     South,
     East,
     West,
+}
+
+#[derive(Eq, PartialEq, Debug, Copy, Clone)]
+pub enum CellLinkError {
+    InvalidGridCoordinate,
+    SelfLink,
 }
 
 #[derive(Debug)]
@@ -72,34 +78,57 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     ///      - better to change the API to take an index and GridDirection
     ///
     /// Panics if a cell does not exist.
-    pub fn link(&mut self, a: GridCoordinate, b: GridCoordinate) {
+    pub fn link(&mut self, a: GridCoordinate, b: GridCoordinate) -> Result<(), CellLinkError> {
         if a != b {
-            let a_index = self.grid_coordinate_graph_index(&a);
-            let b_index = self.grid_coordinate_graph_index(&b);
-            let _ = self.graph.update_edge(a_index, b_index, ());
+            let a_index_opt = self.grid_coordinate_graph_index(&a);
+            let b_index_opt = self.grid_coordinate_graph_index(&b);
+            match (a_index_opt, b_index_opt) {
+                (Some(a_index), Some(b_index)) => {
+                    let _ = self.graph.update_edge(a_index, b_index, ());
+                    Ok(())
+                },
+                _ => Err(CellLinkError::InvalidGridCoordinate),
+            }
+        } else {
+            Err(CellLinkError::SelfLink)
         }
     }
 
-    /// Unlink two cells, if a link exists between them.
-    pub fn unlink(&mut self, a: GridCoordinate, b: GridCoordinate) {
-        let a_index = self.grid_coordinate_graph_index(&a);
-        let b_index = self.grid_coordinate_graph_index(&b);
-        if let Some(edge_index) = self.graph.find_edge(a_index, b_index) {
-            // This will invalidate the last edge index in the graph, which is fine as we
-            // are not storing them for any reason.
-            self.graph.remove_edge(edge_index);
+    /// Unlink two cells, if the grid coordinates are valid and a link exists between them.
+    /// Returns true if an unlink occurred.
+    pub fn unlink(&mut self, a: GridCoordinate, b: GridCoordinate) -> bool {
+        let a_index_opt = self.grid_coordinate_graph_index(&a);
+        let b_index_opt = self.grid_coordinate_graph_index(&b);
+
+        if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
+            if let Some(edge_index) = self.graph.find_edge(a_index, b_index) {
+                // This will invalidate the last edge index in the graph, which is fine as we
+                // are not storing them for any reason.
+                self.graph.remove_edge(edge_index);
+                return true;
+            }
         }
+
+        false
     }
 
     /// Cell nodes that are linked to a particular node by a passage.
-    pub fn links(&self, coord: GridCoordinate) -> CoordinateSmallVec {
-        self.graph
-            .edges(self.grid_coordinate_graph_index(&coord))
-            .map(|index_edge_data_pair| {
-                let grid_node_index = index_edge_data_pair.0;
-                index_to_grid_coordinate(self.dimension_size.index(), grid_node_index.index())
-            })
-            .collect()
+    pub fn links(&self, coord: GridCoordinate) -> Option<CoordinateSmallVec> {
+
+        if let Some(graph_node_index) = self.grid_coordinate_graph_index(&coord) {
+
+            let linked_cells = self.graph
+                .edges(graph_node_index)
+                .map(|index_edge_data_pair| {
+                    let grid_node_index = index_edge_data_pair.0;
+                    index_to_grid_coordinate(self.dimension_size.index(), grid_node_index.index())
+                })
+                .collect();
+            Some(linked_cells)
+        }
+        else {
+            None
+        }
     }
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
@@ -139,9 +168,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Are two cells in the grid linked?
     pub fn is_linked(&self, a: GridCoordinate, b: GridCoordinate) -> bool {
-        let a_index = self.grid_coordinate_graph_index(&a);
-        let b_index = self.grid_coordinate_graph_index(&b);
-        self.graph.find_edge(a_index, b_index).is_some()
+        let a_index_opt = self.grid_coordinate_graph_index(&a);
+        let b_index_opt = self.grid_coordinate_graph_index(&b);
+        if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
+            self.graph.find_edge(a_index, b_index).is_some()
+        }
+        else {
+            false
+        }
     }
 
     pub fn is_neighbour_linked(&self, coord: &GridCoordinate, direction: GridDirection) -> bool {
@@ -150,8 +184,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                     |neighbour_coord| self.is_linked(*coord, neighbour_coord))
     }
 
-    pub fn grid_coordinate_to_index(&self, coord:&GridCoordinate) -> usize {
-        ((coord.y * self.dimension_size.index() as isize) + coord.x) as usize
+    /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
+    /// Returns None if the grid coordinate is invalid.
+    pub fn grid_coordinate_to_index(&self, coord:&GridCoordinate) -> Option<usize> {
+        if self.is_valid_coordinate(coord) {
+            Some(((coord.y * self.dimension_size.index() as isize) + coord.x) as usize)
+        }
+        else {
+            None
+        }
     }
 
     pub fn iter(&self) -> CellIter {
@@ -183,6 +224,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
+    /// Is the grid coordinate valid for this grid - within the grid's dimensions
     fn is_valid_coordinate(&self, coord: &GridCoordinate) -> bool {
         let (x, y) = (coord.x, coord.y);
         let dim_size = self.dimension_size.index() as isize;
@@ -192,11 +234,13 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         true
     }
 
+    /// Convert a grid coordinate into petgraph nodeindex
+    /// Returns None if the grid coordinate is invalid (out of the grid's dimensions).
     fn grid_coordinate_graph_index(&self,
                                    coord: &GridCoordinate)
-                                   -> graph::NodeIndex<GridIndexType> {
-        let grid_index_raw = self.grid_coordinate_to_index(coord);
-        graph::NodeIndex::<GridIndexType>::new(grid_index_raw)
+                                   -> Option<graph::NodeIndex<GridIndexType>> {
+        let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
+        grid_index_raw_opt.map(|index| graph::NodeIndex::<GridIndexType>::new(index))
     }
 }
 
@@ -565,7 +609,21 @@ mod tests {
 
     #[test]
     fn grid_coordinate_as_index() {
-        //grid_coordinate_to_index
+        let g = SmallGrid::new(3);
+        let gc = |x, y| GridCoordinate::new(x, y);
+        let coords = &[gc(0,0), gc(1,0), gc(2,0),
+                       gc(0,1), gc(1,1), gc(2,1),
+                       gc(0,2), gc(1,2), gc(2,2)];
+        let indices: Vec<Option<usize>> = coords.iter()
+            .map(|coord| g.grid_coordinate_to_index(coord))
+            .collect();
+        let expected = (0..9).map(|n| Some(n)).collect::<Vec<Option<usize>>>();
+        assert_eq!(expected, indices);
+
+        assert_eq!(g.grid_coordinate_to_index(&gc(0,-1)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(-1,0)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(2,3)), None);
+        assert_eq!(g.grid_coordinate_to_index(&gc(3,2)), None);
     }
 
     #[test]
@@ -614,7 +672,7 @@ mod tests {
 
         // Testing the expected grid `links`
         let sorted_links = |grid: &SmallGrid, coord| -> Vec<GridCoordinate> {
-            grid.links(coord).iter().cloned().sorted()
+            grid.links(coord).expect("coordinate is invalid").iter().cloned().sorted()
         };
         macro_rules! links_sorted {
             ($x:expr) => (sorted_links(&g, $x))
@@ -662,7 +720,7 @@ mod tests {
         check_directional_links!(b, []);
         check_directional_links!(c, []);
 
-        g.link(a, b);
+        g.link(a, b).expect("link failed");
         // a - b linked bi-directionally
         assert!(bi_check_linked!(a, b));
         assert_eq!(links_sorted!(a), vec![b]);
@@ -671,7 +729,7 @@ mod tests {
         check_directional_links!(b, [GridDirection::North]);
         check_directional_links!(c, []);
 
-        g.link(b, c);
+        g.link(b, c).expect("link failed");
         // a - b still linked bi-directionally after linking b - c
         // b linked to a & c bi-directionally
         // c linked to b bi-directionally
@@ -694,7 +752,8 @@ mod tests {
 
         // a - b unlinked
         // b still linked to c bi-directionally
-        g.unlink(a, b);
+        let is_ab_unlinked = g.unlink(a, b);
+        assert!(is_ab_unlinked);
         assert!(!bi_check_linked!(a, b));
         assert!(bi_check_linked!(b, c));
         assert_eq!(links_sorted!(a), vec![]);
@@ -705,7 +764,8 @@ mod tests {
         check_directional_links!(c, [GridDirection::North]);
 
         // a, b and c start all unlinked again
-        g.unlink(b, c);
+        let is_bc_unlinked = g.unlink(b, c);
+        assert!(is_bc_unlinked);
         assert!(!bi_check_linked!(a, b));
         assert!(!bi_check_linked!(a, c));
         assert!(!bi_check_linked!(b, c));
@@ -721,8 +781,17 @@ mod tests {
     fn no_self_linked_cycles() {
         let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 0);
-        g.link(a, a);
-        assert!(g.links(a).is_empty());
+        let link_result = g.link(a, a);
+        assert_eq!(link_result, Err(CellLinkError::SelfLink));
+    }
+
+    #[test]
+    fn no_links_to_invalid_coordinates() {
+        let mut g = SmallGrid::new(4);
+        let good_coord = GridCoordinate::new(0, 0);
+        let invalid_coord = GridCoordinate::new(100, 100);
+        let link_result = g.link(good_coord, invalid_coord);
+        assert_eq!(link_result, Err(CellLinkError::InvalidGridCoordinate));
     }
 
     #[test]
@@ -730,13 +799,13 @@ mod tests {
         let mut g = SmallGrid::new(4);
         let a = GridCoordinate::new(0, 0);
         let b = GridCoordinate::new(0, 1);
-        g.link(a, b);
-        g.link(a, b);
-        assert_smallvec_eq!(g.links(a), &[b]);
-        assert_smallvec_eq!(g.links(b), &[a]);
+        g.link(a, b).expect("link failed");
+        g.link(a, b).expect("link failed");
+        assert_smallvec_eq!(g.links(a).unwrap(), &[b]);
+        assert_smallvec_eq!(g.links(b).unwrap(), &[a]);
 
         g.unlink(a, b);
-        assert_smallvec_eq!(g.links(a), &[]);
-        assert_smallvec_eq!(g.links(b), &[]);
+        assert_smallvec_eq!(g.links(a).unwrap(), &[]);
+        assert_smallvec_eq!(g.links(b).unwrap(), &[]);
     }
 }
