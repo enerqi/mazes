@@ -29,20 +29,18 @@
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
 
-use std::collections::HashSet;
-use std::fmt::{Display, LowerHex};
-use std::hash::{BuildHasherDefault, Hash};
+
+use std::fmt::{Debug, Display, LowerHex};
 use std::ops::Add;
 
-use fnv::FnvHasher;
-use num::traits::{One, Unsigned, Zero};
+use num::traits::{Bounded, One, Unsigned, Zero};
 use petgraph::graph::IndexType;
 
 use squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
 
-
-struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
-    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
+#[derive(Debug, Clone)]
+pub struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT=GridIndexType>
+    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
     grid: &'a SquareGrid<'a, GridIndexType>,
     start_coordinate: GridCoordinate,
@@ -50,33 +48,32 @@ struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
-    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
+    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
     pub fn new(grid: &'a SquareGrid<GridIndexType>,
-               start_coordinate: &GridCoordinate)
-               -> DijkstraDistances<'a, GridIndexType, MaxDistanceT> {
+               start_coordinate: GridCoordinate)
+               -> Option<DijkstraDistances<'a, GridIndexType, MaxDistanceT>> {
 
-        // All cells are by default 0 zero distance from the start until we process the grid.
-        let cells_count = grid.size();
-        let mut distances: Vec<MaxDistanceT> = Vec::with_capacity(cells_count);
-        for _ in 0..cells_count {
-            distances.push(Zero::zero());
+        let start_coord_index_opt = grid.grid_coordinate_to_index(start_coordinate);
+        if let None = start_coord_index_opt {
+            // Invalid start coordinate
+            return None;
         }
+        let start_coord_index = start_coord_index_opt.unwrap();
 
-        // Wonder how this compares with standard Dijkstra shortest path tree algorithm
-        // We don't have any weights on the edges/links to consider.
+        // All cells except the start cell are by default (infinity) max_value distance from the start until we process the grid.
+        let cells_count = grid.size();
+        let mut distances: Vec<MaxDistanceT> = vec![Bounded::max_value(); cells_count];
+        distances[start_coord_index] = Zero::zero();
+
+        // Wonder how this compares with standard Dijkstra shortest path tree algorithm...
+        // We don't have any weights on the edges/links to consider, every step is just one from the previous cell
+        // so we never have to change the distance to a cell if it has been updated once in the distances vec - the shortest
+        // distance has already been set for that cell.
         //
-        // push start_coordinate onto frontier set/vec/list
-        // while frontier not empty
-        //   new_frontier_set = []
-        //   for cell in frontier
-        //      for each linked cell
-        //          ignore if already visited (distance number of that gridcoordinate != 0 && ! start)
-        //          otherwise
-        //          distance of cell = distance[cell] + 1
-        //          add to new_frontier_set
-        //   swap the frontier set to be that of the new_frontier_set
-        let mut frontier = vec![*start_coordinate];
+        // The frontier vec does not need to be a set datastructure as the distances vec effectively tracks whether a cell
+        // already been processed - acts as a visited set aswell as a storer of the floodfill distances.
+        let mut frontier = vec![start_coordinate];
         while !frontier.is_empty() {
 
             let mut new_frontier = vec![];
@@ -92,7 +89,7 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
 
                     let gc_index = grid.grid_coordinate_to_index(*link)
                                        .expect("Linked cell has an invalid cell coordinate");
-                    if distances[gc_index] != Zero::zero() {
+                    if distances[gc_index] == Bounded::max_value() {
 
                         distances[gc_index] = distance_to_cell + One::one();
                         new_frontier.push(*link);
@@ -102,46 +99,23 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             frontier = new_frontier;
         }
 
-        // does it need to be a set? Can it be a Vec?
-        // if a Vec can we implicitly convert the Vec index into a key?
-        // the use of a set like structure stops the frontier expanding into itself sideways instead of outwards
-        // A Vec would only work if GridCoordinate is put into a Vec Set of fixed capacity. A plain array might be better in that case.
-        // For some workloads the Set could be a brute force vec search for cache efficiency.
-        // The ruby code uses a list/vec as the set only exists to remove dupes...maybe the dupes would not matter and it's more efficient to
-        // ignore them? The set would simply save on checks for whether a distance is already set.
-        // The distances structure acts as a visited set aswell as a storer of the floodfill distances.
-        // let mut set = fnv_hashset::<GridCoordinate>(cells_count/4);
+        Some(DijkstraDistances {
+             grid: grid,
+             start_coordinate: start_coordinate,
+             distances: distances})
+    }
 
-        // also consider
-        // arrayvec - vector with fixed capacity, can be on stack. ArrayVec and ArrayString.
-        // smallvec - some items on the stack. E.g. let mut v = SmallVec::<[_; 16]>::new();
-        // std::collections::VecDeque (growable ringbuffer)
-        // std::collections::binary_heap (priority queue)
-        // vec_map - integer index key into a Vec but more formal
-        // linear_map - brute force vector map
+    pub fn start(&self) -> GridCoordinate {
+        self.start_coordinate
+    }
 
-        DijkstraDistances {
-            grid: grid,
-            start_coordinate: *start_coordinate,
-            distances: distances,
-        }
-
-        // OOP adds this data to a subclass of SquareGrid
-        // The subclass also changes content_of_cell method for fmt::Display of the SquareGrid
-        // "DistanceGrid is a SquareGrid with distance data and a customisation of toString"
-        // DistanceGrid = SquareGrid compose Distance Data? Delegation, no thanks.
-        // or manually compose Data + SquareGrid
-        // SquareGrid inject renderer : constructor or setter injection? In theory may want to change dynamically, so setter...
-        // but it's less a renderer and more a customisation of the renderer - so rendering hook.
-        // trait GridDisplay:
-        //   fn render_cell_body(GridCoordinate)
-        // Given to SquareGrid as template parameter (inflexible, compile time bound, always on) vs as boxed trait
-        //   &GridDisplay with lifetime > SquareGrid
+    pub fn distance_from_start_to(&self, coord: GridCoordinate) -> Option<MaxDistanceT> {
+        self.grid.grid_coordinate_to_index(coord).map(|index| self.distances[index])
     }
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> GridDisplay for DijkstraDistances<'a, GridIndexType, MaxDistanceT>
-    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
+    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
 
@@ -152,14 +126,81 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> GridDisplay for DijkstraDistanc
     }
 }
 
-fn fnv_hashset<T: Hash + Eq>(capacity: usize) -> HashSet<T, BuildHasherDefault<FnvHasher>> {
-    let fnv = BuildHasherDefault::<FnvHasher>::default();
-    HashSet::<T, _>::with_capacity_and_hasher(capacity, fnv)
-}
-
 #[cfg(test)]
 mod tests {
 
-    // use super::*;
+    //use itertools::Itertools;
+    use std::{u8, u32};
+
+    use super::*;
+    use squaregrid::{GridCoordinate, SquareGrid};
+
+    type SmallGrid<'a> = SquareGrid<'a, u8>;
+    type SmallDistances<'a> = DijkstraDistances<'a, u8, u8>;
+
+    static OUT_OF_GRID_COORDINATE: GridCoordinate = GridCoordinate{x: u32::MAX, y: u32::MAX};
+
+    #[test]
+    fn distances_construction_requires_valid_start_coordinate() {
+        let g = SmallGrid::new(2);
+        let distances = SmallDistances::new(&g, OUT_OF_GRID_COORDINATE);
+        assert!(distances.is_none());
+    }
+
+    #[test]
+    fn start() {
+        let g = SmallGrid::new(3);
+        let start_coordinate = GridCoordinate::new(1,1);
+        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        assert_eq!(start_coordinate, distances.start());
+    }
+
+    #[test]
+    fn distances_to_unreachable_cells() {
+        let g = SmallGrid::new(3);
+        let start_coordinate = GridCoordinate::new(0,0);
+        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        for coord in g.iter() {
+            let d = distances.distance_from_start_to(coord);
+
+            if coord != start_coordinate {
+                assert!(d.is_some());
+                assert_eq!(d.unwrap(), u8::MAX);
+            } else {
+                assert!(d.is_some());
+                assert_eq!(d.unwrap(), 0);
+            }
+        }
+    }
+
+    #[test]
+    fn distance_to_invalid_coordinate_is_none() {
+        let g = SmallGrid::new(3);
+        let start_coordinate = GridCoordinate::new(0,0);
+        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE), None);
+    }
+
+    #[test]
+    fn distances_on_open_grid() {
+        let mut g = SmallGrid::new(2);
+        let gc =|x, y| GridCoordinate::new(x, y);
+        let top_left = gc(0,0);
+        let top_right = gc(1,0);
+        let bottom_left = gc(0,1);
+        let bottom_right = gc(1,1);
+        g.link(top_left, top_right).expect("Link Failed");
+        g.link(top_left, bottom_left).expect("Link Failed");
+        g.link(top_right, bottom_right).expect("Link Failed");
+        g.link(bottom_left, bottom_right).expect("Link Failed");
+
+        let start_coordinate = gc(0,0);
+        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+
+        assert_eq!(distances.distance_from_start_to(top_left), Some(0));
+        assert_eq!(distances.distance_from_start_to(top_right), Some(1));
+        assert_eq!(distances.distance_from_start_to(bottom_left), Some(1));
+        assert_eq!(distances.distance_from_start_to(bottom_right), Some(2));
+    }
 
 }
