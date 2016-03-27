@@ -31,3 +31,4 @@ pub mod pathing;
 pub mod renderers;
 pub mod squaregrid;
 mod sdl;
+mod utils;
