@@ -27,11 +27,15 @@ Playing with the rust programming language and maze generation.
 
 ## Other Rust Libs
 
+![docopt docs](http://burntsushi.net/rustdoc/docopt/)
+
 ![itertools docs](https://bluss.github.io/rust-itertools/doc/itertools/index.html)
+
+![num docs](https://rust-num.github.io/num/num/index.html)
 
 ![petgraph docs](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html)
 
-![num docs](https://rust-num.github.io/num/num/index.html)
+![smallvec docs](http://doc.servo.org/smallvec/index.html)
 
 
 # License
