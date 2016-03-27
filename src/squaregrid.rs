@@ -1,12 +1,13 @@
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
-use petgraph::graph::IndexType; // Todo pub use this indextype?
+use petgraph::graph::IndexType;
 use rand;
 use rand::Rng;
 use smallvec::SmallVec;
+use std::convert::From;
 use std::fmt;
 
-#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
+#[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
 pub struct GridCoordinate {
     pub x: u32,
     pub y: u32,
@@ -16,6 +17,12 @@ impl GridCoordinate {
         GridCoordinate { x: x, y: y }
     }
 }
+impl From<(u32, u32)> for GridCoordinate {
+    fn from(x_y_pair: (u32, u32)) -> GridCoordinate {
+        GridCoordinate::new(x_y_pair.0, x_y_pair.1)
+    }
+}
+
 pub type CoordinateSmallVec = SmallVec<[GridCoordinate; 4]>;
 pub type CoordinateOptionSmallVec = SmallVec<[Option<GridCoordinate>; 4]>;
 
@@ -27,20 +34,33 @@ pub enum GridDirection {
     West,
 }
 
-#[derive(Eq, PartialEq, Debug, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum CellLinkError {
     InvalidGridCoordinate,
     SelfLink,
 }
 
-#[derive(Debug)]
-pub struct SquareGrid<GridIndexType: IndexType> {
-    graph: Graph<(), (), Undirected, GridIndexType>,
-    dimension_size: u32,
+pub trait GridDisplay {
+    /// Render the contents of a grid cell as text.
+    /// The String should be 3 glyphs long, padded if required.
+    fn render_cell_body(&self, _: GridCoordinate) -> String {
+        String::from("   ")
+    }
 }
 
-impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
-    pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType> {
+pub struct SquareGrid<'a, GridIndexType: IndexType> {
+    graph: Graph<(), (), Undirected, GridIndexType>,
+    dimension_size: u32,
+    grid_display: Option<&'a GridDisplay>,
+}
+impl<'a, GridIndexType: IndexType> fmt::Debug for SquareGrid<'a, GridIndexType> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "SquareGrid {:?} {:?}", self.graph, self.dimension_size)
+    }
+}
+
+impl<'a, GridIndexType: IndexType> SquareGrid<'a, GridIndexType> {
+    pub fn new(dimension_size: u32) -> SquareGrid<'a, GridIndexType> {
 
         let dim_size = dimension_size as usize;
         let cells_count = dim_size * dim_size;
@@ -50,6 +70,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         let mut grid = SquareGrid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
             dimension_size: dimension_size,
+            grid_display: None,
         };
         for _ in 0..cells_count {
             let _ = grid.graph.add_node(());
@@ -58,10 +79,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         grid
     }
 
+    pub fn set_grid_display(&mut self, grid_display_option: Option<&'a GridDisplay>) {
+        self.grid_display = grid_display_option;
+    }
+
     pub fn size(&self) -> usize {
         self.dimension_size as usize * self.dimension_size as usize
     }
 
+    #[inline]
     pub fn dimension(&self) -> u32 {
         self.dimension_size
     }
@@ -246,7 +272,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 }
 
-impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
+impl<'a, GridIndexType: IndexType> fmt::Display for SquareGrid<'a, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         const WALL_L: &'static str = "╴";
@@ -265,6 +291,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         const WALL_LRUD: &'static str = "┼";
         const WALL_RUD: &'static str = "├";
         const WALL_LUD: &'static str = "┤";
+        let default_cell_body = String::from("   ");
 
         let columns_count = self.dimension_size;
         let rows_count = columns_count;
@@ -318,9 +345,15 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 // Each cell will simply use the southern wall of the cell above
                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
                 // its eastern boundary ('|'), and its southern boundary ('---+') minus the south west corner.
-                let body = "   "; // 3 spaces
                 let east_boundary = render_cell_side(GridDirection::East, " ", WALL_UD);
-                row_middle_section_render.push_str(body);
+
+                // Cell Body
+                if let Some(displayer) = self.grid_display {
+                    row_middle_section_render.push_str(displayer.render_cell_body(cell_coord).as_str());
+                } else {
+                    row_middle_section_render.push_str(default_cell_body.as_str());
+                }
+
                 row_middle_section_render.push_str(east_boundary);
 
                 if is_first_column {
@@ -432,7 +465,7 @@ impl Iterator for CellIter {
 // This form is useful if you have the SquareGrid by value and take a reference to it
 // but seems unhelpful when you already have a reference then we need to do &*grid which
 // it just plain uglier than `grid.iter()`
-impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<GridIndexType> {
+impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<'a, GridIndexType> {
     type Item = GridCoordinate;
     type IntoIter = CellIter;
 
@@ -489,6 +522,8 @@ fn index_to_grid_coordinate(dimension_size: u32, one_dimensional_index: usize) -
     }
 }
 
+/// Create a new GridCoordinate offset 1 cell away in the given direction.
+/// Returns None if the Coordinate is not representable (x < 0 or y < 0).
 fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
     let (x, y) = (coord.x, coord.y);
     match dir {
@@ -520,7 +555,7 @@ mod tests {
     use smallvec::SmallVec;
     use std::u32;
 
-    type SmallGrid = SquareGrid<u8>;
+    type SmallGrid<'a> = SquareGrid<'a, u8>;
 
     // Compare a smallvec to e.g. a vec! or &[T].
     // SmallVec really ruins the syntax ergonomics, hence this macro

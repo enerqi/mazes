@@ -30,6 +30,7 @@
 
 
 use std::collections::HashSet;
+use std::fmt::{Display, LowerHex};
 use std::hash::{BuildHasherDefault, Hash};
 use std::ops::Add;
 
@@ -37,19 +38,19 @@ use fnv::FnvHasher;
 use num::traits::{One, Unsigned, Zero};
 use petgraph::graph::IndexType;
 
-use squaregrid::{GridCoordinate, SquareGrid};
+use squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
 
 
 struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT = u32>
-    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy
+    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
 {
-    grid: &'a SquareGrid<GridIndexType>,
+    grid: &'a SquareGrid<'a, GridIndexType>,
     start_coordinate: GridCoordinate,
     distances: Vec<MaxDistanceT>, /* This could be a vec_map, but all the keys should always be used so not really worth it. */
 }
 
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
-    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy
+    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
 {
     pub fn new(grid: &'a SquareGrid<GridIndexType>,
                start_coordinate: &GridCoordinate)
@@ -124,6 +125,30 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             start_coordinate: *start_coordinate,
             distances: distances,
         }
+
+        // OOP adds this data to a subclass of SquareGrid
+        // The subclass also changes content_of_cell method for fmt::Display of the SquareGrid
+        // "DistanceGrid is a SquareGrid with distance data and a customisation of toString"
+        // DistanceGrid = SquareGrid compose Distance Data? Delegation, no thanks.
+        // or manually compose Data + SquareGrid
+        // SquareGrid inject renderer : constructor or setter injection? In theory may want to change dynamically, so setter...
+        // but it's less a renderer and more a customisation of the renderer - so rendering hook.
+        // trait GridDisplay:
+        //   fn render_cell_body(GridCoordinate)
+        // Given to SquareGrid as template parameter (inflexible, compile time bound, always on) vs as boxed trait
+        //   &GridDisplay with lifetime > SquareGrid
+    }
+}
+
+impl<'a, GridIndexType: IndexType, MaxDistanceT> GridDisplay for DijkstraDistances<'a, GridIndexType, MaxDistanceT>
+    where MaxDistanceT: Zero + One + Unsigned + Add + Clone + Copy + Display + LowerHex
+{
+    fn render_cell_body(&self, coord: GridCoordinate) -> String {
+
+        let index = self.grid.grid_coordinate_to_index(coord).expect("An invalid GridCoordinate is being Displayed.");
+        let distance = self.distances[index];
+        // centre align, padding 3, lowercase hexadecimal
+        format!("{:^3x}", distance)
     }
 }
 
