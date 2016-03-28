@@ -50,7 +50,7 @@ pub struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT=GridInde
 impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
     where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
-    pub fn new(grid: &'a SquareGrid<GridIndexType>,
+    pub fn new(grid: &'a SquareGrid<'a, GridIndexType>,
                start_coordinate: GridCoordinate)
                -> Option<DijkstraDistances<'a, GridIndexType, MaxDistanceT>> {
 
@@ -102,7 +102,8 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         Some(DijkstraDistances {
              grid: grid,
              start_coordinate: start_coordinate,
-             distances: distances})
+             distances: distances
+         })
     }
 
     pub fn start(&self) -> GridCoordinate {

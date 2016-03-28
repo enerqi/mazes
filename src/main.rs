@@ -9,24 +9,28 @@ use std::io::prelude::*;
 use std::io;
 use std::fs::File;
 use std::path::Path;
+use std::process::exit;
 
 use docopt::Docopt;
 
-use mazes::squaregrid::SquareGrid;
+use mazes::squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
 use mazes::generators;
 use mazes::renderers;
+use mazes::pathing;
 
 const USAGE: &'static str = "Mazes
 
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path>] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
 
 Options:
     -h --help           Show this screen.
     --grid-size=<n>     The grid size is n * n [default: 20].
     --text-out=<path>   Output file path for a textual rendering of a maze.
+    --path-start-x=<x>
+    --path-start-y=<y>
     --image-out=<path>  Output file path for a image rendering of a maze.
     --cell-pixels=<n>   Pixel count to render one cell wall in a maze [default: 10] max 255.
     --screen-view       When rendering to an image and saving to a file, also show the image on the screen.
@@ -43,6 +47,8 @@ struct MazeArgs {
     flag_image_out: String,
     flag_cell_pixels: u8,
     flag_screen_view: bool,
+    flag_path_start_x: Option<u32>,
+    flag_path_start_y: Option<u32>,
 }
 
 
@@ -74,7 +80,21 @@ fn main() {
         generators::sidewinder(&mut maze_grid);
     }
 
+    let grid_display: Option<pathing::DijkstraDistances<u32, u32>> =
+        if do_text_render {
+            if let (Some(x), Some(y)) = (args.flag_path_start_x, args.flag_path_start_y) {
+                Some(pathing::DijkstraDistances::<u32, u32>::new(&maze_grid, GridCoordinate::new(x, y))
+                        .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
+            } else { None }
+        } else { None };
+    if let Some(displayer) = grid_display {
+        maze_grid.set_grid_display(Some(&displayer as &GridDisplay));
+    }
+
     if do_text_render {
+
+
+
         if args.flag_text_out.is_empty() {
             println!("{}", maze_grid);
         } else {
@@ -102,3 +122,10 @@ fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
     try!(f.write_all(data.as_bytes()));
     Ok(())
 }
+
+fn exit_with_msg(e: &str) -> ! {
+    writeln!(&mut io::stderr(), "{}", e)
+        .expect(format!("Failed to print error: {}", e).as_str());
+    exit(1);
+}
+

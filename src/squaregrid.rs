@@ -6,6 +6,8 @@ use rand::Rng;
 use smallvec::SmallVec;
 use std::convert::From;
 use std::fmt;
+use std::cell::{RefCell, RefMut, Ref};
+use std::rc::Rc;
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -51,7 +53,14 @@ pub trait GridDisplay {
 pub struct SquareGrid<'a, GridIndexType: IndexType> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: u32,
-    grid_display: Option<&'a GridDisplay>,
+
+    // mutable pointer to gridDisplay
+    // or
+    // rc refcell option gridDisplay? don't really want to ref count the refcell, only the thing inside..
+    //
+    // refcell option rc<>
+    grid_display: RefCell<Option<&'a GridDisplay>>,
+    //grid_display: RefCell<Option<Rc<GridDisplay>>>,
 }
 impl<'a, GridIndexType: IndexType> fmt::Debug for SquareGrid<'a, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -70,7 +79,7 @@ impl<'a, GridIndexType: IndexType> SquareGrid<'a, GridIndexType> {
         let mut grid = SquareGrid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
             dimension_size: dimension_size,
-            grid_display: None,
+            grid_display: RefCell::new(None),
         };
         for _ in 0..cells_count {
             let _ = grid.graph.add_node(());
@@ -79,8 +88,9 @@ impl<'a, GridIndexType: IndexType> SquareGrid<'a, GridIndexType> {
         grid
     }
 
-    pub fn set_grid_display(&mut self, grid_display_option: Option<&'a GridDisplay>) {
-        self.grid_display = grid_display_option;
+    pub fn set_grid_display(&self, grid_display_option: Option<&'a GridDisplay>) {
+        let mut grid_display_borrow: RefMut<Option<&'a GridDisplay>> = self.grid_display.borrow_mut();
+        *grid_display_borrow = grid_display_option;
     }
 
     pub fn size(&self) -> usize {
@@ -296,6 +306,9 @@ impl<'a, GridIndexType: IndexType> fmt::Display for SquareGrid<'a, GridIndexType
         let columns_count = self.dimension_size;
         let rows_count = columns_count;
 
+        let grid_display_borrow: Ref<Option<&'a GridDisplay>> = self.grid_display.borrow();
+        let grid_display: Option<&'a GridDisplay> = *grid_display_borrow;
+
         // Start by special case rendering the text for the north most boundary
         let first_grid_row: &Vec<GridCoordinate> =
             &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
@@ -348,7 +361,7 @@ impl<'a, GridIndexType: IndexType> fmt::Display for SquareGrid<'a, GridIndexType
                 let east_boundary = render_cell_side(GridDirection::East, " ", WALL_UD);
 
                 // Cell Body
-                if let Some(displayer) = self.grid_display {
+                if let Some(displayer) = grid_display {
                     row_middle_section_render.push_str(displayer.render_cell_body(cell_coord).as_str());
                 } else {
                     row_middle_section_render.push_str(default_cell_body.as_str());
