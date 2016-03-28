@@ -80,20 +80,14 @@ fn main() {
         generators::sidewinder(&mut maze_grid);
     }
 
-    let grid_display: Option<pathing::DijkstraDistances<u32, u32>> =
-        if do_text_render {
-            if let (Some(x), Some(y)) = (args.flag_path_start_x, args.flag_path_start_y) {
-                Some(pathing::DijkstraDistances::<u32, u32>::new(&maze_grid, GridCoordinate::new(x, y))
-                        .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
-            } else { None }
-        } else { None };
-    if let Some(displayer) = grid_display {
-        maze_grid.set_grid_display(Some(&displayer as &GridDisplay));
-    }
-
     if do_text_render {
+        if let (Some(x), Some(y)) = (args.flag_path_start_x, args.flag_path_start_y) {
 
+            let distances = Box::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
+                    .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
 
+            maze_grid.set_grid_display(Some(distances as Box<GridDisplay>));
+        }
 
         if args.flag_text_out.is_empty() {
             println!("{}", maze_grid);
@@ -124,8 +118,6 @@ fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
 }
 
 fn exit_with_msg(e: &str) -> ! {
-    writeln!(&mut io::stderr(), "{}", e)
-        .expect(format!("Failed to print error: {}", e).as_str());
+    writeln!(&mut io::stderr(), "{}", e).expect(format!("Failed to print error: {}", e).as_str());
     exit(1);
 }
-

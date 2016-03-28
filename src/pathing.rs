@@ -29,42 +29,40 @@
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
 
-
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
 use std::fmt::{Debug, Display, LowerHex};
 use std::ops::Add;
 
+use fnv::FnvHasher;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use petgraph::graph::IndexType;
 
 use squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
+use utils;
 
 #[derive(Debug, Clone)]
-pub struct DijkstraDistances<'a, GridIndexType: IndexType, MaxDistanceT=GridIndexType>
+pub struct DijkstraDistances<MaxDistanceT=u32>
     where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
-    grid: &'a SquareGrid<'a, GridIndexType>,
     start_coordinate: GridCoordinate,
-    distances: Vec<MaxDistanceT>, /* This could be a vec_map, but all the keys should always be used so not really worth it. */
+    distances: HashMap<GridCoordinate, MaxDistanceT, BuildHasherDefault<FnvHasher>>,
 }
 
-impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndexType, MaxDistanceT>
+impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
     where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
-    pub fn new(grid: &'a SquareGrid<'a, GridIndexType>,
+    pub fn new<GridIndexType: IndexType>(grid: &SquareGrid<GridIndexType>,
                start_coordinate: GridCoordinate)
-               -> Option<DijkstraDistances<'a, GridIndexType, MaxDistanceT>> {
+               -> Option<DijkstraDistances<MaxDistanceT>> {
 
-        let start_coord_index_opt = grid.grid_coordinate_to_index(start_coordinate);
-        if let None = start_coord_index_opt {
-            // Invalid start coordinate
+        if !grid.is_valid_coordinate(start_coordinate) {
             return None;
         }
-        let start_coord_index = start_coord_index_opt.unwrap();
 
-        // All cells except the start cell are by default (infinity) max_value distance from the start until we process the grid.
         let cells_count = grid.size();
-        let mut distances: Vec<MaxDistanceT> = vec![Bounded::max_value(); cells_count];
-        distances[start_coord_index] = Zero::zero();
+        let mut distances = utils::fnv_hashmap(cells_count);
+        distances.insert(start_coordinate, Zero::zero());
 
         // Wonder how this compares with standard Dijkstra shortest path tree algorithm...
         // We don't have any weights on the edges/links to consider, every step is just one from the previous cell
@@ -79,20 +77,21 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
             let mut new_frontier = vec![];
             for cell_coord in &frontier {
 
-                let cell_index = grid.grid_coordinate_to_index(*cell_coord)
-                                     .expect("Frontier cell has an invalid cell coordinate");
-                let distance_to_cell: MaxDistanceT = distances[cell_index].clone();
+                // All cells except the start cell are by default infinity distance from
+                // the start until we process them, which is represented as Option::None when accessing the map.
+                let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord)
+                                                               .or_insert(Bounded::max_value());
 
                 let links = grid.links(*cell_coord)
                                 .expect("Source cell has an invalid cell coordinate.");
-                for link in &*links {
+                for link_coordinate in &*links {
 
-                    let gc_index = grid.grid_coordinate_to_index(*link)
-                                       .expect("Linked cell has an invalid cell coordinate");
-                    if distances[gc_index] == Bounded::max_value() {
+                    let distance_to_link: MaxDistanceT = *distances.entry(*link_coordinate)
+                                                                   .or_insert(Bounded::max_value());
+                    if distance_to_link == Bounded::max_value() {
 
-                        distances[gc_index] = distance_to_cell + One::one();
-                        new_frontier.push(*link);
+                        distances.insert(*link_coordinate, distance_to_cell + One::one());
+                        new_frontier.push(*link_coordinate);
                     }
                 }
             }
@@ -100,10 +99,9 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
         }
 
         Some(DijkstraDistances {
-             grid: grid,
              start_coordinate: start_coordinate,
              distances: distances
-         })
+        })
     }
 
     pub fn start(&self) -> GridCoordinate {
@@ -111,39 +109,54 @@ impl<'a, GridIndexType: IndexType, MaxDistanceT> DijkstraDistances<'a, GridIndex
     }
 
     pub fn distance_from_start_to(&self, coord: GridCoordinate) -> Option<MaxDistanceT> {
-        self.grid.grid_coordinate_to_index(coord).map(|index| self.distances[index])
+        self.distances.get(&coord).cloned()
     }
 }
 
-impl<'a, GridIndexType: IndexType, MaxDistanceT> GridDisplay for DijkstraDistances<'a, GridIndexType, MaxDistanceT>
+impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
     where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
 {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
 
-        let index = self.grid.grid_coordinate_to_index(coord).expect("An invalid GridCoordinate is being Displayed.");
-        let distance = self.distances[index];
-        // centre align, padding 3, lowercase hexadecimal
-        format!("{:^3x}", distance)
+        // In case DijkstraDistances is used with a different grid check for Vec access being in bounds.
+        // N.B.
+        // Keeping a reference to the grid that was processed is possible, but the circular nature of distances to Grid
+        // and Grid to (distances as GridDisplay) means we need Rc and Weak pointers, in particular Rc<RefCell<_>> for the
+        // maze so that we could mutate it to inject the (distance as GridDisplay) and the (distance as GridDisplay) could be
+        // given an Rc<_> downgraded to Weak<_> to refer to the Grid...or maybe GridDisplay holds a &SquareGrid but that won't
+        // work as the lifetime of any Rc is unknown and &SquareGrid would need a 'static lifetime.
+        // As the ref from the (distance as GridDisplay) to SquareGrid is not &T and the Rc<RefCell> avoids static borrow check
+        // rules there are no guarantees that the graph on the SquareGrid cannot change after distances has been created.
+        //
+        // *Iff* a DijkstraDistances were always to be created with every SquareGrid, such that the lifetimes are the same
+        // the SquareGrid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &SquareGrid which would
+        // freeze as immutable the graph of the SquareGrid.
+
+        if let Some(d) = self.distances.get(&coord) {
+            // centre align, padding 3, lowercase hexadecimal
+            format!("{:^3x}", d)
+        } else {
+            String::from("   ")
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    //use itertools::Itertools;
-    use std::{u8, u32};
+    use std::u32;
 
     use super::*;
     use squaregrid::{GridCoordinate, SquareGrid};
 
-    type SmallGrid<'a> = SquareGrid<'a, u8>;
-    type SmallDistances<'a> = DijkstraDistances<'a, u8, u8>;
+    type SmallGrid = SquareGrid<u8>;
+    type SmallDistances = DijkstraDistances<u8>;
 
     static OUT_OF_GRID_COORDINATE: GridCoordinate = GridCoordinate{x: u32::MAX, y: u32::MAX};
 
     #[test]
     fn distances_construction_requires_valid_start_coordinate() {
-        let g = SmallGrid::new(2);
+        let g = SmallGrid::new(3);
         let distances = SmallDistances::new(&g, OUT_OF_GRID_COORDINATE);
         assert!(distances.is_none());
     }
@@ -157,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn distances_to_unreachable_cells() {
+    fn distances_to_unreachable_cells_is_none() {
         let g = SmallGrid::new(3);
         let start_coordinate = GridCoordinate::new(0,0);
         let distances = SmallDistances::new(&g, start_coordinate).unwrap();
@@ -165,8 +178,7 @@ mod tests {
             let d = distances.distance_from_start_to(coord);
 
             if coord != start_coordinate {
-                assert!(d.is_some());
-                assert_eq!(d.unwrap(), u8::MAX);
+                assert!(d.is_none());
             } else {
                 assert!(d.is_some());
                 assert_eq!(d.unwrap(), 0);
