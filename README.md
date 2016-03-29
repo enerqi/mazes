@@ -9,7 +9,7 @@ Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze gen
 
 # Try It!
 
-There is a mazes driver executable to try out the mazes library. The commandline interface is built with ![docopt](http://docopt.org/).
+Use the mazes driver executable to try out the mazes library. The commandline interface is built with ![docopt](http://docopt.org/).
 
 ```bash
 cargo run -- --help
