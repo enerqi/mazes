@@ -1,13 +1,25 @@
 # mazes
 
-Playing with the rust programming language and maze generation.
+Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze generation, path finding and visualisation with ![SDL](https://www.libsdl.org/).
 
 ![Basic Maze](resources/binary-tree.jpg)
 ![Sidewinder Maze](resources/sidewinder.jpg)
 
 
 
-# Handy Links
+# Try It!
+
+There is a mazes driver executable to try out the mazes library. The commandline interface is built with ![docopt](http://docopt.org/).
+
+```bash
+cargo run -- --help
+
+# Examples
+cargo run -- render sidewinder image --grid-size=100
+cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
+```
+
+# Documentation Links
 
 ## Rust Core
 
