@@ -6,6 +6,7 @@ use rand::Rng;
 use smallvec::SmallVec;
 use std::convert::From;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -51,7 +52,7 @@ pub trait GridDisplay {
 pub struct SquareGrid<GridIndexType: IndexType> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: u32,
-    grid_display: Option<Box<GridDisplay>>,
+    grid_display: Option<Rc<GridDisplay>>,
 }
 impl<GridIndexType: IndexType> fmt::Debug for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -79,7 +80,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         grid
     }
 
-    pub fn set_grid_display(&mut self, grid_display: Option<Box<GridDisplay>>) {
+    pub fn set_grid_display(&mut self, grid_display: Option<Rc<GridDisplay>>) {
         self.grid_display = grid_display;
     }
 

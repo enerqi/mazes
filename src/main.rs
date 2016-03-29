@@ -10,6 +10,7 @@ use std::io;
 use std::fs::File;
 use std::path::Path;
 use std::process::exit;
+use std::rc::Rc;
 
 use docopt::Docopt;
 
@@ -31,7 +32,7 @@ Options:
     --text-out=<path>   Output file path for a textual rendering of a maze.
     --path-start-x=<x>
     --path-start-y=<y>
-    --image-out=<path>  Output file path for a image rendering of a maze.
+    --image-out=<path>  Output file path for an image rendering of a maze.
     --cell-pixels=<n>   Pixel count to render one cell wall in a maze [default: 10] max 255.
     --screen-view       When rendering to an image and saving to a file, also show the image on the screen.
 ";
@@ -83,10 +84,10 @@ fn main() {
     if do_text_render {
         if let (Some(x), Some(y)) = (args.flag_path_start_x, args.flag_path_start_y) {
 
-            let distances = Box::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
+            let distances = Rc::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
 
-            maze_grid.set_grid_display(Some(distances as Box<GridDisplay>));
+            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
         }
 
         if args.flag_text_out.is_empty() {
