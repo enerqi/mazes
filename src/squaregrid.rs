@@ -106,7 +106,9 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     ///
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: GridCoordinate, b: GridCoordinate) -> Result<(), CellLinkError> {
-        if a != b {
+        if a == b {
+            Err(CellLinkError::SelfLink)
+        } else {
             let a_index_opt = self.grid_coordinate_graph_index(a);
             let b_index_opt = self.grid_coordinate_graph_index(b);
             match (a_index_opt, b_index_opt) {
@@ -116,8 +118,6 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                 }
                 _ => Err(CellLinkError::InvalidGridCoordinate),
             }
-        } else {
-            Err(CellLinkError::SelfLink)
         }
     }
 
@@ -269,7 +269,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                                    coord: GridCoordinate)
                                    -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
-        grid_index_raw_opt.map(|index| graph::NodeIndex::<GridIndexType>::new(index))
+        grid_index_raw_opt.map(graph::NodeIndex::<GridIndexType>::new)
     }
 }
 

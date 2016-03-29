@@ -80,14 +80,14 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
                 // All cells except the start cell are by default infinity distance from
                 // the start until we process them, which is represented as Option::None when accessing the map.
                 let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord)
-                                                               .or_insert(Bounded::max_value());
+                                                               .or_insert_with(Bounded::max_value);
 
                 let links = grid.links(*cell_coord)
                                 .expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
 
                     let distance_to_link: MaxDistanceT = *distances.entry(*link_coordinate)
-                                                                   .or_insert(Bounded::max_value());
+                                                                   .or_insert_with(Bounded::max_value);
                     if distance_to_link == Bounded::max_value() {
 
                         distances.insert(*link_coordinate, distance_to_cell + One::one());
