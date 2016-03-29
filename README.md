@@ -7,7 +7,7 @@ Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze gen
 
 
 
-# Try It!
+## Try It!
 
 Use the mazes driver executable to try out the mazes library. The commandline interface is built with ![docopt](http://docopt.org/).
 
@@ -19,15 +19,15 @@ cargo run -- render sidewinder image --grid-size=100
 cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
 ```
 
-# Documentation Links
+## Documentation Links
 
-## Rust Core
+### Rust Core
 
 [Rust api docs](https://doc.rust-lang.org/std/)
 
 [Rust By Example](http://rustbyexample.com/)
 
-## SDL2
+### SDL2
 
 [Rust sdl2 docs](https://angrylawyer.github.io/rust-sdl2/sdl2/)
 
@@ -37,7 +37,7 @@ cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
 
 [Rust sdl2 ttf src](https://github.com/andelf/rust-sdl2_ttf/tree/master/src/sdl2_ttf)
 
-## Other Rust Libs
+### Other Rust Libs
 
 [docopt docs](http://burntsushi.net/rustdoc/docopt/)
 
@@ -50,7 +50,7 @@ cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
 [smallvec docs](http://doc.servo.org/smallvec/index.html)
 
 
-# License
+## License
 
 Dual-licensed to be compatible with the Rust project.
 
