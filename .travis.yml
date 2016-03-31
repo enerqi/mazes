@@ -2,7 +2,7 @@ sudo: false
 addons:
  apt:
    sources:
-   - ubuntu-toolchain-r-test
+   - team-xbmc
    packages:
    - libsdl2-dev
    - libsdl2-ttf-dev
