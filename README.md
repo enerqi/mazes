@@ -3,6 +3,7 @@
 Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze generation, path finding and visualisation with [SDL](https://www.libsdl.org/).
 
 [![Build status](https://api.travis-ci.org/enerqi/mazes.png)](https://travis-ci.org/enerqi/mazes)
+[![Windows build status](https://ci.appveyor.com/api/projects/status/github/enerqi/mazes?svg=true)](https://ci.appveyor.com/project/enerqi/mazes)
 
 ![Basic Maze](resources/binary-tree.jpg)
 ![Sidewinder Maze](resources/sidewinder.jpg)
