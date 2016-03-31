@@ -1,13 +1,13 @@
-sudo: false
-addons:
- apt:
-   sources:
-   - debian-sid
-   packages:
-   - libsdl2-dev
-   - libsdl2-ttf-dev
-   - libsdl2-image-dev
 language: rust
+sudo: required
+rust:
+- beta
+- nightly
+- stable
+install:
+- sudo add-apt-repository ppa:team-xbmc/ppa -y
+- sudo apt-get update -q
+- sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 rust:
   - stable
   - beta
@@ -15,4 +15,3 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
-
