@@ -5,7 +5,7 @@ rust:
 - nightly
 - stable
 install:
-- sudo add-apt-repository ppa:team-xbmc/ppa -y
+- sudo add-apt-repository ppa:debian-sid/ppa -y
 - sudo apt-get update -q
 - sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 rust:
