@@ -1,11 +1,14 @@
-language: rust
 sudo: required
+language: rust
+env:
+  global:
+    - LD_LIBRARY_PATH: /usr/local/lib
 rust:
 - beta
 - nightly
 - stable
 install:
-- sudo add-apt-repository ppa:debian-sid/ppa -y
+- sudo add-apt-repository ppa:zoogie/sdl2-snapshots/ppa -y
 - sudo apt-get update -q
 - sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 rust:
