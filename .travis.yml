@@ -2,7 +2,7 @@ sudo: false
 addons:
  apt:
    sources:
-   - team-xbmc
+   - debian-sid
    packages:
    - libsdl2-dev
    - libsdl2-ttf-dev
