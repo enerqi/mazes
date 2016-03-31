@@ -1,6 +1,12 @@
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
+sudo: false
+addons:
+ apt:
+   sources:
+   - ubuntu-toolchain-r-test
+   packages:
+   - libsdl2-dev
+   - libsdl2-ttf-dev
+   - libsdl2-image-dev
 language: rust
 rust:
   - stable
