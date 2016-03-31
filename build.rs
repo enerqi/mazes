@@ -2,7 +2,9 @@ use std::env;
 
 fn main() {
 
-    let libs_dir =
+    if cfg!(target_family = "windows") {
+
+        let libs_dir =
         if let Ok(dir) = env::var("SDL_LIBS_DIR") {
             Some(dir)
         }
@@ -15,7 +17,8 @@ fn main() {
             }
         };
 
-    if let Some(libs) = libs_dir {
-        println!("cargo:rustc-flags=-L {}", libs);
+        if let Some(libs) = libs_dir {
+            println!("cargo:rustc-flags=-L {}", libs);
+        }
     }
 }
