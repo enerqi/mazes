@@ -12,77 +12,72 @@ fn main() {
     //
     // On a windows OS we look for the C built sdl2 libraries for the relevant platform/architecture
     // and add them to the Link arguments.
-    // We also ensure that the DLLs have been copied to ./sdl_libs (or SDL_LIBS_DIR).
-    // The `cargo run` command will look for sdl2 dlls in ./sdl_libs...it's unknown why cargo cannot
-    // be told to find the DLLs in subdirectories of sdl_libs.
+    // We also ensure that the DLLs have been copied to the project root (or SDL_DLLS_RUN_DIR env var dir)
+    // so that cargo run can find them.
     if cfg!(target_family = "windows") {
 
-        let root_libs_dir = if let Ok(dir) = env::var("SDL_LIBS_DIR") {
-            Some(dir)
-        } else {
-            if let Ok(cargo_root_dir) = env::var("CARGO_MANIFEST_DIR") {
-                Some(format!("{}/sdl_libs", cargo_root_dir))
-            } else {
-                None
-            }
-        };
+        // Assuming cargo always sets this environment variable.
+        let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
-        if let Some(libs) = root_libs_dir {
-
-            // Add link flag for the compiler
-            println!("cargo:rustc-flags=-L {}", libs);
-
-            // Copy sdl2 related DLLs to the root libs directory.
-            let is_x64 = cfg!(target_arch = "x86_64");
-            let is_mingw = cfg!(target_env = "gnu");
-
-            let select_libs_dir = |base_dir| {
-                let dir = format!("{}/{}/{}/{}",
-                                  libs,
-                                  base_dir,
-                                  if is_mingw {
-                                      "mingw"
-                                  } else {
-                                      "msvc"
-                                  },
-                                  if is_x64 {
-                                      "x64"
-                                  } else {
-                                      "x32"
-                                  });
+        let win_sdl_dlls_dir = if let Ok(dir) = env::var("SDL_DLLS_RUN_DIR") {
                 dir
+            } else {
+                manifest_dir.clone()
             };
 
-            let machine_lib_dirs = [select_libs_dir("sdl2"),
-                                    select_libs_dir("sdl2-image"),
-                                    select_libs_dir("sdl2-ttf")];
+        let win_sdl_libs_dir =
+            format!("{}/sdl_libs", manifest_dir);
 
-            for dir in &machine_lib_dirs {
+        let is_x64 = cfg!(target_arch = "x86_64");
+        let is_mingw = cfg!(target_env = "gnu");
 
-                println!("cargo:rustc-flags=-L {}", dir);
+        let select_libs_dir = |base_dir| {
+            let dir = format!("{}/{}/{}/{}",
+                              win_sdl_libs_dir,
+                              base_dir,
+                              if is_mingw {
+                                  "mingw"
+                              } else {
+                                  "msvc"
+                              },
+                              if is_x64 {
+                                  "x64"
+                              } else {
+                                  "x32"
+                              });
+            dir
+        };
 
-                for entry in WalkDir::new(dir) {
-                    let entry = entry.unwrap();
+        let machine_lib_dirs = [select_libs_dir("sdl2"),
+                                select_libs_dir("sdl2-image"),
+                                select_libs_dir("sdl2-ttf")];
 
-                    if is_dll_file(&entry) {
+        for dir in &machine_lib_dirs {
 
-                        let src_file_path: &Path = entry.path();
-                        let src_file_name: &OsStr = entry.file_name();
-                        let target_dir: &String = &libs;
-                        let target_dir_path: &Path = Path::new(target_dir);
-                        let target_file_str: OsString = target_dir_path.join(src_file_name)
-                                                                       .into_os_string();
-                        let target_file_path: &Path = Path::new(&target_file_str);
+            println!("cargo:rustc-flags=-L {}", dir);
 
-                        if !target_file_path.exists() ||
-                           are_different_file_contents(&entry, target_file_path) {
+            // Copy sdl2 related DLLs to win_sdl_dlls_dir so `cargo run` succeeds.
+            for entry in WalkDir::new(dir) {
+                let entry = entry.unwrap();
 
-                            copy(src_file_path, target_file_path)
-                                .expect(format!("Failed to copy windows os dll from {} to {}",
-                                                src_file_path.display(),
-                                                target_file_path.display())
-                                            .as_str());
-                        }
+                if is_dll_file(&entry) {
+
+                    let src_file_path: &Path = entry.path();
+                    let src_file_name: &OsStr = entry.file_name();
+                    let target_dir: &String = &win_sdl_dlls_dir;
+                    let target_dir_path: &Path = Path::new(target_dir);
+                    let target_file_str: OsString = target_dir_path.join(src_file_name)
+                                                                   .into_os_string();
+                    let target_file_path: &Path = Path::new(&target_file_str);
+
+                    if !target_file_path.exists() ||
+                       are_different_file_contents(&entry, target_file_path) {
+
+                        copy(src_file_path, target_file_path)
+                            .expect(format!("Failed to copy windows os dll from {} to {}",
+                                            src_file_path.display(),
+                                            target_file_path.display())
+                                        .as_str());
                     }
                 }
             }
