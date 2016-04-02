@@ -24,6 +24,10 @@ before_script:
       pip install 'travis-cargo<0.2' --user &&
       export PATH=$HOME/.local/bin:$PATH
 
+branches:
+  only:
+    - master
+
 # Better rust debugging info.
 env:
   global:
