@@ -8,15 +8,14 @@ install:
 env:
   global:
     - LD_LIBRARY_PATH: /usr/local/lib
-rust:
-  - stable
-  - beta
-  - nightly
-    env: FEATURES="--features clippy"
 matrix:
-  allow_failures:
-    - rust: nightly
-
+    include:
+        - rust: nightly
+          env: FEATURES="--features clippy"
+        - rust: beta
+        - rust: stable
+    allow_failures:
+        - rust: nightly
 script:
   - cargo build --verbose $FEATURES
   - cargo test --verbose $FEATURES
