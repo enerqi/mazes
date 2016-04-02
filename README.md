@@ -25,32 +25,10 @@ cargo run -- render sidewinder image --grid-size=100
 cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
 ```
 
-## Documentation Links
+## Doc Links
 
-### Rust Core
+**Rust Core**: [Rust api docs](https://doc.rust-lang.org/std/). [Rust By Example](http://rustbyexample.com/).
 
-[Rust api docs](https://doc.rust-lang.org/std/)
+**SDL2**: [Rust sdl2](https://angrylawyer.github.io/rust-sdl2/sdl2/) + [Repository](https://github.com/AngryLawyer/rust-sdl2), [Rust sdl2-image src](https://github.com/xsleonard/rust-sdl2_image/blob/master/src/sdl2_image/).
 
-[Rust By Example](http://rustbyexample.com/)
-
-### SDL2
-
-[Rust sdl2 docs](https://angrylawyer.github.io/rust-sdl2/sdl2/)
-
-[Rust sdl2 github](https://github.com/AngryLawyer/rust-sdl2)
-
-[Rust sdl2 image src](https://github.com/xsleonard/rust-sdl2_image/blob/master/src/sdl2_image/)
-
-[Rust sdl2 ttf src](https://github.com/andelf/rust-sdl2_ttf/tree/master/src/sdl2_ttf)
-
-### Other Rust Libs
-
-[docopt docs](http://burntsushi.net/rustdoc/docopt/)
-
-[itertools docs](https://bluss.github.io/rust-itertools/doc/itertools/index.html)
-
-[num docs](https://rust-num.github.io/num/num/index.html)
-
-[petgraph docs](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html)
-
-[smallvec docs](http://doc.servo.org/smallvec/index.html)
+**Other Rust Libs**: [docopt](http://burntsushi.net/rustdoc/docopt/), [fnv](https://doc.servo.org/fnv/), [itertools](https://bluss.github.io/rust-itertools/doc/itertools/index.html), [num](https://rust-num.github.io/num/num/index.html), [petgraph](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html), [rand](https://doc.rust-lang.org/rand/rand/index.html), [smallvec](http://doc.servo.org/smallvec/index.html), [walkdir](http://burntsushi.net/rustdoc/walkdir/).
