@@ -4,6 +4,8 @@ Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze gen
 
 [![Build status](https://api.travis-ci.org/enerqi/mazes.png)](https://travis-ci.org/enerqi/mazes)
 [![Windows build status](https://ci.appveyor.com/api/projects/status/github/enerqi/mazes?svg=true)](https://ci.appveyor.com/project/enerqi/mazes)
+[![](https://img.shields.io/badge/License-Apache2-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-APACHE)
+[![](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-MIT)
 
 ![Basic Maze](resources/binary-tree.jpg)
 ![Sidewinder Maze](resources/sidewinder.jpg)
@@ -51,10 +53,3 @@ cargo run -- render binary image --image-out="maze.bmp" --grid-size=200
 [petgraph docs](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html)
 
 [smallvec docs](http://doc.servo.org/smallvec/index.html)
-
-
-## License
-
-Dual-licensed to be compatible with the Rust project.
-
-Licensed under the Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0 or the MIT license http://opensource.org/licenses/MIT, at your option. This file may not be copied, modified, or distributed except according to those terms.
