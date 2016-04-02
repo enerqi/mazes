@@ -59,6 +59,8 @@ fn main() {
 
             for dir in &machine_lib_dirs {
 
+                println!("cargo:rustc-flags=-L {}", dir);
+
                 for entry in WalkDir::new(dir) {
                     let entry = entry.unwrap();
 
