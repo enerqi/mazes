@@ -145,6 +145,7 @@ impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
 mod tests {
 
     use std::u32;
+    use quickcheck::quickcheck;
 
     use super::*;
     use squaregrid::{GridCoordinate, SquareGrid};
@@ -216,4 +217,12 @@ mod tests {
         assert_eq!(distances.distance_from_start_to(bottom_right), Some(2));
     }
 
+    #[test]
+    fn quickcheck_experiment() {
+
+        fn p(_: Vec<isize>) -> bool {
+            true
+        }
+        quickcheck(p as fn(Vec<isize>) -> bool)
+    }
 }
