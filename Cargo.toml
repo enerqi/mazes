@@ -9,6 +9,7 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 docopt = "^0.6.78"
+itertools = "^0.4.6"
 fnv = "^1.0.2"
 num = "^0.1.31"
 petgraph = "^0.2.3"
@@ -22,7 +23,6 @@ smallvec = "^0.1.6"
 clippy = { version = "*", optional = true }
 
 [dev-dependencies]
-itertools = "^0.4.6"
 quickcheck = "^0.2.7"
 
 [build-dependencies]

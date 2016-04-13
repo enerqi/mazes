@@ -15,6 +15,7 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
 extern crate fnv;
+extern crate itertools;
 extern crate num;
 extern crate petgraph;
 extern crate rand;
@@ -23,8 +24,6 @@ extern crate sdl2_image;
 extern crate sdl2_ttf;
 extern crate smallvec;
 
-#[cfg(test)]
-extern crate itertools;
 #[cfg(test)]
 extern crate quickcheck;
 

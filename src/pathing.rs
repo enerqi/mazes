@@ -30,31 +30,38 @@
 
 
 use std::collections::HashMap;
+use std::cmp::Ordering::{Equal, Greater};
 use std::hash::BuildHasherDefault;
 use std::fmt::{Debug, Display, LowerHex};
 use std::ops::Add;
 
 use fnv::FnvHasher;
+use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use petgraph::graph::IndexType;
+use smallvec::SmallVec;
 
-use squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
+use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
 use utils;
 
+// Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
+// Note generic parameter type aliases are not in the langauge.
+// `type X = Y;` only works with concrete types.
+pub trait MaxDistance: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord {}
+impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord> MaxDistance for T {}
+
+
 #[derive(Debug, Clone)]
-pub struct DijkstraDistances<MaxDistanceT=u32>
-    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
-{
+pub struct DijkstraDistances<MaxDistanceT = u32> {
     start_coordinate: GridCoordinate,
     distances: HashMap<GridCoordinate, MaxDistanceT, BuildHasherDefault<FnvHasher>>,
 }
 
-impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
-    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
+impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
 {
     pub fn new<GridIndexType: IndexType>(grid: &SquareGrid<GridIndexType>,
-               start_coordinate: GridCoordinate)
-               -> Option<DijkstraDistances<MaxDistanceT>> {
+                                         start_coordinate: GridCoordinate)
+                                         -> Option<DijkstraDistances<MaxDistanceT>> {
 
         if !grid.is_valid_coordinate(start_coordinate) {
             return None;
@@ -86,8 +93,9 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
                                 .expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
 
-                    let distance_to_link: MaxDistanceT = *distances.entry(*link_coordinate)
-                                                                   .or_insert_with(Bounded::max_value);
+                    let distance_to_link: MaxDistanceT =
+                        *distances.entry(*link_coordinate)
+                                  .or_insert_with(Bounded::max_value);
                     if distance_to_link == Bounded::max_value() {
 
                         distances.insert(*link_coordinate, distance_to_cell + One::one());
@@ -99,8 +107,8 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
         }
 
         Some(DijkstraDistances {
-             start_coordinate: start_coordinate,
-             distances: distances
+            start_coordinate: start_coordinate,
+            distances: distances,
         })
     }
 
@@ -113,8 +121,7 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
     }
 }
 
-impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
-    where MaxDistanceT: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex
+impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
 {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
 
@@ -141,6 +148,97 @@ impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
     }
 }
 
+pub fn furthest_points_on_grid<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>,
+                                                            distances_from_start: &DijkstraDistances<MaxDistanceT>) -> CoordinateSmallVec
+    where GridIndexType: IndexType, MaxDistanceT: MaxDistance
+{
+    let mut furthest = CoordinateSmallVec::new();
+    let mut furthest_distance: MaxDistanceT = Zero::zero();
+    for coord in grid.iter() {
+
+        let d = distances_from_start.distance_from_start_to(coord)
+                                    .expect("Coordinate invalid for distances_from_start data.");
+        match d.cmp(&furthest_distance) {
+
+            Greater => {
+                furthest.clear();
+                furthest.push(coord);
+                furthest_distance = d;
+            }
+            Equal => {
+                furthest.push(coord);
+            }
+            _ => {}
+        }
+    }
+    furthest
+}
+
+pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>,
+                                                  distances_from_start: &DijkstraDistances<MaxDistanceT>,
+                                                  end_point: GridCoordinate) -> Option<Vec<GridCoordinate>>
+    where GridIndexType: IndexType, MaxDistanceT: MaxDistance
+{
+    let mut path = vec![end_point];
+    let start = distances_from_start.start();
+    let mut current_coord = end_point;
+
+    while current_coord != start {
+
+        let current_distance_to_start = distances_from_start.distance_from_start_to(current_coord)
+                                                            .expect("Coordinate invalid for distances_from_start data.");
+
+        let mut linked_neighbours = grid.neighbours(current_coord)
+                                    .iter()
+                                    .cloned()
+                                    .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
+                                    .collect::<CoordinateSmallVec>();
+        let mut neighbour_distances = linked_neighbours.into_iter()
+                                                   .map(|coord| (coord, distances_from_start.distance_from_start_to(coord)
+                                                                            .expect("Coordinate invalid for distances_from_start data.")))
+                                                   .collect::<SmallVec<[(GridCoordinate, MaxDistanceT); 4]>>();
+        let closest_to_start = neighbour_distances.into_iter()
+                                                  .fold1(|closest_accumulator, closest_candidate|
+                                                            if closest_candidate.1 < closest_accumulator.1 { closest_candidate }
+                                                            else { closest_accumulator });
+
+        if let Some((closer_coord, closer_distance)) = closest_to_start {
+
+            if closer_distance == current_distance_to_start {
+                // We have not got any closer to the final goal, so there is no path there.
+                return None;
+            }
+
+            current_coord = closer_coord;
+            path.push(current_coord);
+
+        } else {
+            // There are no linked neighbours - this input data is broken.
+            return None;
+        }
+
+    }
+
+    Some(path)
+}
+
+/// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>) -> Option<Vec<GridCoordinate>>
+    where GridIndexType: IndexType, MaxDistanceT: MaxDistance
+{
+    // Distances to everywhere from an arbitrary start coordinate
+    let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0,0)).expect("Invalid start coordinate.");
+
+    // The start of the longest path is just the point furthest away from an arbitrary initial point
+    let long_path_start_coordinate = furthest_points_on_grid(&grid, &first_distances)[0];
+
+    let distances_from_start = DijkstraDistances::<MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
+    let end_point = furthest_points_on_grid(&grid, &distances_from_start)[0];
+
+    shortest_path(&grid, &distances_from_start, end_point)
+}
+
+
 #[cfg(test)]
 mod tests {
 
@@ -153,7 +251,10 @@ mod tests {
     type SmallGrid = SquareGrid<u8>;
     type SmallDistances = DijkstraDistances<u8>;
 
-    static OUT_OF_GRID_COORDINATE: GridCoordinate = GridCoordinate{x: u32::MAX, y: u32::MAX};
+    static OUT_OF_GRID_COORDINATE: GridCoordinate = GridCoordinate {
+        x: u32::MAX,
+        y: u32::MAX,
+    };
 
     #[test]
     fn distances_construction_requires_valid_start_coordinate() {
@@ -165,7 +266,7 @@ mod tests {
     #[test]
     fn start() {
         let g = SmallGrid::new(3);
-        let start_coordinate = GridCoordinate::new(1,1);
+        let start_coordinate = GridCoordinate::new(1, 1);
         let distances = SmallDistances::new(&g, start_coordinate).unwrap();
         assert_eq!(start_coordinate, distances.start());
     }
@@ -173,7 +274,7 @@ mod tests {
     #[test]
     fn distances_to_unreachable_cells_is_none() {
         let g = SmallGrid::new(3);
-        let start_coordinate = GridCoordinate::new(0,0);
+        let start_coordinate = GridCoordinate::new(0, 0);
         let distances = SmallDistances::new(&g, start_coordinate).unwrap();
         for coord in g.iter() {
             let d = distances.distance_from_start_to(coord);
@@ -190,25 +291,26 @@ mod tests {
     #[test]
     fn distance_to_invalid_coordinate_is_none() {
         let g = SmallGrid::new(3);
-        let start_coordinate = GridCoordinate::new(0,0);
+        let start_coordinate = GridCoordinate::new(0, 0);
         let distances = SmallDistances::new(&g, start_coordinate).unwrap();
-        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE), None);
+        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
+                   None);
     }
 
     #[test]
     fn distances_on_open_grid() {
         let mut g = SmallGrid::new(2);
-        let gc =|x, y| GridCoordinate::new(x, y);
-        let top_left = gc(0,0);
-        let top_right = gc(1,0);
-        let bottom_left = gc(0,1);
-        let bottom_right = gc(1,1);
+        let gc = |x, y| GridCoordinate::new(x, y);
+        let top_left = gc(0, 0);
+        let top_right = gc(1, 0);
+        let bottom_left = gc(0, 1);
+        let bottom_right = gc(1, 1);
         g.link(top_left, top_right).expect("Link Failed");
         g.link(top_left, bottom_left).expect("Link Failed");
         g.link(top_right, bottom_right).expect("Link Failed");
         g.link(bottom_left, bottom_right).expect("Link Failed");
 
-        let start_coordinate = gc(0,0);
+        let start_coordinate = gc(0, 0);
         let distances = SmallDistances::new(&g, start_coordinate).unwrap();
 
         assert_eq!(distances.distance_from_start_to(top_left), Some(0));
