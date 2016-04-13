@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path> --furthest-point (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
 
 Options:
     -h --help           Show this screen.
@@ -32,6 +32,7 @@ Options:
     --text-out=<path>   Output file path for a textual rendering of a maze.
     --path-start-x=<x>
     --path-start-y=<y>
+    --furthest-point    Show the furthest (points) from the path-start-x/path-start-y coordinate
     --image-out=<path>  Output file path for an image rendering of a maze.
     --cell-pixels=<n>   Pixel count to render one cell wall in a maze [default: 10] max 255.
     --screen-view       When rendering to an image and saving to a file, also show the image on the screen.
@@ -48,6 +49,7 @@ struct MazeArgs {
     flag_image_out: String,
     flag_cell_pixels: u8,
     flag_screen_view: bool,
+    flag_furthest_point: bool,
     flag_path_start_x: Option<u32>,
     flag_path_start_y: Option<u32>,
 }
@@ -87,7 +89,15 @@ fn main() {
             let distances = Rc::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
 
-            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
+            if args.flag_furthest_point {
+
+                let end_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
+                let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(GridCoordinate::new(x, y),
+                                                                                           end_points));
+                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+            } else {
+                maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
+            }
         }
 
         if args.flag_text_out.is_empty() {

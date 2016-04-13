@@ -148,6 +148,31 @@ impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT> where MaxDist
     }
 }
 
+#[derive(Debug)]
+pub struct StartEndPointsDisplay {
+    start_coordinate: GridCoordinate,
+    end_coordinates: CoordinateSmallVec
+}
+impl StartEndPointsDisplay {
+    pub fn new(start: GridCoordinate, ends: CoordinateSmallVec) -> StartEndPointsDisplay {
+        StartEndPointsDisplay {start_coordinate: start, end_coordinates: ends}
+    }
+}
+impl GridDisplay for StartEndPointsDisplay
+{
+    fn render_cell_body(&self, coord: GridCoordinate) -> String {
+        if coord == self.start_coordinate {
+            return String::from(" S ")
+        }
+
+        if self.end_coordinates.iter().any(|&c| c == coord) {
+            String::from(" E ")
+        } else {
+            String::from("   ")
+        }
+    }
+}
+
 pub fn furthest_points_on_grid<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>,
                                                             distances_from_start: &DijkstraDistances<MaxDistanceT>) -> CoordinateSmallVec
     where GridIndexType: IndexType, MaxDistanceT: MaxDistance
