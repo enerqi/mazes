@@ -95,6 +95,7 @@ fn main() {
 
             if let (Some(end_x), Some(end_y)) = (args.flag_end_point_x, args.flag_end_point_y) {
 
+                // Given a start and end point - show the shortest path between these two points
                 let path_opt = pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
                 if let Some(path) = path_opt {
 
@@ -110,14 +111,27 @@ fn main() {
             }
             else if args.flag_furthest_point {
 
+                // Given a start point and asked to show furthest point away from it - find an end point
                 let end_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
                 let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(GridCoordinate::new(x, y),
                                                                                            end_points));
                 maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+
             } else {
 
+                // Only given a start point - show the distances to everywhere else
                 maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
             }
+
+        } else if args.flag_furthest_point {
+            // Not given a start point. Asking for the furthest point means find 2 arbitrary places that are max distance from one another.
+            let longest_path: Vec<GridCoordinate> = pathing::dijkstra_longest_path::<_, u32>(&maze_grid).expect("Not a perfect maze, no longest path exists.");
+            let start = longest_path.first().unwrap();
+            let end = longest_path.last().unwrap();
+            let mut end_points = CoordinateSmallVec::new();
+            end_points.push(*end);
+            let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(*start, end_points));
+            maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
         }
 
         if args.flag_text_out.is_empty() {

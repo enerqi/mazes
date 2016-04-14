@@ -2,6 +2,7 @@
 
 // TODO infrastructure:
 // - public docs
+// - deny dead_code, missing_docs
 
 #![allow(dead_code, missing_docs)]
 #![warn(variant_size_differences)]
