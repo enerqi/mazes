@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--furthest-point|--end-point-x=<e1> --end-point-y=<e2>) (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--find-furthest-point-from-start|--path-end-x=<e1> --path-end-y=<e2>) (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --screen-view] [--grid-size=<n>]
 
 Options:
     -h --help           Show this screen.
@@ -51,7 +51,9 @@ struct MazeArgs {
     flag_image_out: String,
     flag_cell_pixels: u8,
     flag_screen_view: bool,
-    flag_furthest_point: bool,
+    flag_show_distances: bool,
+    flag_show_path: bool,
+    flag_find_furthest_point_from_start: bool,
     flag_path_start_x: Option<u32>,
     flag_path_start_y: Option<u32>,
     flag_end_point_x: Option<u32>,
@@ -76,63 +78,11 @@ fn main() {
 
     let mut maze_grid = SquareGrid::<u32>::new(grid_size);
 
-    if args.cmd_render {
-        if args.cmd_binary {
-            generators::binary_tree(&mut maze_grid);
-        }
-        if args.cmd_sidewinder {
-            generators::sidewinder(&mut maze_grid);
-        }
-    } else {
-        generators::sidewinder(&mut maze_grid);
-    }
+    generate_maze_on_grid(&mut maze_grid, &args);
 
     if do_text_render {
-        if let (Some(x), Some(y)) = (args.flag_path_start_x, args.flag_path_start_y) {
 
-            let distances = Rc::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
-                    .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
-
-            if let (Some(end_x), Some(end_y)) = (args.flag_end_point_x, args.flag_end_point_y) {
-
-                // Given a start and end point - show the shortest path between these two points
-                let path_opt = pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
-                if let Some(path) = path_opt {
-
-                    let display_path = Rc::new(pathing::PathDisplay::new(&path)) ;
-                    maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay>));
-                } else {
-                    let mut end_points = CoordinateSmallVec::new();
-                    end_points.push(GridCoordinate::new(end_x, end_y));
-                    let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(GridCoordinate::new(x, y),
-                                                                                               end_points));
-                    maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
-                }
-            }
-            else if args.flag_furthest_point {
-
-                // Given a start point and asked to show furthest point away from it - find an end point
-                let end_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
-                let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(GridCoordinate::new(x, y),
-                                                                                           end_points));
-                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
-
-            } else {
-
-                // Only given a start point - show the distances to everywhere else
-                maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
-            }
-
-        } else if args.flag_furthest_point {
-            // Not given a start point. Asking for the furthest point means find 2 arbitrary places that are max distance from one another.
-            let longest_path: Vec<GridCoordinate> = pathing::dijkstra_longest_path::<_, u32>(&maze_grid).expect("Not a perfect maze, no longest path exists.");
-            let start = longest_path.first().unwrap();
-            let end = longest_path.last().unwrap();
-            let mut end_points = CoordinateSmallVec::new();
-            end_points.push(*end);
-            let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(*start, end_points));
-            maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
-        }
+        set_maze_griddisplay(&mut maze_grid, &args);
 
         if args.flag_text_out.is_empty() {
             println!("{}", maze_grid);
@@ -141,6 +91,7 @@ fn main() {
                 .expect(&format!("Failed to write maze to text file {}", args.flag_text_out));
         }
     }
+
     if do_image_render {
         let is_image_path_set = !args.flag_image_out.is_empty();
         let out_image_path = if is_image_path_set {
@@ -154,6 +105,73 @@ fn main() {
                                                         args.flag_cell_pixels);
         renderers::render_square_grid(&maze_grid, &render_opts);
     }
+}
+
+fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs) {
+
+    if maze_args.cmd_render {
+        if maze_args.cmd_binary {
+            generators::binary_tree(&mut maze_grid);
+        }
+        if maze_args.cmd_sidewinder {
+            generators::sidewinder(&mut maze_grid);
+        }
+    } else {
+        generators::sidewinder(&mut maze_grid);
+    }
+}
+
+fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs) {
+
+    if let (Some(x), Some(y)) = (maze_args.flag_path_start_x, maze_args.flag_path_start_y) {
+
+        let distances = Rc::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
+                .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
+
+        if let (Some(end_x), Some(end_y)) = (maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
+
+            // Given a start and end point - show the shortest path between these two points
+            let path_opt = pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
+            if let Some(path) = path_opt {
+
+                let display_path = Rc::new(pathing::PathDisplay::new(&path));
+                maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay>));
+            } else {
+
+                let start_points = as_coordinate_smallvec(GridCoordinate::new(x, y));
+                let end_points = as_coordinate_smallvec(GridCoordinate::new(end_x, end_y));
+                let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(start_points, end_points));
+                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+            }
+        }
+        else if maze_args.flag_find_furthest_point_from_start {
+
+            // Given a start point and asked to show furthest point away from it - find an end point
+            let start_points = as_coordinate_smallvec(GridCoordinate::new(x, y));
+            let end_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
+            let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(start_points, end_points));
+            maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+
+        } else {
+
+            // Only given a start point - show the distances to everywhere else
+            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
+        }
+
+    } else if maze_args.flag_find_furthest_point_from_start {
+
+        // Not given a start point. Asking for the furthest point means find 2 arbitrary places that are max distance from one another.
+        let longest_path: Vec<GridCoordinate> = pathing::dijkstra_longest_path::<_, u32>(&maze_grid).expect("Not a perfect maze, no longest path exists.");
+        let start = longest_path.first().unwrap();
+        let end = longest_path.last().unwrap();
+        let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(as_coordinate_smallvec(*start),
+                                                                                   as_coordinate_smallvec(*end)));
+        maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+    }
+}
+
+fn as_coordinate_smallvec(coord: GridCoordinate) -> CoordinateSmallVec {
+    [coord].into_iter().cloned().collect::<CoordinateSmallVec>()
 }
 
 fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {

@@ -148,23 +148,29 @@ impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT> where MaxDist
 
 #[derive(Debug)]
 pub struct StartEndPointsDisplay {
-    start_coordinate: GridCoordinate,
+    start_coordinates: CoordinateSmallVec,
     end_coordinates: CoordinateSmallVec
 }
 impl StartEndPointsDisplay {
-    pub fn new(start: GridCoordinate, ends: CoordinateSmallVec) -> StartEndPointsDisplay {
-        StartEndPointsDisplay {start_coordinate: start, end_coordinates: ends}
+    pub fn new(starts: CoordinateSmallVec, ends: CoordinateSmallVec) -> StartEndPointsDisplay {
+        StartEndPointsDisplay {start_coordinates: starts, end_coordinates: ends}
     }
 }
 impl GridDisplay for StartEndPointsDisplay
 {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
-        if coord == self.start_coordinate {
-            return String::from(" S ")
-        }
 
-        if self.end_coordinates.iter().any(|&c| c == coord) {
+        let contains_coordinate = |coordinates: &CoordinateSmallVec| {
+            coordinates.iter().any(|&c| c == coord)
+        };
+
+        if contains_coordinate(&self.start_coordinates) {
+            return String::from(" S ");
+
+        } else if contains_coordinate(&self.end_coordinates) {
+
             String::from(" E ")
+
         } else {
             String::from("   ")
         }
