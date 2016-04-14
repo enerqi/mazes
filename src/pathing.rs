@@ -28,14 +28,10 @@
 // - Weak (requires downgrading an RC<T>) pointer or RC<T>
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
-
-use std::collections::HashMap;
 use std::cmp::Ordering::{Equal, Greater};
-use std::hash::BuildHasherDefault;
 use std::fmt::{Debug, Display, LowerHex};
 use std::ops::Add;
 
-use fnv::FnvHasher;
 use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use petgraph::graph::IndexType;
@@ -43,6 +39,8 @@ use smallvec::SmallVec;
 
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
 use utils;
+use utils::{FnvHashMap, FnvHashSet};
+
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
 // Note generic parameter type aliases are not in the langauge.
@@ -54,7 +52,7 @@ impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display +
 #[derive(Debug, Clone)]
 pub struct DijkstraDistances<MaxDistanceT = u32> {
     start_coordinate: GridCoordinate,
-    distances: HashMap<GridCoordinate, MaxDistanceT, BuildHasherDefault<FnvHasher>>,
+    distances: FnvHashMap<GridCoordinate, MaxDistanceT>,
 }
 
 impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
@@ -167,6 +165,27 @@ impl GridDisplay for StartEndPointsDisplay
 
         if self.end_coordinates.iter().any(|&c| c == coord) {
             String::from(" E ")
+        } else {
+            String::from("   ")
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct PathDisplay {
+    on_path_coordinates: FnvHashSet<GridCoordinate>
+}
+impl PathDisplay {
+    pub fn new(path: &[GridCoordinate]) -> Self {
+        PathDisplay {
+            on_path_coordinates: path.iter().cloned().collect()
+        }
+    }
+}
+impl GridDisplay for PathDisplay {
+    fn render_cell_body(&self, coord: GridCoordinate) -> String {
+        if self.on_path_coordinates.contains(&coord) {
+            String::from(" . ")
         } else {
             String::from("   ")
         }

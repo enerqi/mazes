@@ -14,7 +14,7 @@ use std::rc::Rc;
 
 use docopt::Docopt;
 
-use mazes::squaregrid::{GridCoordinate, GridDisplay, SquareGrid};
+use mazes::squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
 use mazes::generators;
 use mazes::renderers;
 use mazes::pathing;
@@ -95,8 +95,18 @@ fn main() {
 
             if let (Some(end_x), Some(end_y)) = (args.flag_end_point_x, args.flag_end_point_y) {
 
-                let path = pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
-                // turn into hashset for render_cell_body display routine?
+                let path_opt = pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
+                if let Some(path) = path_opt {
+
+                    let display_path = Rc::new(pathing::PathDisplay::new(&path)) ;
+                    maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay>));
+                } else {
+                    let mut end_points = CoordinateSmallVec::new();
+                    end_points.push(GridCoordinate::new(end_x, end_y));
+                    let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(GridCoordinate::new(x, y),
+                                                                                               end_points));
+                    maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+                }
             }
             else if args.flag_furthest_point {
 
