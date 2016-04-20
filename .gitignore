@@ -3,6 +3,9 @@
 *.so
 *.rlib
 
+# dlls copied into root of project by build process
+/*.dll
+
 # Executables
 *.exe
 
