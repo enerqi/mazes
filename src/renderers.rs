@@ -5,11 +5,12 @@ use sdl2;
 use sdl2::event::Event;
 use sdl2::hint;
 use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::Point;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::{Renderer, Texture};
 use sdl2::surface::Surface;
 
 use sdl;
+use pathing;
 use squaregrid::{GridDirection, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
@@ -22,18 +23,24 @@ const BLUE: Color = Color::RGB(0, 0, 0xff);
 const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
 
 #[derive(Debug)]
-pub struct RenderOptions<'path> {
+pub struct RenderOptions<'path, 'dist> {
     show_on_screen: bool,
+    colour_distances: bool,
+    distances: Option<&'dist pathing::DijkstraDistances<u32>>,
     output_file: Option<&'path Path>,
     cell_side_pixels_length: u8,
 }
-impl<'path> RenderOptions<'path> {
+impl<'path, 'dist> RenderOptions<'path, 'dist> {
     pub fn new(show_on_screen: bool,
-               output_file: Option<&Path>,
+               colour_distances: bool,
+               distances: Option<&'dist pathing::DijkstraDistances<u32>>,
+               output_file: Option<&'path Path>,
                cell_side_pixels_length: u8)
-               -> RenderOptions {
+               -> RenderOptions<'path, 'dist> {
         RenderOptions {
             show_on_screen: show_on_screen,
+            colour_distances: colour_distances,
+            distances: distances,
             output_file: output_file,
             cell_side_pixels_length: cell_side_pixels_length,
         }
@@ -114,8 +121,9 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     r.set_draw_color(WHITE);
     r.clear();
 
-    // Set the maze wall colour.
-    r.set_draw_color(BLUE);
+    let distance_colour = GREEN;
+    let wall_colour = BLUE;
+    r.set_draw_color(wall_colour);
 
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels * grid.dimension() as usize;
@@ -152,11 +160,38 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
             r.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
-        if !grid.is_neighbour_linked(cell, GridDirection::East) {
+        let must_draw_east_wall = !grid.is_neighbour_linked(cell, GridDirection::East);
+        let must_draw_south_wall = !grid.is_neighbour_linked(cell, GridDirection::South);
+
+        if must_draw_east_wall {
             r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
         }
-        if !grid.is_neighbour_linked(cell, GridDirection::South) {
+        if must_draw_south_wall {
             r.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
+        }
+
+        if options.colour_distances {
+            if let Some(dist) = options.distances {
+                // offset inside the wall line
+                let fill_x1 = x1 + 1;
+                let fill_y1 = y1 + 1;
+                // extend to cover where not drawing the wall if required
+                let fill_x2 = if must_draw_east_wall { x2 } else { x2 + 1 };
+                let fill_y2 = if must_draw_south_wall { y2 } else { y2 + 1 };
+
+                let w = (fill_x2 - fill_x1) as u32;
+                let h = (fill_y2 - fill_y1) as u32;
+
+                let max_f = dist.max() as f32;
+                let distance_to_f = dist.distance_from_start_to(cell)
+                                        .expect("Coordinate invalid for distances_from_start data.") as f32;
+                let intensity = (max_f- distance_to_f) / max_f;
+                let cell_colour = colour_mul(distance_colour, intensity);
+
+                r.set_draw_color(cell_colour);
+                r.fill_rect(Rect::new(fill_x1, fill_y1, w, h)).unwrap();
+                r.set_draw_color(wall_colour);
+            }
         }
     }
 }
@@ -227,6 +262,13 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
     // Reseting gives us back ownership of the updated texture and restores the default render target
     let updated_texture: Option<Texture> = r.render_target().unwrap().reset().unwrap();
     updated_texture.unwrap()
+}
+
+fn colour_mul(colour: Color, scale: f32) -> Color {
+    match colour {
+        Color::RGB(r, g, b) => Color::RGB((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8),
+        Color::RGBA(r, g, b, a) => Color::RGBA((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8, a),
+    }
 }
 
 // Research Notes

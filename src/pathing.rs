@@ -53,6 +53,7 @@ impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display +
 pub struct DijkstraDistances<MaxDistanceT = u32> {
     start_coordinate: GridCoordinate,
     distances: FnvHashMap<GridCoordinate, MaxDistanceT>,
+    max_distance: MaxDistanceT,
 }
 
 impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
@@ -65,6 +66,7 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistan
             return None;
         }
 
+        let mut max = Zero::zero();
         let cells_count = grid.size();
         let mut distances = utils::fnv_hashmap(cells_count);
         distances.insert(start_coordinate, Zero::zero());
@@ -86,6 +88,9 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistan
                 // the start until we process them, which is represented as Option::None when accessing the map.
                 let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord)
                                                                .or_insert_with(Bounded::max_value);
+                if distance_to_cell > max {
+                    max = distance_to_cell;
+                }
 
                 let links = grid.links(*cell_coord)
                                 .expect("Source cell has an invalid cell coordinate.");
@@ -107,11 +112,16 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistan
         Some(DijkstraDistances {
             start_coordinate: start_coordinate,
             distances: distances,
+            max_distance: max,
         })
     }
 
     pub fn start(&self) -> GridCoordinate {
         self.start_coordinate
+    }
+
+    pub fn max(&self) -> MaxDistanceT {
+        self.max_distance
     }
 
     pub fn distance_from_start_to(&self, coord: GridCoordinate) -> Option<MaxDistanceT> {
