@@ -8,8 +8,10 @@ use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Renderer, Texture};
 use sdl2::surface::Surface;
+use sdl2_ttf;
 
 use sdl;
+use sdl::SdlSetup;
 use pathing;
 use squaregrid::{GridDirection, SquareGrid};
 
@@ -21,6 +23,7 @@ const RED: Color = Color::RGB(0xff, 0, 0);
 const GREEN: Color = Color::RGB(0, 0xff, 0);
 const BLUE: Color = Color::RGB(0, 0, 0xff);
 const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
+
 
 #[derive(Debug)]
 pub struct RenderOptions<'path, 'dist> {
@@ -95,7 +98,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // the #defines at e.g. https://github.com/spurious/SDL-mirror/blob/master/include/SDL_hints.h
     hint::set("SDL_RENDER_SCALE_QUALITY", "1");
 
-    draw_maze(&mut software_renderer, &grid, &options);
+    draw_maze(&mut software_renderer, &grid, &options, &sdl_setup);
 
     // Getting the surface from the renderer drops the renderer.
     let maze_surface: Surface =
@@ -114,7 +117,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
 
 fn draw_maze<GridIndexType>(r: &mut Renderer,
                             grid: &SquareGrid<GridIndexType>,
-                            options: &RenderOptions)
+                            options: &RenderOptions, sdl_setup: &SdlSetup)
     where GridIndexType: IndexType
 {
     // clear the texture background to white
@@ -142,6 +145,16 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     } else {
         0
     };
+
+    // Font creation
+    let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
+    let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
+    let mut font = sdl_setup.ttf_context.load_font(&font_path, font_px_size)
+                                    .expect("Failed to load font");
+    font.set_style(sdl2_ttf::STYLE_BOLD);
+    // Start and end symbol letters rendered to different surfaces
+    let s_surface = font.render("S").blended(BLACK).unwrap();
+    let e_surface = font.render("E").blended(WHITE).unwrap();
 
     for cell in grid.iter() {
         let column = cell.x as usize;
@@ -185,18 +198,31 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 let max_f = dist.max() as f32;
                 let distance_to_f = dist.distance_from_start_to(cell)
                                         .expect("Coordinate invalid for distances_from_start data.") as f32;
-                let intensity = (max_f- distance_to_f) / max_f;
+                let intensity = (max_f - distance_to_f) / max_f;
                 let cell_colour = colour_mul(distance_colour, intensity);
 
                 r.set_draw_color(cell_colour);
-                r.fill_rect(Rect::new(fill_x1, fill_y1, w, h)).unwrap();
+                let cell_bg_rect = Rect::new(fill_x1, fill_y1, w, h);
+                r.fill_rect(cell_bg_rect).unwrap();
                 r.set_draw_color(wall_colour);
+
+                if distance_to_f == 0.0 {
+                    // At the start
+                    s_surface.blit(None, r.surface_mut().unwrap(),
+                                   Some(Rect::new(fill_x1+1, fill_y1-1, w-1, h-1)))
+                             .expect("S blit to maze surface failed");
+                } else if distance_to_f == max_f {
+                    // At the end
+                    e_surface.blit(None, r.surface_mut().unwrap(),
+                                   Some(Rect::new(fill_x1+1, fill_y1-1, w-1, h-1)))
+                             .expect("E blit to maze surface failed");
+                }
             }
         }
     }
 }
 
-fn show_maze_on_screen(maze_surface: Surface, sdl_setup: sdl::SdlSetup) {
+fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     let mut window_builder = sdl_setup.video_subsystem.window("Mazes", WINDOW_W, WINDOW_H);
     let window = window_builder.position_centered()
                                .resizable()
@@ -247,7 +273,8 @@ fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexT
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
                                        t: Texture,
                                        grid: &SquareGrid<GridIndexType>,
-                                       options: &RenderOptions)
+                                       options: &RenderOptions,
+                                       sdl_setup: &SdlSetup)
                                        -> Texture
     where GridIndexType: IndexType
 {
@@ -257,7 +284,7 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
      .set(t)
      .unwrap(); // Returns the old render target if the function is successful, which we ignore.
 
-    draw_maze(r, &grid, &options);
+    draw_maze(r, &grid, &options, &sdl_setup);
 
     // Reseting gives us back ownership of the updated texture and restores the default render target
     let updated_texture: Option<Texture> = r.render_target().unwrap().reset().unwrap();

@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point|--path-end-x=<e1> --path-end-y=<e2>) (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --screen-view] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point|--path-end-x=<e1> --path-end-y=<e2>) (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --screen-view --mark-start-end] [--grid-size=<n>]
 
 Options:
     -h --help              Show this screen.
@@ -41,6 +41,7 @@ Options:
     --cell-pixels=<n>      Pixel count to render one cell wall in a maze [default: 10] max 255.
     --colour-distances     Indicate the distance from a starting point to any cell by the cell's background colour.
     --screen-view          When rendering to an image and saving to a file, also show the image on the screen.
+    --mark-start-end       Draw an 'S' (start) and 'E' (end) to show the path start and end points.
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
@@ -56,6 +57,7 @@ struct MazeArgs {
     flag_screen_view: bool,
     flag_colour_distances: bool,
     flag_show_distances: bool,
+    flag_mark_start_end: bool,
     flag_show_path: bool,
     flag_furthest_end_point: bool,
     flag_path_start_x: Option<u32>,
