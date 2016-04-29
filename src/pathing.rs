@@ -279,6 +279,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexTyp
 
     }
 
+    path.reverse();
     Some(path)
 }
 

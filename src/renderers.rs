@@ -13,7 +13,7 @@ use sdl2_ttf;
 use sdl;
 use sdl::SdlSetup;
 use pathing;
-use squaregrid::{GridDirection, SquareGrid};
+use squaregrid::{GridCoordinate, GridDirection, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
@@ -23,30 +23,66 @@ const RED: Color = Color::RGB(0xff, 0, 0);
 const GREEN: Color = Color::RGB(0, 0xff, 0);
 const BLUE: Color = Color::RGB(0, 0, 0xff);
 const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
+const HOT_PINK: Color = Color::RGB(255, 105, 180);
 
 
 #[derive(Debug)]
 pub struct RenderOptions<'path, 'dist> {
     show_on_screen: bool,
     colour_distances: bool,
+    mark_start_end: bool,
+    show_path: bool,
     distances: Option<&'dist pathing::DijkstraDistances<u32>>,
     output_file: Option<&'path Path>,
+    path: Option<Vec<GridCoordinate>>,
     cell_side_pixels_length: u8,
 }
-impl<'path, 'dist> RenderOptions<'path, 'dist> {
-    pub fn new(show_on_screen: bool,
-               colour_distances: bool,
-               distances: Option<&'dist pathing::DijkstraDistances<u32>>,
-               output_file: Option<&'path Path>,
-               cell_side_pixels_length: u8)
-               -> RenderOptions<'path, 'dist> {
-        RenderOptions {
-            show_on_screen: show_on_screen,
-            colour_distances: colour_distances,
-            distances: distances,
-            output_file: output_file,
-            cell_side_pixels_length: cell_side_pixels_length,
+
+#[derive(Debug)]
+pub struct RenderOptionsBuilder<'path, 'dist> {
+    options: RenderOptions<'path, 'dist>
+}
+impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
+    pub fn new() -> RenderOptionsBuilder<'path, 'dist> {
+        RenderOptionsBuilder {
+            options: RenderOptions {
+                show_on_screen: false,
+                colour_distances: false,
+                mark_start_end: false,
+                show_path: false,
+                distances: None,
+                output_file: None,
+                path: None,
+                cell_side_pixels_length: 10,
+            }
         }
+    }
+    pub fn show_on_screen(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.show_on_screen = on; self
+    }
+    pub fn colour_distances(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.colour_distances = on; self
+    }
+    pub fn mark_start_end(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.mark_start_end = on; self
+    }
+    pub fn show_path(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.show_path = on; self
+    }
+    pub fn distances(mut self, distances: Option<&'dist pathing::DijkstraDistances<u32>>) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.distances = distances; self
+    }
+    pub fn output_file(mut self, output_file: Option<&'path Path>) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.output_file = output_file; self
+    }
+    pub fn path(mut self, path: Option<Vec<GridCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.path = path; self
+    }
+    pub fn cell_side_pixels_length(mut self, cell_side_pixels_length: u8) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.cell_side_pixels_length = cell_side_pixels_length; self
+    }
+    pub fn build(self) -> RenderOptions<'path, 'dist> {
+        self.options
     }
 }
 
@@ -152,18 +188,29 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     let mut font = sdl_setup.ttf_context.load_font(&font_path, font_px_size)
                                     .expect("Failed to load font");
     font.set_style(sdl2_ttf::STYLE_BOLD);
+
     // Start and end symbol letters rendered to different surfaces
     let s_surface = font.render("S").blended(BLACK).unwrap();
-    let e_surface = font.render("E").blended(WHITE).unwrap();
+    let e_white_surface = font.render("E").blended(WHITE).unwrap();
+    let e_black_surface = font.render("E").blended(BLACK).unwrap();
 
-    for cell in grid.iter() {
+    let calc_cell_screen_coordinates = |cell: GridCoordinate| -> (i32, i32, i32, i32) {
         let column = cell.x as usize;
         let row = cell.y as usize;
-
         let x1 = ((column * cell_size_pixels) + x_centering_offset) as i32;
         let y1 = ((row * cell_size_pixels) + y_centering_offset) as i32;
         let x2 = (((column + 1) * cell_size_pixels) + x_centering_offset) as i32;
         let y2 = (((row + 1) * cell_size_pixels) + y_centering_offset) as i32;
+        (x1, y1, x2, y2)
+    };
+
+    let max_cell_distance_f: f32 = if let Some(dist) = options.distances {
+            dist.max() as f32
+        } else { 0.0 };
+
+    for cell in grid.iter() {
+
+        let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
 
         // special cases north and west to handle first row and column.
         if grid.neighbour_at_direction(cell, GridDirection::North).is_none() {
@@ -183,41 +230,77 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
             r.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
         }
 
-        if options.colour_distances {
-            if let Some(dist) = options.distances {
-                // offset inside the wall line
-                let fill_x1 = x1 + 1;
-                let fill_y1 = y1 + 1;
-                // extend to cover where not drawing the wall if required
-                let fill_x2 = if must_draw_east_wall { x2 } else { x2 + 1 };
-                let fill_y2 = if must_draw_south_wall { y2 } else { y2 + 1 };
+        let distance_to_cell_f: f32 = if let Some(dist) = options.distances {
+                dist.distance_from_start_to(cell)
+                    .expect("Coordinate invalid for distances_from_start data.") as f32
+            } else { 0.0 };
 
-                let w = (fill_x2 - fill_x1) as u32;
-                let h = (fill_y2 - fill_y1) as u32;
 
-                let max_f = dist.max() as f32;
-                let distance_to_f = dist.distance_from_start_to(cell)
-                                        .expect("Coordinate invalid for distances_from_start data.") as f32;
-                let intensity = (max_f - distance_to_f) / max_f;
+        if options.colour_distances || options.mark_start_end {
+
+            // Pixels on which to draw a particular cell
+            // offset inside the wall line
+            let cell_x1 = x1 + 1;
+            let cell_y1 = y1 + 1;
+            // extend to cover where not drawing the wall if required
+            let cell_x2 = if must_draw_east_wall { x2 } else { x2 + 1 };
+            let cell_y2 = if must_draw_south_wall { y2 } else { y2 + 1 };
+
+            let w = (cell_x2 - cell_x1) as u32;
+            let h = (cell_y2 - cell_y1) as u32;
+
+            if options.colour_distances {
+                let intensity = (max_cell_distance_f - distance_to_cell_f) / max_cell_distance_f;
                 let cell_colour = colour_mul(distance_colour, intensity);
 
                 r.set_draw_color(cell_colour);
-                let cell_bg_rect = Rect::new(fill_x1, fill_y1, w, h);
+                let cell_bg_rect = Rect::new(cell_x1, cell_y1, w, h);
                 r.fill_rect(cell_bg_rect).unwrap();
                 r.set_draw_color(wall_colour);
+            }
 
-                if distance_to_f == 0.0 {
+            if options.mark_start_end {
+
+                if distance_to_cell_f == 0.0 {
                     // At the start
                     s_surface.blit(None, r.surface_mut().unwrap(),
-                                   Some(Rect::new(fill_x1+1, fill_y1-1, w-1, h-1)))
+                                   Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
                              .expect("S blit to maze surface failed");
-                } else if distance_to_f == max_f {
+                } else if distance_to_cell_f == max_cell_distance_f {
                     // At the end
-                    e_surface.blit(None, r.surface_mut().unwrap(),
-                                   Some(Rect::new(fill_x1+1, fill_y1-1, w-1, h-1)))
-                             .expect("E blit to maze surface failed");
+                    let end_surface = if options.colour_distances { &e_white_surface } else { &e_black_surface };
+                    end_surface.blit(None, r.surface_mut().unwrap(),
+                                     Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
+                               .expect("E blit to maze surface failed");
                 }
             }
+        }
+    }
+
+    if let Some(ref path) = options.path {
+
+        let calc_cell_centre_screen_coordinate = |cell| {
+            let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
+            let half_w = (x2 - x1)/2;
+            let half_h = (y2 - y1)/2;
+            let mid_x = x1 + half_w;
+            let mid_y= y1 + half_h;
+            (mid_x, mid_y)
+        };
+
+        r.set_draw_color(HOT_PINK);
+
+        let (skip_amount, take_amount) = if options.mark_start_end { (1, path.len() - 2) } else { (0, path.len()) };
+        let mut last_cell_draw_pos = calc_cell_centre_screen_coordinate(path[skip_amount]);
+
+        for cell in path.iter().skip(skip_amount).take(take_amount) {
+            let path_line_point_1 = last_cell_draw_pos;
+            let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
+
+            r.draw_line(Point::from(path_line_point_1),
+                        Point::from(path_line_point_2)).unwrap();
+
+            last_cell_draw_pos = path_line_point_2;
         }
     }
 }
