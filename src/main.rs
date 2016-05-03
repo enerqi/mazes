@@ -163,7 +163,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
 fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
                         maze_args: &MazeArgs,
-                        longest_path: &Vec<GridCoordinate>) {
+                        longest_path: &[GridCoordinate]) {
 
     let start_opt = get_start_point(&maze_args, &longest_path);
     let end_opt = get_end_point(&maze_args, &longest_path);
@@ -221,7 +221,7 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
     }
 }
 
-fn get_start_point(maze_args: &MazeArgs, longest_path: &Vec<GridCoordinate>) -> Option<(u32, u32)> {
+fn get_start_point(maze_args: &MazeArgs, longest_path: &[GridCoordinate]) -> Option<(u32, u32)> {
 
     if let (Some(start_x), Some(start_y)) = (maze_args.flag_path_start_x,
                                              maze_args.flag_path_start_y) {
@@ -236,7 +236,7 @@ fn get_start_point(maze_args: &MazeArgs, longest_path: &Vec<GridCoordinate>) -> 
         None
     }
 }
-fn get_end_point(maze_args: &MazeArgs, longest_path: &Vec<GridCoordinate>) -> Option<(u32, u32)> {
+fn get_end_point(maze_args: &MazeArgs, longest_path: &[GridCoordinate]) -> Option<(u32, u32)> {
 
     if let (Some(end_x), Some(end_y)) = (maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
         Some((end_x, end_y))

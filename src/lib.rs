@@ -14,6 +14,7 @@
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", allow(similar_names))]
 
 extern crate fnv;
 extern crate itertools;

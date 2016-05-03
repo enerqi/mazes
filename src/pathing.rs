@@ -175,7 +175,7 @@ impl GridDisplay for StartEndPointsDisplay
         };
 
         if contains_coordinate(&self.start_coordinates) {
-            return String::from(" S ");
+            String::from(" S ")
 
         } else if contains_coordinate(&self.end_coordinates) {
 

@@ -42,6 +42,11 @@ pub struct RenderOptions<'path, 'dist> {
 pub struct RenderOptionsBuilder<'path, 'dist> {
     options: RenderOptions<'path, 'dist>
 }
+impl<'path, 'dist> Default for RenderOptionsBuilder<'path, 'dist> {
+    fn default() -> Self {
+        RenderOptionsBuilder::new()
+    }
+}
 impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
     pub fn new() -> RenderOptionsBuilder<'path, 'dist> {
         RenderOptionsBuilder {
@@ -204,9 +209,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         (x1, y1, x2, y2)
     };
 
-    let max_cell_distance_f: f32 = if let Some(dist) = options.distances {
-            dist.max() as f32
-        } else { 0.0 };
+    let max_cell_distance = if let Some(dist) = options.distances { dist.max() } else { 0 };
+    let max_cell_distance_f: f32 = max_cell_distance as f32;
 
     for cell in grid.iter() {
 
@@ -230,11 +234,11 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
             r.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
         }
 
-        let distance_to_cell_f: f32 = if let Some(dist) = options.distances {
+        let distance_to_cell = if let Some(dist) = options.distances {
                 dist.distance_from_start_to(cell)
-                    .expect("Coordinate invalid for distances_from_start data.") as f32
-            } else { 0.0 };
-
+                    .expect("Coordinate invalid for distances_from_start data.")
+            } else { 0 };
+        let distance_to_cell_f = distance_to_cell as f32;
 
         if options.colour_distances || options.mark_start_end {
 
@@ -261,12 +265,12 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
             if options.mark_start_end {
 
-                if distance_to_cell_f == 0.0 {
+                if distance_to_cell == 0 {
                     // At the start
                     s_surface.blit(None, r.surface_mut().unwrap(),
                                    Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
                              .expect("S blit to maze surface failed");
-                } else if distance_to_cell_f == max_cell_distance_f {
+                } else if distance_to_cell == max_cell_distance {
                     // At the end
                     let end_surface = if options.colour_distances { &e_white_surface } else { &e_black_surface };
                     end_surface.blit(None, r.surface_mut().unwrap(),

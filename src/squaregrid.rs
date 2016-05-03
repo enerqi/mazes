@@ -524,7 +524,7 @@ fn index_to_grid_coordinate(dimension_size: u32, one_dimensional_index: usize) -
     }
 }
 
-/// Create a new GridCoordinate offset 1 cell away in the given direction.
+/// Create a new `GridCoordinate` offset 1 cell away in the given direction.
 /// Returns None if the Coordinate is not representable (x < 0 or y < 0).
 fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
     let (x, y) = (coord.x, coord.y);
