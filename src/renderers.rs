@@ -1,3 +1,4 @@
+use std::cmp;
 use std::path::Path;
 
 use petgraph::graph::IndexType;
@@ -99,11 +100,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
 
     // Logically eg. 20x20 grid === 200 x 200 pixels + 32 on the sides (232x232).
     // scaled to whatever the window size is, which maybe a different aspect ratio.
-    let (logical_w, logical_h) = logical_maze_rendering_dimensions(&grid, &options);
-
-    // The image size can happily be the logical width and height. It will not be lossy as all pixels are drawn
-    // and there will not be any visualisation issues
-    let (image_w, image_h) = (logical_w, logical_h);
+    let (image_w, image_h) = maze_image_dimensions(&grid, &options);
 
     // The visualisation window size can be whatever size we want. If it uses auto scaling by setting a logical size
     // we can easily have aspect ratio issues unless the logical size is the same aspect ratio as the image
@@ -122,7 +119,6 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    println!("image w/h ({:?}, {:?})", image_w, image_h);
     let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
                                .expect("Surface creation failed.");
     let mut software_renderer = Renderer::from_surface(software_surface)
@@ -131,7 +127,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
-    // software_renderer.set_logical_size(logical_w, logical_h).unwrap();
+    //software_renderer.set_logical_size(logical_w, logical_h).unwrap();
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -171,22 +167,6 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     r.set_draw_color(wall_colour);
 
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels * grid.dimension() as usize;
-    let img_height = cell_size_pixels * grid.dimension() as usize;
-    let (max_width, max_height) = match r.logical_size() {
-        (w, h) => (w as usize, h as usize),
-    };
-
-    let x_centering_offset = if img_width < max_width {
-        (max_width - img_width) / 2
-    } else {
-        0
-    };
-    let y_centering_offset = if img_height < max_height {
-        (max_height - img_height) / 2
-    } else {
-        0
-    };
 
     // Font creation
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
@@ -203,10 +183,10 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     let calc_cell_screen_coordinates = |cell: GridCoordinate| -> (i32, i32, i32, i32) {
         let column = cell.x as usize;
         let row = cell.y as usize;
-        let x1 = ((column * cell_size_pixels) + x_centering_offset) as i32;
-        let y1 = ((row * cell_size_pixels) + y_centering_offset) as i32;
-        let x2 = (((column + 1) * cell_size_pixels) + x_centering_offset) as i32;
-        let y2 = (((row + 1) * cell_size_pixels) + y_centering_offset) as i32;
+        let x1 = (column * cell_size_pixels) as i32;
+        let y1 = (row * cell_size_pixels) as i32;
+        let x2 = ((column + 1) * cell_size_pixels) as i32;
+        let y2 = ((row + 1) * cell_size_pixels) as i32;
         (x1, y1, x2, y2)
     };
 
@@ -312,10 +292,15 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
 fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
 
+    // Fit the window size to the texture unless the texture is bigger than the display resolution
     let primary_display_mode = sdl_setup.video_subsystem.current_display_mode(0).unwrap();
-    let (w, h) = (primary_display_mode.w as u32, primary_display_mode.h as u32);
+    let (maze_w, maze_h) = (maze_surface.width(), maze_surface.height());
+    let (display_w, display_h) = (primary_display_mode.w as u32, primary_display_mode.h as u32);
+    let maze_image_padding = 32;
+    let window_w = cmp::min(display_w, maze_w + maze_image_padding);
+    let window_h = cmp::min(display_h, maze_h + maze_image_padding);
 
-    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", w, h);
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_w, window_h);
     let window = window_builder.position_centered()
                                .resizable()
                                .allow_highdpi()
@@ -328,7 +313,8 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
                              .build()
                              .unwrap();
 
-    let screen_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
+    let maze_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
+    let maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
 
     let mut events = sdl_setup.sdl_context.event_pump().unwrap();
     'running: loop {
@@ -338,17 +324,20 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
                     break 'running
                 }
                 _ => continue,
+                // todo handle window resize?
+                // todo allow resolution > display size?
+                // todo allow control of max on screen window size
             }
         }
 
         renderer.set_draw_color(WHITE);
         renderer.clear();
-        renderer.copy(&screen_texture, None, None);
+        renderer.copy(&maze_texture, None, Some(maze_target_rect));
         renderer.present();
     }
 }
 
-fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
+fn maze_image_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
                                                     options: &RenderOptions)
                                                     -> (u32, u32)
     where GridIndexType: IndexType
@@ -357,7 +346,7 @@ fn logical_maze_rendering_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexT
     let img_width = cell_size_pixels as u32 * grid.dimension();
     let img_height = cell_size_pixels as u32 * grid.dimension();
 
-    (32 + img_width, 32 + img_height)
+    (img_width, img_height)
 }
 
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
@@ -386,6 +375,42 @@ fn colour_mul(colour: Color, scale: f32) -> Color {
         Color::RGB(r, g, b) => Color::RGB((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8),
         Color::RGBA(r, g, b, a) => Color::RGBA((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8, a),
     }
+}
+
+/// Return a Rect that is centered within a parent rectangle. The rectangle will be scaled down to fit within the parent rectangle
+/// if it is bigger than the parent rectangle's width or height.
+/// `rect_width` - width of some rectangle to centre.
+/// `rect_height` - height of some rectangle to centre.
+/// `parent_rect_width` - width of the parent rectangle within which we centre a rectangle.
+/// `parent_rect_height` - height of the parent rectangle within which we centre a rectangle.
+fn centre_rectangle(rect_width: u32, rect_height: u32, parent_rect_width: u32, parent_rect_height: u32) -> Rect {
+
+    let rect_width_f = rect_width as f32;
+    let rect_height_f = rect_height as f32;
+    let parent_rect_width_f = parent_rect_width as f32;
+    let parent_rect_height_f = parent_rect_height as f32;
+    let parent_rect_width_i = parent_rect_width as i32;
+    let parent_rect_height_i = parent_rect_height as i32;
+
+    let width_ratio = rect_width_f / parent_rect_width_f;
+    let height_ratio = rect_height_f / parent_rect_height_f;
+
+    let (w, h) = if width_ratio > 1.0 || height_ratio > 1.0 {
+
+        if width_ratio > height_ratio {
+            let h = (rect_height_f / width_ratio) as i32;
+            (parent_rect_width as i32, h)
+        } else {
+            let w = (rect_width_f / height_ratio) as i32;
+            (w, parent_rect_height as i32)
+        }
+    } else {
+        (rect_width as i32, rect_height as i32)
+    };
+
+    let cx = (parent_rect_width_i - w)/2;
+    let cy = (parent_rect_height_i - h)/2;
+    Rect::new(cx, cy, w as u32, h as u32)
 }
 
 // Research Notes
