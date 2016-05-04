@@ -122,6 +122,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
+    println!("image w/h ({:?}, {:?})", image_w, image_h);
     let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
                                .expect("Surface creation failed.");
     let mut software_renderer = Renderer::from_surface(software_surface)
@@ -130,7 +131,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
-    software_renderer.set_logical_size(logical_w, logical_h).unwrap();
+    // software_renderer.set_logical_size(logical_w, logical_h).unwrap();
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -310,7 +311,11 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 }
 
 fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
-    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", WINDOW_W, WINDOW_H);
+
+    let primary_display_mode = sdl_setup.video_subsystem.current_display_mode(0).unwrap();
+    let (w, h) = (primary_display_mode.w as u32, primary_display_mode.h as u32);
+
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", w, h);
     let window = window_builder.position_centered()
                                .resizable()
                                .allow_highdpi()
@@ -322,8 +327,6 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
                              .target_texture()
                              .build()
                              .unwrap();
-
-    // renderer.set_logical_size(LOGICAL_W, LOGICAL_H).unwrap();
 
     let screen_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
 
@@ -475,3 +478,26 @@ fn colour_mul(colour: Color, scale: f32) -> Color {
 // The app works with a given logical size but sdl scales it on the GPU, even handling scaling
 // with different aspect ratios and letterboxing the difference.
 //
+//
+// Ok, the problem is that if we didn't letterbox, then the game written to run at 640x480 is going to distort if we use a whole 1920x1200 display.
+// You have a few options:
+// - Don't use the logical size API, and render at the full size of the window.
+// - Force the window to be a certain aspect ratio (don't let the user resize it by dragging the window frame, give a list of resolutions they can use, that match the monitor's aspect ratio, in a menu somewhere).
+// - Use the logical size API, and adjust your rendering to take aspect ratio into account.
+// In a perfect world, Option #1 is your best choice, but it takes more work. The logical size API is meant to say "I absolutely need a grid of WxH pixels, my game can't function in any other way, can you figure out how to make this work right?" �...it's absolutely a lifesaver in moderning older games, but if you're doing new code, consider if you shouldn't just take advantage of all available pixels.
+// The idea behind a logical size is that no matter what size the SDL_Window
+// is, you have a consistent-sized array of pixels to render to that will fill
+// that entire window. (This does mean stretching to fit, if necessary.) I
+// originally implemented it with a simple call to glOrtho.
+// SDL_RenderSetLogicalSize really should simply set the number of drawable
+// pixels in the window equal to the value you passed in, and leave it at
+// that. Can we fix the current broken implementation please?
+//
+// SDL_RenderSetLogicalSize(renderer, width, height);
+// Where width and height are the resolution your program will give to
+// the SDL functions (i.e. the one that isn't the real resolution). All
+// renderer functions called after this will scale their coordinates
+// accordingly.
+// Of course this only applies if you're using SDL's rendering functions,
+// not if you're e.g. using OpenGL directly.
+
