@@ -134,6 +134,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // 2 or 'best' == anisotropic filtering (supported by Direct3D)
     // The hint strings don't seem to be abstracted in the rust source at the moment but we can see
     // the #defines at e.g. https://github.com/spurious/SDL-mirror/blob/master/include/SDL_hints.h
+    // SDL_HINT_RENDER_SCALE_QUALITY applies per texture, not per renderer.
     hint::set("SDL_RENDER_SCALE_QUALITY", "1");
 
     draw_maze(&mut software_renderer, &grid, &options, &sdl_setup);
@@ -346,7 +347,7 @@ fn maze_image_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
     let img_width = cell_size_pixels as u32 * grid.dimension();
     let img_height = cell_size_pixels as u32 * grid.dimension();
 
-    (img_width, img_height)
+    (img_width + 1, img_height + 1)
 }
 
 fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
