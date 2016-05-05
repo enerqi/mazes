@@ -3,7 +3,7 @@ use std::path::Path;
 
 use petgraph::graph::IndexType;
 use sdl2;
-use sdl2::event::Event;
+use sdl2::event::{Event, WindowEventId};
 use sdl2::hint;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
@@ -315,7 +315,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
                              .unwrap();
 
     let maze_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
-    let maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
+    let mut maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
 
     let mut events = sdl_setup.sdl_context.event_pump().unwrap();
     'running: loop {
@@ -323,9 +323,11 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => {
                     break 'running
-                }
+                },
+                Event::Window{win_event_id: WindowEventId::Resized, data1: new_width, data2: new_height, ..} => {
+                    maze_target_rect = centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
+                },
                 _ => continue,
-                // todo handle window resize?
                 // todo allow resolution > display size?
                 // todo allow control of max on screen window size
             }
