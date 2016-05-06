@@ -226,9 +226,6 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
 #[allow(match_same_arms)]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGrid<u32>) -> Vec<GridCoordinate> {
 
-    println!("{:?}", (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
-                                                  maze_args.flag_end_point_x, maze_args.flag_end_point_y));
-
     let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
                                                   maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
         (Some(_), Some(_), Some(_), Some(_)) => None,
