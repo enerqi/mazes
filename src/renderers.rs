@@ -32,6 +32,8 @@ pub struct RenderOptions<'path, 'dist> {
     show_on_screen: bool,
     colour_distances: bool,
     mark_start_end: bool,
+    start: Option<GridCoordinate>,
+    end: Option<GridCoordinate>,
     show_path: bool,
     distances: Option<&'dist pathing::DijkstraDistances<u32>>,
     output_file: Option<&'path Path>,
@@ -55,6 +57,8 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
                 show_on_screen: false,
                 colour_distances: false,
                 mark_start_end: false,
+                start: None,
+                end: None,
                 show_path: false,
                 distances: None,
                 output_file: None,
@@ -71,6 +75,12 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
     }
     pub fn mark_start_end(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.mark_start_end = on; self
+    }
+    pub fn start(mut self, start: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.start = start; self
+    }
+    pub fn end(mut self, end: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.end = end; self
     }
     pub fn show_path(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.show_path = on; self
@@ -247,13 +257,24 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
             if options.mark_start_end {
 
-                if distance_to_cell == 0 {
-                    // At the start
+                // Start?
+                let is_start = if let Some(start_coord) = options.start {
+                    start_coord == cell
+                } else {
+                    distance_to_cell == 0
+                };
+                if is_start {
                     s_surface.blit(None, r.surface_mut().unwrap(),
                                    Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
                              .expect("S blit to maze surface failed");
-                } else if distance_to_cell == max_cell_distance {
-                    // At the end
+                }
+
+                let is_end = if let Some(end_coord) = options.end {
+                    end_coord == cell
+                } else {
+                    distance_to_cell == max_cell_distance
+                };
+                if is_end {
                     let end_surface = if options.colour_distances { &e_white_surface } else { &e_black_surface };
                     end_surface.blit(None, r.surface_mut().unwrap(),
                                      Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
@@ -265,28 +286,39 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
     if let Some(ref path) = options.path {
 
-        let calc_cell_centre_screen_coordinate = |cell| {
-            let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
-            let half_w = (x2 - x1)/2;
-            let half_h = (y2 - y1)/2;
-            let mid_x = x1 + half_w;
-            let mid_y= y1 + half_h;
-            (mid_x, mid_y)
+        let path_long_enough_to_show = |path: &[GridCoordinate], options: &RenderOptions| -> bool {
+             if options.mark_start_end {
+                path.len() >= 4
+            } else {
+                path.len() >= 2
+            }
         };
 
-        r.set_draw_color(HOT_PINK);
+        if path_long_enough_to_show(&path, &options) {
 
-        let (skip_amount, take_amount) = if options.mark_start_end { (1, path.len() - 2) } else { (0, path.len()) };
-        let mut last_cell_draw_pos = calc_cell_centre_screen_coordinate(path[skip_amount]);
+            let calc_cell_centre_screen_coordinate = |cell| {
+                let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
+                let half_w = (x2 - x1)/2;
+                let half_h = (y2 - y1)/2;
+                let mid_x = x1 + half_w;
+                let mid_y= y1 + half_h;
+                (mid_x, mid_y)
+            };
 
-        for cell in path.iter().skip(skip_amount).take(take_amount) {
-            let path_line_point_1 = last_cell_draw_pos;
-            let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
+            r.set_draw_color(HOT_PINK);
 
-            r.draw_line(Point::from(path_line_point_1),
-                        Point::from(path_line_point_2)).unwrap();
+            let (skip_amount, take_amount) = if options.mark_start_end { (1, path.len() - 2) } else { (0, path.len()) };
+            let mut last_cell_draw_pos = calc_cell_centre_screen_coordinate(path[skip_amount]);
 
-            last_cell_draw_pos = path_line_point_2;
+            for cell in path.iter().skip(skip_amount).take(take_amount) {
+                let path_line_point_1 = last_cell_draw_pos;
+                let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
+
+                r.draw_line(Point::from(path_line_point_1),
+                            Point::from(path_line_point_2)).unwrap();
+
+                last_cell_draw_pos = path_line_point_2;
+            }
         }
     }
 }

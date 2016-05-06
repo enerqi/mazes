@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point|--path-end-x=<e1> --path-end-y=<e2>) (--path-start-x=<x> --path-start-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
 
 Options:
     -h --help              Show this screen.
@@ -33,8 +33,8 @@ Options:
     --show-distances       Show the distance from the start point to all other points on the grid. The start point is the longest path start if not specified.
     --show-path            Show the path from the start to end point. Choose the start/end point automatically from the longest path if not specified.
     --furthest-end-point   Chooses an endpoint that is the furthest distance from the start point. The start point is the longest path start if not specified.
-    --path-start-x=<x>     x coordinate of the path start
-    --path-start-y=<y>     y coordinate of the path start
+    --start-point-x=<x>    x coordinate of the path start
+    --start-point-y=<y>    y coordinate of the path start
     --end-point-x=<e1>     x coordinate of the path end
     --end-point-y=<e2>     y coordinate of the path end
     --image-out=<path>     Output file path for an image rendering of a maze.
@@ -60,8 +60,8 @@ struct MazeArgs {
     flag_mark_start_end: bool,
     flag_show_path: bool,
     flag_furthest_end_point: bool,
-    flag_path_start_x: Option<u32>,
-    flag_path_start_y: Option<u32>,
+    flag_start_point_x: Option<u32>,
+    flag_start_point_y: Option<u32>,
     flag_end_point_x: Option<u32>,
     flag_end_point_y: Option<u32>,
 }
@@ -86,9 +86,7 @@ fn main() {
 
     generate_maze_on_grid(&mut maze_grid, &args);
 
-    let longest_path: Vec<GridCoordinate> =
-        pathing::dijkstra_longest_path::<_, u32>(&maze_grid)
-            .expect("Not a perfect maze, no longest path exists.");
+    let longest_path = longest_path_from_arg_constraints(&args, &maze_grid);
 
     if do_text_render {
 
@@ -110,8 +108,10 @@ fn main() {
             None
         };
 
+        let start_opt = get_start_point(&args, &longest_path);
+        let end_opt = get_end_point(&args, &longest_path);
+
         let distances = if args.flag_colour_distances || args.flag_mark_start_end || args.flag_show_path {
-            let start_opt = get_start_point(&args, &longest_path);
             let (start_x, start_y) = start_opt.unwrap();
             Some(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(start_x, start_y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
@@ -120,22 +120,24 @@ fn main() {
         };
 
         let path_opt = if args.flag_show_path {
-                let (end_x, end_y) = get_end_point(&args, &longest_path).unwrap();
+                let (end_x, end_y) = end_opt.unwrap();
                 pathing::shortest_path(&maze_grid, distances.as_ref().unwrap(),
                                        GridCoordinate::new(end_x, end_y))
             }
             else { None };
-        let render_opts = renderers::RenderOptionsBuilder::new()
+        let render_options = renderers::RenderOptionsBuilder::new()
                                          .show_on_screen(args.flag_screen_view || !is_image_path_set)
                                          .colour_distances(args.flag_colour_distances)
                                          .mark_start_end(args.flag_mark_start_end)
+                                         .start(start_opt.map(|x_y_pair| GridCoordinate::from(x_y_pair)))
+                                         .end(end_opt.map(|x_y_pair| GridCoordinate::from(x_y_pair)))
                                          .show_path(args.flag_show_path)
                                          .distances(distances.as_ref())
                                          .output_file(out_image_path)
                                          .path(path_opt)
                                          .cell_side_pixels_length(args.flag_cell_pixels)
                                          .build();
-        renderers::render_square_grid(&maze_grid, &render_opts);
+        renderers::render_square_grid(&maze_grid, &render_options);
     }
 }
 
@@ -221,10 +223,45 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
     }
 }
 
+fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGrid<u32>) -> Vec<GridCoordinate> {
+
+    println!("{:?}", (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
+                                                  maze_args.flag_end_point_x, maze_args.flag_end_point_y));
+
+    let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
+                                                  maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
+        (Some(_), Some(_), Some(_), Some(_)) => None,
+        (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
+        (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),
+        _ => None
+    };
+
+    if let Some((x, y)) = single_point {
+        let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
+                                            .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
+        let furthest_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
+        let end_coord = furthest_points[0];
+        pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(|| Vec::new())
+    } else {
+        // Fully defined start and end, so we can only find the path for it.
+        if let (Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
+                                                                           maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
+
+            let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(start_x, start_y))
+                                            .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
+            let end_coord = GridCoordinate::new(end_x, end_y);
+            pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(|| Vec::new())
+        } else {
+            // No points given, just find the actual longest path
+            pathing::dijkstra_longest_path::<_, u32>(&maze_grid).unwrap_or_else(|| Vec::new())
+        }
+    }
+}
+
 fn get_start_point(maze_args: &MazeArgs, longest_path: &[GridCoordinate]) -> Option<(u32, u32)> {
 
-    if let (Some(start_x), Some(start_y)) = (maze_args.flag_path_start_x,
-                                             maze_args.flag_path_start_y) {
+    if let (Some(start_x), Some(start_y)) = (maze_args.flag_start_point_x,
+                                             maze_args.flag_start_point_y) {
         Some((start_x, start_y))
 
     } else if maze_arg_requires_start_and_end_point(maze_args) {
