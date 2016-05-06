@@ -129,8 +129,8 @@ fn main() {
                                          .show_on_screen(args.flag_screen_view || !is_image_path_set)
                                          .colour_distances(args.flag_colour_distances)
                                          .mark_start_end(args.flag_mark_start_end)
-                                         .start(start_opt.map(|x_y_pair| GridCoordinate::from(x_y_pair)))
-                                         .end(end_opt.map(|x_y_pair| GridCoordinate::from(x_y_pair)))
+                                         .start(start_opt.map(GridCoordinate::from))
+                                         .end(end_opt.map(GridCoordinate::from))
                                          .show_path(args.flag_show_path)
                                          .distances(distances.as_ref())
                                          .output_file(out_image_path)
@@ -223,6 +223,7 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
     }
 }
 
+#[allow(match_same_arms)]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGrid<u32>) -> Vec<GridCoordinate> {
 
     println!("{:?}", (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
@@ -233,7 +234,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGri
         (Some(_), Some(_), Some(_), Some(_)) => None,
         (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
         (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),
-        _ => None
+        _ => None,
     };
 
     if let Some((x, y)) = single_point {
@@ -241,7 +242,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGri
                                             .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
         let furthest_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
         let end_coord = furthest_points[0];
-        pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(|| Vec::new())
+        pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
     } else {
         // Fully defined start and end, so we can only find the path for it.
         if let (Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
@@ -250,10 +251,10 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGri
             let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(start_x, start_y))
                                             .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
             let end_coord = GridCoordinate::new(end_x, end_y);
-            pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(|| Vec::new())
+            pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
             // No points given, just find the actual longest path
-            pathing::dijkstra_longest_path::<_, u32>(&maze_grid).unwrap_or_else(|| Vec::new())
+            pathing::dijkstra_longest_path::<_, u32>(&maze_grid).unwrap_or_else(Vec::new)
         }
     }
 }
