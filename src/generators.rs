@@ -208,9 +208,11 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     };
 
     let visit_cell = |cell, visited_set: &mut BitSet, visited_count: &mut usize, grid: &SquareGrid<GridIndexType>| {
-        let bit_num = bit_index(cell, &grid);
-        visited_set.insert(bit_num);
-        *visited_count += 1;
+
+        let is_previously_unvisited = visited_set.insert(bit_index(cell, &grid));
+        if is_previously_unvisited {
+            *visited_count += 1;
+        }
     };
 
     // Visit one cell randomly to start things off

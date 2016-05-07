@@ -297,9 +297,6 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<Grid
     // Distances to everywhere from an arbitrary start coordinate
     let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0,0)).expect("Invalid start coordinate.");
 
-    println!("{:?}", first_distances);
-    println!("{}", grid);
-
     // The start of the longest path is just the point furthest away from an arbitrary initial point
     let long_path_start_coordinate = furthest_points_on_grid(&grid, &first_distances)[0];
 
