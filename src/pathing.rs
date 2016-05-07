@@ -216,19 +216,20 @@ pub fn furthest_points_on_grid<GridIndexType, MaxDistanceT>(grid: &SquareGrid<Gr
     let mut furthest_distance: MaxDistanceT = Zero::zero();
     for coord in grid.iter() {
 
-        let d = distances_from_start.distance_from_start_to(coord)
-                                    .expect("Coordinate invalid for distances_from_start data.");
-        match d.cmp(&furthest_distance) {
+        // If the cell is reachable from the start coordinate...
+        if let Some(d) = distances_from_start.distance_from_start_to(coord) {
+            match d.cmp(&furthest_distance) {
 
-            Greater => {
-                furthest.clear();
-                furthest.push(coord);
-                furthest_distance = d;
+                Greater => {
+                    furthest.clear();
+                    furthest.push(coord);
+                    furthest_distance = d;
+                }
+                Equal => {
+                    furthest.push(coord);
+                }
+                _ => {}
             }
-            Equal => {
-                furthest.push(coord);
-            }
-            _ => {}
         }
     }
     furthest
@@ -239,6 +240,12 @@ pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexTyp
                                                   end_point: GridCoordinate) -> Option<Vec<GridCoordinate>>
     where GridIndexType: IndexType, MaxDistanceT: MaxDistance
 {
+
+    if let None = distances_from_start.distance_from_start_to(end_point) {
+        // The end point is not reachable from start.
+        return None;
+    }
+
     let mut path = vec![end_point];
     let start = distances_from_start.start();
     let mut current_coord = end_point;
@@ -289,6 +296,9 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<Grid
 {
     // Distances to everywhere from an arbitrary start coordinate
     let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0,0)).expect("Invalid start coordinate.");
+
+    println!("{:?}", first_distances);
+    println!("{}", grid);
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
     let long_path_start_coordinate = furthest_points_on_grid(&grid, &first_distances)[0];

@@ -5,6 +5,7 @@ use rand::{Rng, ThreadRng};
 use smallvec::SmallVec;
 
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, SquareGrid};
+use squaregrid;
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -139,7 +140,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 /// Randomly walk from one cell to another until all have been visited. A new cell
 /// in the walk is linked to the previous one in the walks path whenever it is unvisited.
 /// Warning: can be painfully slow to visit all cells in a large grid due to the pure random walking.
-pub fn random_walk<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
     let cells_count = grid.size();
@@ -178,4 +179,109 @@ pub fn random_walk<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     }
 }
 
+pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+    where GridIndexType: IndexType
+{
+    let cells_count = grid.size();
 
+    let mut rng = rand::thread_rng();
+    let mut visited_cells = BitSet::with_capacity(cells_count);
+    let mut visited_count = 0;
+
+    let bit_index = |cell, grid: &SquareGrid<GridIndexType>| -> usize {
+        grid.grid_coordinate_to_index(cell).unwrap()
+    };
+
+    let random_unvisited_cell = |visited_set: &BitSet, visited_count: usize, grid: &SquareGrid<GridIndexType>, rng: &mut ThreadRng| -> GridCoordinate {
+
+        let remaining_unvisited_count = cells_count - visited_count;
+        if remaining_unvisited_count > 0 {
+
+            let n = rng.gen::<usize>() % remaining_unvisited_count;
+
+            let cell_index = (0..cells_count).filter(|bit_index| !visited_set.contains(*bit_index)).nth(n).unwrap();
+            squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index)
+
+        } else {
+            panic!("Error, looking for unvisited cell when all visited.");
+        }
+    };
+
+    let visit_cell = |cell, visited_set: &mut BitSet, visited_count: &mut usize, grid: &SquareGrid<GridIndexType>| {
+        let bit_num = bit_index(cell, &grid);
+        visited_set.insert(bit_num);
+        *visited_count += 1;
+    };
+
+    // Visit one cell randomly to start things off
+    visit_cell(random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng),
+               &mut visited_cells, &mut visited_count, &grid);
+
+    // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
+    // The path is a sequence, i.e. Vec/Stack, but we want a quick way to look up if any particular coordinate is in that path.
+    // Crates.io has a linked-hash-map crate but not linked-hash-set, so use a manual hashset/bitset + vec combination.
+    let mut cells_on_random_walk = BitSet::with_capacity(cells_count);
+    let mut random_walk_path: Vec<GridCoordinate> = Vec::new();
+
+    while visited_count < cells_count {
+
+        // A loop erased random walk until any visited cell is encountered
+        // Keep walking randomly until we find a visited cell then link up all the cells on the path to the visited cell found.
+        cells_on_random_walk.clear();
+        random_walk_path.clear();
+
+        let walk_start_cell = random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng);
+        random_walk_path.push(walk_start_cell);
+        cells_on_random_walk.insert(bit_index(walk_start_cell, &grid));
+
+        'walking: loop {
+
+            let current_walk_cell = random_walk_path.last().unwrap().clone();
+
+            if visited_cells.contains(bit_index(current_walk_cell, &grid)) {
+
+                // We have a completed random walk path
+                // Link up the cells and visit them.
+                for (walk_index, cell) in random_walk_path.iter().enumerate() {
+
+                    visit_cell(*cell, &mut visited_cells, &mut visited_count, &grid);
+
+                    if walk_index > 0 {
+
+                        let path_previous_cell = random_walk_path[walk_index - 1];
+                        grid.link(*cell, path_previous_cell)
+                            .expect("Failed to link a cell on loop erased random walk path.");;
+                    }
+                }
+
+                // Look to start a new walk if there are any unvisited cells
+                break 'walking;
+
+            } else {
+
+                // Still randomly walking...
+                if let Some(new_cell) = grid.neighbour_at_direction(current_walk_cell, rand_direction(&mut rng)) {
+
+                    // We have new cell that is within the bounds of the maze grid...
+                    if cells_on_random_walk.contains(bit_index(new_cell, &grid)) {
+
+                        // There is a loop in the current walk, erase it by dropping the path after this point.
+                        // We also have to remove the dropped cells from the bitset
+                        let loop_start_index = random_walk_path.iter().position(|walk_cell| *walk_cell == new_cell).unwrap();
+                        let altered_path_length = loop_start_index + 1;
+                        for cell in random_walk_path.iter().skip(altered_path_length) {
+                            cells_on_random_walk.remove(bit_index(*cell, &grid));
+                        }
+                        random_walk_path.truncate(altered_path_length);
+
+                    } else {
+
+                        // Extend the walk
+                        random_walk_path.push(new_cell);
+                        cells_on_random_walk.insert(bit_index(new_cell, &grid));
+                    }
+                }
+            }
+        }
+    }
+}
