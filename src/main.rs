@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder|random-walk) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
 
 Options:
     -h --help              Show this screen.
@@ -49,6 +49,7 @@ struct MazeArgs {
     cmd_render: bool,
     cmd_binary: bool,
     cmd_sidewinder: bool,
+    cmd_random_walk: bool,
     cmd_text: bool,
     flag_text_out: String,
     cmd_image: bool,
@@ -146,9 +147,12 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
     if maze_args.cmd_render {
         if maze_args.cmd_binary {
             generators::binary_tree(&mut maze_grid);
-        }
-        if maze_args.cmd_sidewinder {
+
+        } else if maze_args.cmd_sidewinder {
             generators::sidewinder(&mut maze_grid);
+        }
+        else if maze_args.cmd_random_walk {
+            generators::random_walk(&mut maze_grid);
         }
     } else {
         generators::sidewinder(&mut maze_grid);

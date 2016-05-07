@@ -287,7 +287,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     if let Some(ref path) = options.path {
 
         let path_long_enough_to_show = |path: &[GridCoordinate], options: &RenderOptions| -> bool {
-             if options.mark_start_end {
+            if options.mark_start_end {
                 path.len() >= 4
             } else {
                 path.len() >= 2

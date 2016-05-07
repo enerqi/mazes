@@ -1,3 +1,4 @@
+use bit_set::BitSet;
 use petgraph::graph::IndexType;
 use rand;
 use rand::{Rng, ThreadRng};
@@ -57,6 +58,15 @@ fn rand_horizontal_direction(rng: &mut ThreadRng) -> GridDirection {
     } else {
         GridDirection::West
     }
+}
+
+static DIRS: [GridDirection; 4] = [GridDirection::North,
+                                   GridDirection::South,
+                                   GridDirection::East,
+                                   GridDirection::West];
+fn rand_direction(rng: &mut ThreadRng) -> GridDirection {
+    let dir_index = rng.gen::<usize>() % 4;
+    DIRS[dir_index]
 }
 
 /// Apply the sidewinder maze generation algorithm to the grid
@@ -124,3 +134,47 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         }
     }
 }
+
+/// Apply the Aldous-Broder random walk maze generation algorithm to the grid.
+/// Randomly walk from one cell to another until all have been visited. A new cell
+/// in the walk is linked to the previous one in the walks path whenever it is unvisited.
+pub fn random_walk<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+    where GridIndexType: IndexType
+{
+    let cells_count = grid.size();
+
+    let mut rng = rand::thread_rng();
+    let mut visited_cells = BitSet::with_capacity(cells_count);
+    let mut visited_count = 0;
+    let mut current_cell = grid.random_cell();
+
+    let bit_index = |cell, grid: &SquareGrid<GridIndexType>| -> usize {
+        grid.grid_coordinate_to_index(cell).unwrap()
+    };
+
+    let visit_cell = |cell, visited_set: &mut BitSet, visited_count: &mut usize, grid: &SquareGrid<GridIndexType>| {
+        let bit_num = bit_index(cell, &grid);
+        visited_set.insert(bit_num);
+        *visited_count += 1;
+    };
+
+    visit_cell(current_cell, &mut visited_cells, &mut visited_count, &grid);
+
+    while visited_count < cells_count {
+
+        if let Some(new_cell) = grid.neighbour_at_direction(current_cell, rand_direction(&mut rng)) {
+
+            if !visited_cells.contains(bit_index(new_cell, &grid)) {
+
+                grid.link(current_cell, new_cell)
+                    .expect("Failed to link a cell on random walk.");
+
+                visit_cell(new_cell, &mut visited_cells, &mut visited_count, &grid);
+            }
+
+            current_cell = new_cell;
+        }
+    }
+}
+
+
