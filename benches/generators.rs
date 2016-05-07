@@ -78,3 +78,27 @@ fn bench_sidewinder_maze_500(b: &mut Bencher) {
 
     b.iter(|| generators::sidewinder(&mut g));
 }
+
+#[bench]
+fn bench_random_walk_maze_128_u16(b: &mut Bencher) {
+
+    let mut g = SquareGrid::<u16>::new(128);
+
+    b.iter(|| generators::random_walk(&mut g));
+}
+
+#[bench]
+fn bench_random_walk_maze_128_u32(b: &mut Bencher) {
+
+    let mut g = SquareGrid::<u32>::new(128);
+
+    b.iter(|| generators::random_walk(&mut g));
+}
+
+#[bench]
+fn bench_random_walk_maze_250(b: &mut Bencher) {
+
+    let mut g = SquareGrid::<u32>::new(250);
+
+    b.iter(|| generators::random_walk(&mut g));
+}

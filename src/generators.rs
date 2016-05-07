@@ -138,6 +138,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 /// Apply the Aldous-Broder random walk maze generation algorithm to the grid.
 /// Randomly walk from one cell to another until all have been visited. A new cell
 /// in the walk is linked to the previous one in the walks path whenever it is unvisited.
+/// Warning: can be painfully slow to visit all cells in a large grid due to the pure random walking.
 pub fn random_walk<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
