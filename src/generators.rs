@@ -149,16 +149,21 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
 
-    let random_unvisited_cell = |visited_set: &BitSet, visited_count: usize, grid: &SquareGrid<GridIndexType>, rng: &mut ThreadRng| -> GridCoordinate {
+    let random_unvisited_cell = |visited_set: &BitSet,
+                                 visited_count: usize,
+                                 grid: &SquareGrid<GridIndexType>,
+                                 rng: &mut ThreadRng|
+                                 -> GridCoordinate {
 
         let remaining_unvisited_count = cells_count - visited_count;
         if remaining_unvisited_count > 0 {
 
             let n = rng.gen::<usize>() % remaining_unvisited_count;
 
-            let cell_index = (0..cells_count).filter(|bit_index| !visited_set.contains(*bit_index))
-                                             .nth(n)
-                                             .unwrap();
+            let cell_index = (0..cells_count)
+                                 .filter(|bit_index| !visited_set.contains(*bit_index))
+                                 .nth(n)
+                                 .unwrap();
             squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index)
 
         } else {
@@ -168,7 +173,9 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
     // Visit one cell randomly to start things off
     visit_cell(random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng),
-               &mut visited_cells, &mut visited_count, &grid);
+               &mut visited_cells,
+               &mut visited_count,
+               &grid);
 
     // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
     // The path is a sequence, i.e. Vec/Stack, but we want a quick way to look up if any particular coordinate is in that path.
@@ -220,7 +227,11 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
                         // There is a loop in the current walk, erase it by dropping the path after this point.
                         // We also have to remove the dropped cells from the bitset
-                        let loop_start_index = random_walk_path.iter().position(|walk_cell| *walk_cell == new_cell).unwrap();
+                        let loop_start_index = random_walk_path.iter()
+                                                               .position(|walk_cell| {
+                                                                   *walk_cell == new_cell
+                                                               })
+                                                               .unwrap();
                         let altered_path_length = loop_start_index + 1;
                         for cell in random_walk_path.iter().skip(altered_path_length) {
                             undo_cell_visit(*cell, &mut cells_on_random_walk, None, &grid);
@@ -249,19 +260,26 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut visited_count = 0;
     let mut current_cell = grid.random_cell();
 
-    let has_any_visited_neighbour = |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>| -> bool {
+    let has_any_visited_neighbour = |cell,
+                                     visited_set: &BitSet,
+                                     grid: &SquareGrid<GridIndexType>|
+                                     -> bool {
         grid.neighbours(cell)
             .iter()
             .any(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
     };
 
-    let visited_neighbours = |cell: GridCoordinate, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>|
+    let visited_neighbours = |cell: GridCoordinate,
+                              visited_set: &BitSet,
+                              grid: &SquareGrid<GridIndexType>|
                               -> Option<CoordinateSmallVec> {
         let vn: CoordinateSmallVec = grid.neighbours(cell)
-                                          .iter()
-                                          .cloned()
-                                          .filter(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
-                                          .collect();
+                                         .iter()
+                                         .cloned()
+                                         .filter(|c| {
+                                             is_cell_in_visited_set(*c, &visited_set, &grid)
+                                         })
+                                         .collect();
         if vn.is_empty() {
             None
         } else {
@@ -269,7 +287,10 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         }
     };
 
-    let are_all_neighbours_visited = |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>| -> bool {
+    let are_all_neighbours_visited = |cell,
+                                      visited_set: &BitSet,
+                                      grid: &SquareGrid<GridIndexType>|
+                                      -> bool {
         grid.neighbours(cell)
             .iter()
             .all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
@@ -314,7 +335,9 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
                     // Link the hunted_cell to any random neighbour that is visited
                     // Visit the hunted cell and make it the new current cell in the walk
-                    let random_visited_neighbour = hunteds_visited_neighbours[rng.gen::<usize>() % hunteds_visited_neighbours.len()];
+                    let random_visited_neighbour =
+                        hunteds_visited_neighbours[rng.gen::<usize>() %
+                                                   hunteds_visited_neighbours.len()];
                     grid.link(hunted_cell, random_visited_neighbour)
                         .expect("Failed to link the hunted cell to a random visited neighbour.");
                     visit_cell(hunted_cell, &mut visited_cells, &mut visited_count, &grid);
@@ -353,13 +376,18 @@ fn rand_horizontal_direction(rng: &mut ThreadRng) -> GridDirection {
 
 fn rand_direction(rng: &mut ThreadRng) -> GridDirection {
     const DIRS_COUNT: usize = 4;
-    const DIRS: [GridDirection; DIRS_COUNT] = [GridDirection::North, GridDirection::South,
-                                               GridDirection::East, GridDirection::West];
+    const DIRS: [GridDirection; DIRS_COUNT] = [GridDirection::North,
+                                               GridDirection::South,
+                                               GridDirection::East,
+                                               GridDirection::West];
     let dir_index = rng.gen::<usize>() % DIRS_COUNT;
     DIRS[dir_index]
 }
 
-fn random_neighbour<GridIndexType>(cell: GridCoordinate, grid: &SquareGrid<GridIndexType>, mut rng: &mut ThreadRng) -> Option<GridCoordinate>
+fn random_neighbour<GridIndexType>(cell: GridCoordinate,
+                                   grid: &SquareGrid<GridIndexType>,
+                                   mut rng: &mut ThreadRng)
+                                   -> Option<GridCoordinate>
     where GridIndexType: IndexType
 {
     grid.neighbour_at_direction(cell, rand_direction(&mut rng))
@@ -369,16 +397,26 @@ fn bit_index<GridIndexType>(cell: GridCoordinate, grid: &SquareGrid<GridIndexTyp
     where GridIndexType: IndexType
 {
     grid.grid_coordinate_to_index(cell)
-        .expect(format!("GridCoordinate {:?} is invalid for Grid with dimension {}.", cell, grid.dimension()).as_ref())
+        .expect(format!("GridCoordinate {:?} is invalid for Grid with dimension {}.",
+                        cell,
+                        grid.dimension())
+                    .as_ref())
 }
 
-fn is_cell_in_visited_set<GridIndexType>(cell: GridCoordinate, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>) -> bool
+fn is_cell_in_visited_set<GridIndexType>(cell: GridCoordinate,
+                                         visited_set: &BitSet,
+                                         grid: &SquareGrid<GridIndexType>)
+                                         -> bool
     where GridIndexType: IndexType
 {
     visited_set.contains(bit_index(cell, &grid))
 }
 
-fn visit_cell<GridIndexType>(cell: GridCoordinate, visited_set: &mut BitSet, visited_count: &mut usize, grid: &SquareGrid<GridIndexType>) -> bool
+fn visit_cell<GridIndexType>(cell: GridCoordinate,
+                             visited_set: &mut BitSet,
+                             visited_count: &mut usize,
+                             grid: &SquareGrid<GridIndexType>)
+                             -> bool
     where GridIndexType: IndexType
 {
     let is_previously_unvisited = visited_set.insert(bit_index(cell, &grid));
@@ -390,7 +428,11 @@ fn visit_cell<GridIndexType>(cell: GridCoordinate, visited_set: &mut BitSet, vis
     }
 }
 
-fn undo_cell_visit<GridIndexType>(cell: GridCoordinate, visited_set: &mut BitSet, visited_count: Option<&mut usize>, grid: &SquareGrid<GridIndexType>) -> bool
+fn undo_cell_visit<GridIndexType>(cell: GridCoordinate,
+                                  visited_set: &mut BitSet,
+                                  visited_count: Option<&mut usize>,
+                                  grid: &SquareGrid<GridIndexType>)
+                                  -> bool
     where GridIndexType: IndexType
 {
     let index = bit_index(cell, &grid);

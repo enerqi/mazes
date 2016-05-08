@@ -56,7 +56,8 @@ pub struct DijkstraDistances<MaxDistanceT = u32> {
     max_distance: MaxDistanceT,
 }
 
-impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
+impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
+    where MaxDistanceT: MaxDistance
 {
     pub fn new<GridIndexType: IndexType>(grid: &SquareGrid<GridIndexType>,
                                          start_coordinate: GridCoordinate)
@@ -129,7 +130,8 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistan
     }
 }
 
-impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT> where MaxDistanceT: MaxDistance
+impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
+    where MaxDistanceT: MaxDistance
 {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
 
@@ -159,15 +161,17 @@ impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT> where MaxDist
 #[derive(Debug)]
 pub struct StartEndPointsDisplay {
     start_coordinates: CoordinateSmallVec,
-    end_coordinates: CoordinateSmallVec
+    end_coordinates: CoordinateSmallVec,
 }
 impl StartEndPointsDisplay {
     pub fn new(starts: CoordinateSmallVec, ends: CoordinateSmallVec) -> StartEndPointsDisplay {
-        StartEndPointsDisplay {start_coordinates: starts, end_coordinates: ends}
+        StartEndPointsDisplay {
+            start_coordinates: starts,
+            end_coordinates: ends,
+        }
     }
 }
-impl GridDisplay for StartEndPointsDisplay
-{
+impl GridDisplay for StartEndPointsDisplay {
     fn render_cell_body(&self, coord: GridCoordinate) -> String {
 
         let contains_coordinate = |coordinates: &CoordinateSmallVec| {
@@ -189,13 +193,11 @@ impl GridDisplay for StartEndPointsDisplay
 
 #[derive(Debug)]
 pub struct PathDisplay {
-    on_path_coordinates: FnvHashSet<GridCoordinate>
+    on_path_coordinates: FnvHashSet<GridCoordinate>,
 }
 impl PathDisplay {
     pub fn new(path: &[GridCoordinate]) -> Self {
-        PathDisplay {
-            on_path_coordinates: path.iter().cloned().collect()
-        }
+        PathDisplay { on_path_coordinates: path.iter().cloned().collect() }
     }
 }
 impl GridDisplay for PathDisplay {
@@ -252,22 +254,31 @@ pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexTyp
 
     while current_coord != start {
 
-        let current_distance_to_start = distances_from_start.distance_from_start_to(current_coord)
-                                                            .expect("Coordinate invalid for distances_from_start data.");
+        let current_distance_to_start =
+            distances_from_start.distance_from_start_to(current_coord)
+                                .expect("Coordinate invalid for distances_from_start data.");
 
         let mut linked_neighbours = grid.neighbours(current_coord)
-                                    .iter()
-                                    .cloned()
-                                    .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
-                                    .collect::<CoordinateSmallVec>();
+                                        .iter()
+                                        .cloned()
+                                        .filter(|neighbour_coord| {
+                                            grid.is_linked(*neighbour_coord, current_coord)
+                                        })
+                                        .collect::<CoordinateSmallVec>();
         let mut neighbour_distances = linked_neighbours.into_iter()
                                                    .map(|coord| (coord, distances_from_start.distance_from_start_to(coord)
                                                                             .expect("Coordinate invalid for distances_from_start data.")))
                                                    .collect::<SmallVec<[(GridCoordinate, MaxDistanceT); 4]>>();
         let closest_to_start = neighbour_distances.into_iter()
-                                                  .fold1(|closest_accumulator, closest_candidate|
-                                                            if closest_candidate.1 < closest_accumulator.1 { closest_candidate }
-                                                            else { closest_accumulator });
+                                                  .fold1(|closest_accumulator,
+                                                          closest_candidate| {
+                                                      if closest_candidate.1 <
+                                                         closest_accumulator.1 {
+                                                          closest_candidate
+                                                      } else {
+                                                          closest_accumulator
+                                                      }
+                                                  });
 
         if let Some((closer_coord, closer_distance)) = closest_to_start {
 
@@ -291,16 +302,21 @@ pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexTyp
 }
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
-pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>) -> Option<Vec<GridCoordinate>>
-    where GridIndexType: IndexType, MaxDistanceT: MaxDistance
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>)
+                                                          -> Option<Vec<GridCoordinate>>
+    where GridIndexType: IndexType,
+          MaxDistanceT: MaxDistance
 {
     // Distances to everywhere from an arbitrary start coordinate
-    let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0,0)).expect("Invalid start coordinate.");
+    let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0, 0))
+                              .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
     let long_path_start_coordinate = furthest_points_on_grid(&grid, &first_distances)[0];
 
-    let distances_from_start = DijkstraDistances::<MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
+    let distances_from_start = DijkstraDistances::<MaxDistanceT>::new(grid,
+                                                                      long_path_start_coordinate)
+                                   .unwrap();
     let end_point = furthest_points_on_grid(&grid, &distances_from_start)[0];
 
     shortest_path(&grid, &distances_from_start, end_point)

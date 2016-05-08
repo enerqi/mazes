@@ -43,7 +43,7 @@ pub struct RenderOptions<'path, 'dist> {
 
 #[derive(Debug)]
 pub struct RenderOptionsBuilder<'path, 'dist> {
-    options: RenderOptions<'path, 'dist>
+    options: RenderOptions<'path, 'dist>,
 }
 impl<'path, 'dist> Default for RenderOptionsBuilder<'path, 'dist> {
     fn default() -> Self {
@@ -64,38 +64,54 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
                 output_file: None,
                 path: None,
                 cell_side_pixels_length: 10,
-            }
+            },
         }
     }
     pub fn show_on_screen(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.show_on_screen = on; self
+        self.options.show_on_screen = on;
+        self
     }
     pub fn colour_distances(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.colour_distances = on; self
+        self.options.colour_distances = on;
+        self
     }
     pub fn mark_start_end(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.mark_start_end = on; self
+        self.options.mark_start_end = on;
+        self
     }
     pub fn start(mut self, start: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.start = start; self
+        self.options.start = start;
+        self
     }
     pub fn end(mut self, end: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.end = end; self
+        self.options.end = end;
+        self
     }
     pub fn show_path(mut self, on: bool) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.show_path = on; self
+        self.options.show_path = on;
+        self
     }
-    pub fn distances(mut self, distances: Option<&'dist pathing::DijkstraDistances<u32>>) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.distances = distances; self
+    pub fn distances(mut self,
+                     distances: Option<&'dist pathing::DijkstraDistances<u32>>)
+                     -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.distances = distances;
+        self
     }
-    pub fn output_file(mut self, output_file: Option<&'path Path>) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.output_file = output_file; self
+    pub fn output_file(mut self,
+                       output_file: Option<&'path Path>)
+                       -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.output_file = output_file;
+        self
     }
     pub fn path(mut self, path: Option<Vec<GridCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.path = path; self
+        self.options.path = path;
+        self
     }
-    pub fn cell_side_pixels_length(mut self, cell_side_pixels_length: u8) -> RenderOptionsBuilder<'path, 'dist> {
-        self.options.cell_side_pixels_length = cell_side_pixels_length; self
+    pub fn cell_side_pixels_length(mut self,
+                                   cell_side_pixels_length: u8)
+                                   -> RenderOptionsBuilder<'path, 'dist> {
+        self.options.cell_side_pixels_length = cell_side_pixels_length;
+        self
     }
     pub fn build(self) -> RenderOptions<'path, 'dist> {
         self.options
@@ -137,7 +153,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
-    //software_renderer.set_logical_size(logical_w, logical_h).unwrap();
+    // software_renderer.set_logical_size(logical_w, logical_h).unwrap();
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -166,7 +182,8 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
 
 fn draw_maze<GridIndexType>(r: &mut Renderer,
                             grid: &SquareGrid<GridIndexType>,
-                            options: &RenderOptions, sdl_setup: &SdlSetup)
+                            options: &RenderOptions,
+                            sdl_setup: &SdlSetup)
     where GridIndexType: IndexType
 {
     // clear the texture background to white
@@ -182,8 +199,9 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     // Font creation
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
     let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
-    let mut font = sdl_setup.ttf_context.load_font(&font_path, font_px_size)
-                                    .expect("Failed to load font");
+    let mut font = sdl_setup.ttf_context
+                            .load_font(&font_path, font_px_size)
+                            .expect("Failed to load font");
     font.set_style(sdl2_ttf::STYLE_BOLD);
 
     // Start and end symbol letters rendered to different surfaces
@@ -201,7 +219,11 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         (x1, y1, x2, y2)
     };
 
-    let max_cell_distance = if let Some(dist) = options.distances { dist.max() } else { 0 };
+    let max_cell_distance = if let Some(dist) = options.distances {
+        dist.max()
+    } else {
+        0
+    };
     let max_cell_distance_f: f32 = max_cell_distance as f32;
 
     for cell in grid.iter() {
@@ -227,9 +249,11 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         }
 
         let distance_to_cell = if let Some(dist) = options.distances {
-                dist.distance_from_start_to(cell)
-                    .expect("Coordinate invalid for distances_from_start data.")
-            } else { 0 };
+            dist.distance_from_start_to(cell)
+                .expect("Coordinate invalid for distances_from_start data.")
+        } else {
+            0
+        };
         let distance_to_cell_f = distance_to_cell as f32;
 
         if options.colour_distances || options.mark_start_end {
@@ -239,8 +263,16 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
             let cell_x1 = x1 + 1;
             let cell_y1 = y1 + 1;
             // extend to cover where not drawing the wall if required
-            let cell_x2 = if must_draw_east_wall { x2 } else { x2 + 1 };
-            let cell_y2 = if must_draw_south_wall { y2 } else { y2 + 1 };
+            let cell_x2 = if must_draw_east_wall {
+                x2
+            } else {
+                x2 + 1
+            };
+            let cell_y2 = if must_draw_south_wall {
+                y2
+            } else {
+                y2 + 1
+            };
 
             let w = (cell_x2 - cell_x1) as u32;
             let h = (cell_y2 - cell_y1) as u32;
@@ -249,7 +281,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 let intensity = (max_cell_distance_f - distance_to_cell_f) / max_cell_distance_f;
                 let cell_colour = colour_mul(distance_colour, intensity);
 
-                //let cell_colour = rainbow_colour(intensity);
+                // let cell_colour = rainbow_colour(intensity);
 
                 r.set_draw_color(cell_colour);
                 let cell_bg_rect = Rect::new(cell_x1, cell_y1, w, h);
@@ -266,8 +298,9 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                     distance_to_cell == 0
                 };
                 if is_start {
-                    s_surface.blit(None, r.surface_mut().unwrap(),
-                                   Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
+                    s_surface.blit(None,
+                                   r.surface_mut().unwrap(),
+                                   Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                              .expect("S blit to maze surface failed");
                 }
 
@@ -277,9 +310,14 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                     distance_to_cell == max_cell_distance
                 };
                 if is_end {
-                    let end_surface = if options.colour_distances { &e_white_surface } else { &e_black_surface };
-                    end_surface.blit(None, r.surface_mut().unwrap(),
-                                     Some(Rect::new(cell_x1+1, cell_y1-1, w-1, h-1)))
+                    let end_surface = if options.colour_distances {
+                        &e_white_surface
+                    } else {
+                        &e_black_surface
+                    };
+                    end_surface.blit(None,
+                                     r.surface_mut().unwrap(),
+                                     Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                                .expect("E blit to maze surface failed");
                 }
             }
@@ -288,28 +326,33 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
     if let Some(ref path) = options.path {
 
-        let path_long_enough_to_show = |path: &[GridCoordinate], options: &RenderOptions| -> bool {
-            if options.mark_start_end {
-                path.len() >= 4
-            } else {
-                path.len() >= 2
-            }
-        };
+        let path_long_enough_to_show =
+            |path: &[GridCoordinate], options: &RenderOptions| -> bool {
+                if options.mark_start_end {
+                    path.len() >= 4
+                } else {
+                    path.len() >= 2
+                }
+            };
 
         if path_long_enough_to_show(&path, &options) {
 
             let calc_cell_centre_screen_coordinate = |cell| {
                 let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
-                let half_w = (x2 - x1)/2;
-                let half_h = (y2 - y1)/2;
+                let half_w = (x2 - x1) / 2;
+                let half_h = (y2 - y1) / 2;
                 let mid_x = x1 + half_w;
-                let mid_y= y1 + half_h;
+                let mid_y = y1 + half_h;
                 (mid_x, mid_y)
             };
 
             r.set_draw_color(HOT_PINK);
 
-            let (skip_amount, take_amount) = if options.mark_start_end { (1, path.len() - 2) } else { (0, path.len()) };
+            let (skip_amount, take_amount) = if options.mark_start_end {
+                (1, path.len() - 2)
+            } else {
+                (0, path.len())
+            };
             let mut last_cell_draw_pos = calc_cell_centre_screen_coordinate(path[skip_amount]);
 
             for cell in path.iter().skip(skip_amount).take(take_amount) {
@@ -317,7 +360,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
                 r.draw_line(Point::from(path_line_point_1),
-                            Point::from(path_line_point_2)).unwrap();
+                            Point::from(path_line_point_2))
+                 .unwrap();
 
                 last_cell_draw_pos = path_line_point_2;
             }
@@ -357,10 +401,10 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => {
                     break 'running
-                },
+                }
                 Event::Window{win_event_id: WindowEventId::Resized, data1: new_width, data2: new_height, ..} => {
                     maze_target_rect = centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
-                },
+                }
                 _ => continue,
                 // todo allow resolution > display size?
                 // todo allow control of max on screen window size
@@ -375,8 +419,8 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
 }
 
 fn maze_image_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
-                                                    options: &RenderOptions)
-                                                    -> (u32, u32)
+                                        options: &RenderOptions)
+                                        -> (u32, u32)
     where GridIndexType: IndexType
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
@@ -409,8 +453,17 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
 
 fn colour_mul(colour: Color, scale: f32) -> Color {
     match colour {
-        Color::RGB(r, g, b) => Color::RGB((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8),
-        Color::RGBA(r, g, b, a) => Color::RGBA((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8, a),
+        Color::RGB(r, g, b) => {
+            Color::RGB((r as f32 * scale) as u8,
+                       (g as f32 * scale) as u8,
+                       (b as f32 * scale) as u8)
+        }
+        Color::RGBA(r, g, b, a) => {
+            Color::RGBA((r as f32 * scale) as u8,
+                        (g as f32 * scale) as u8,
+                        (b as f32 * scale) as u8,
+                        a)
+        }
     }
 }
 
@@ -419,7 +472,7 @@ fn rainbow_colour(cycle_complete_percent: f32) -> Color {
     let rainbow_point = match cycle_complete_percent {
         n if n > 1.0 => 1.0,
         n if n < 0.0 => 0.0,
-        n => n
+        n => n,
     };
     let center = 128.0;
     let width = 127.0;
@@ -444,7 +497,11 @@ fn rainbow_colour(cycle_complete_percent: f32) -> Color {
 /// `rect_height` - height of some rectangle to centre.
 /// `parent_rect_width` - width of the parent rectangle within which we centre a rectangle.
 /// `parent_rect_height` - height of the parent rectangle within which we centre a rectangle.
-fn centre_rectangle(rect_width: u32, rect_height: u32, parent_rect_width: u32, parent_rect_height: u32) -> Rect {
+fn centre_rectangle(rect_width: u32,
+                    rect_height: u32,
+                    parent_rect_width: u32,
+                    parent_rect_height: u32)
+                    -> Rect {
 
     let rect_width_f = rect_width as f32;
     let rect_height_f = rect_height as f32;
@@ -469,8 +526,8 @@ fn centre_rectangle(rect_width: u32, rect_height: u32, parent_rect_width: u32, p
         (rect_width as i32, rect_height as i32)
     };
 
-    let cx = (parent_rect_width_i - w)/2;
-    let cy = (parent_rect_height_i - h)/2;
+    let cx = (parent_rect_width_i - w) / 2;
+    let cy = (parent_rect_height_i - h) / 2;
     Rect::new(cx, cy, w as u32, h as u32)
 }
 
@@ -586,4 +643,3 @@ fn centre_rectangle(rect_width: u32, rect_height: u32, parent_rect_width: u32, p
 // accordingly.
 // Of course this only applies if you're using SDL's rendering functions,
 // not if you're e.g. using OpenGL directly.
-

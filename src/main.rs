@@ -115,7 +115,8 @@ fn main() {
         let start_opt = get_start_point(&args, &longest_path);
         let end_opt = get_end_point(&args, &longest_path);
 
-        let distances = if args.flag_colour_distances || args.flag_mark_start_end || args.flag_show_path {
+        let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
+                           args.flag_show_path {
             let (start_x, start_y) = start_opt.unwrap();
             Some(pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(start_x, start_y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
@@ -124,23 +125,25 @@ fn main() {
         };
 
         let path_opt = if args.flag_show_path {
-                let (end_x, end_y) = end_opt.unwrap();
-                pathing::shortest_path(&maze_grid, distances.as_ref().unwrap(),
-                                       GridCoordinate::new(end_x, end_y))
-            }
-            else { None };
+            let (end_x, end_y) = end_opt.unwrap();
+            pathing::shortest_path(&maze_grid,
+                                   distances.as_ref().unwrap(),
+                                   GridCoordinate::new(end_x, end_y))
+        } else {
+            None
+        };
         let render_options = renderers::RenderOptionsBuilder::new()
-                                         .show_on_screen(args.flag_screen_view || !is_image_path_set)
-                                         .colour_distances(args.flag_colour_distances)
-                                         .mark_start_end(args.flag_mark_start_end)
-                                         .start(start_opt.map(GridCoordinate::from))
-                                         .end(end_opt.map(GridCoordinate::from))
-                                         .show_path(args.flag_show_path)
-                                         .distances(distances.as_ref())
-                                         .output_file(out_image_path)
-                                         .path(path_opt)
-                                         .cell_side_pixels_length(args.flag_cell_pixels)
-                                         .build();
+                                 .show_on_screen(args.flag_screen_view || !is_image_path_set)
+                                 .colour_distances(args.flag_colour_distances)
+                                 .mark_start_end(args.flag_mark_start_end)
+                                 .start(start_opt.map(GridCoordinate::from))
+                                 .end(end_opt.map(GridCoordinate::from))
+                                 .show_path(args.flag_show_path)
+                                 .distances(distances.as_ref())
+                                 .output_file(out_image_path)
+                                 .path(path_opt)
+                                 .cell_side_pixels_length(args.flag_cell_pixels)
+                                 .build();
         renderers::render_square_grid(&maze_grid, &render_options);
     }
 }
@@ -152,17 +155,13 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
             generators::binary_tree(&mut maze_grid);
         } else if maze_args.cmd_sidewinder {
             generators::sidewinder(&mut maze_grid);
-        }
-        else if maze_args.cmd_aldous_broder {
+        } else if maze_args.cmd_aldous_broder {
             generators::aldous_broder(&mut maze_grid);
-        }
-        else if maze_args.cmd_wilson {
+        } else if maze_args.cmd_wilson {
             generators::wilson(&mut maze_grid);
-        }
-        else if maze_args.cmd_hunt_kill {
+        } else if maze_args.cmd_hunt_kill {
             generators::hunt_and_kill(&mut maze_grid);
-        }
-        else if maze_args.cmd_recursive_backtracker {
+        } else if maze_args.cmd_recursive_backtracker {
             generators::recursive_backtracker(&mut maze_grid);
         }
     } else {
@@ -239,10 +238,14 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
 }
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
-fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGrid<u32>) -> Vec<GridCoordinate> {
+fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
+                                     maze_grid: &SquareGrid<u32>)
+                                     -> Vec<GridCoordinate> {
 
-    let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
-                                                  maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
+    let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
+                                                  maze_args.flag_start_point_y,
+                                                  maze_args.flag_end_point_x,
+                                                  maze_args.flag_end_point_y) {
         (Some(_), Some(_), Some(_), Some(_)) => None,
         (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
         (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),
@@ -250,18 +253,24 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs, maze_grid: &SquareGri
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(x, y))
-                                            .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
+        let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
+                                                               GridCoordinate::new(x, y))
+                            .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
         let furthest_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
         let end_coord = furthest_points[0];
         pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
     } else {
         // Fully defined start and end, so we can only find the path for it.
-        if let (Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (maze_args.flag_start_point_x, maze_args.flag_start_point_y,
-                                                                           maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
+        if let (Some(start_x), Some(start_y), Some(end_x), Some(end_y)) =
+               (maze_args.flag_start_point_x,
+                maze_args.flag_start_point_y,
+                maze_args.flag_end_point_x,
+                maze_args.flag_end_point_y) {
 
-            let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, GridCoordinate::new(start_x, start_y))
-                                            .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
+            let distances =
+                pathing::DijkstraDistances::<u32>::new(&maze_grid,
+                                                       GridCoordinate::new(start_x, start_y))
+                    .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
             let end_coord = GridCoordinate::new(end_x, end_y);
             pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
