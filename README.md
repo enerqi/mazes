@@ -8,8 +8,7 @@ Fun with the ![Rust](https://www.rust-lang.org/) programming language - maze gen
 [![](https://img.shields.io/badge/License-Apache2-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-APACHE)
 [![](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-MIT)
 
-![Basic Maze](resources/binary-tree.jpg)
-![Sidewinder Maze](resources/sidewinder.jpg)
+![Wilson Maze](resources/wilson-maze.jpg)
 
 
 

@@ -250,6 +250,10 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     }
 }
 
+/// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
+/// Memory efficient - little beyond the grid to maintain.
+/// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
+/// Executing the hunt phase many times can visit a cell many times though.
 pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
@@ -348,6 +352,10 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     }
 }
 
+/// aka Depth First Search
+/// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
+/// Compute efficient - visits each cell exactly twice
+/// Memory challenged - the search stack can get very deep, up to grid size deep.
 pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
