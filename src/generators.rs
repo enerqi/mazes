@@ -256,8 +256,8 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     };
 
     let visited_neighbours = |cell: GridCoordinate, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>|
-                              -> Option<Vec<GridCoordinate>> {
-        let vn: Vec<GridCoordinate> = grid.neighbours(cell)
+                              -> Option<CoordinateSmallVec> {
+        let vn: CoordinateSmallVec = grid.neighbours(cell)
                                           .iter()
                                           .cloned()
                                           .filter(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
@@ -299,7 +299,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 
                     // There are no other unvisited cells next to this
                     // Start from (0,0) in the grid and find the first *unvisited* cell that is next to a visited one.
-                    let (hunted_cell, hunteds_visited_neighbours): (GridCoordinate, Vec<GridCoordinate>) =
+                    let (hunted_cell, hunteds_visited_neighbours): (GridCoordinate, CoordinateSmallVec) =
                         grid.iter()
                             .skip_while(|cell| !has_any_visited_neighbour(*cell, &visited_cells, &grid) ||
                                                is_cell_in_visited_set(*cell, &visited_cells, &grid))
