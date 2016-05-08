@@ -8,41 +8,9 @@ use mazes::generators;
 use test::Bencher;
 
 #[bench]
-fn bench_binary_maze_11_u8(b: &mut Bencher) {
+fn bench_binary_maze_32_u16(b: &mut Bencher) {
 
-    let mut g = SquareGrid::<u8>::new(11);
-
-    b.iter(|| generators::binary_tree(&mut g));
-}
-
-#[bench]
-fn bench_binary_maze_11_u16(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u16>::new(11);
-
-    b.iter(|| generators::binary_tree(&mut g));
-}
-
-#[bench]
-fn bench_binary_maze_11_u32(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u32>::new(11);
-
-    b.iter(|| generators::binary_tree(&mut g));
-}
-
-#[bench]
-fn bench_binary_maze_128_u16(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u16>::new(128);
-
-    b.iter(|| generators::binary_tree(&mut g));
-}
-
-#[bench]
-fn bench_binary_maze_128_u32(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u32>::new(128);
+    let mut g = SquareGrid::<u16>::new(32);
 
     b.iter(|| generators::binary_tree(&mut g));
 }
@@ -56,17 +24,9 @@ fn bench_binary_maze_500(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_sidewinder_maze_128_u16(b: &mut Bencher) {
+fn bench_sidewinder_maze_32_u16(b: &mut Bencher) {
 
-    let mut g = SquareGrid::<u16>::new(128);
-
-    b.iter(|| generators::sidewinder(&mut g));
-}
-
-#[bench]
-fn bench_sidewinder_maze_128_u32(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u32>::new(128);
+    let mut g = SquareGrid::<u16>::new(32);
 
     b.iter(|| generators::sidewinder(&mut g));
 }
@@ -80,25 +40,25 @@ fn bench_sidewinder_maze_500(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_random_walk_maze_128_u16(b: &mut Bencher) {
+fn bench_aldous_broder_maze_32_u16(b: &mut Bencher) {
 
-    let mut g = SquareGrid::<u16>::new(128);
+    let mut g = SquareGrid::<u16>::new(32);
 
-    b.iter(|| generators::random_walk(&mut g));
+    b.iter(|| generators::aldous_broder(&mut g));
 }
 
 #[bench]
-fn bench_random_walk_maze_128_u32(b: &mut Bencher) {
+fn bench_wilson_maze_32_u16(b: &mut Bencher) {
 
-    let mut g = SquareGrid::<u32>::new(128);
+    let mut g = SquareGrid::<u16>::new(32);
 
-    b.iter(|| generators::random_walk(&mut g));
+    b.iter(|| generators::wilson(&mut g));
 }
 
 #[bench]
-fn bench_random_walk_maze_250(b: &mut Bencher) {
+fn bench_hunt_and_kill_maze_32_u16(b: &mut Bencher) {
 
-    let mut g = SquareGrid::<u32>::new(250);
+    let mut g = SquareGrid::<u16>::new(32);
 
-    b.iter(|| generators::random_walk(&mut g));
+    b.iter(|| generators::hunt_and_kill(&mut g));
 }
