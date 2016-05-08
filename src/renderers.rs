@@ -249,6 +249,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 let intensity = (max_cell_distance_f - distance_to_cell_f) / max_cell_distance_f;
                 let cell_colour = colour_mul(distance_colour, intensity);
 
+                //let cell_colour = rainbow_colour(intensity);
+
                 r.set_draw_color(cell_colour);
                 let cell_bg_rect = Rect::new(cell_x1, cell_y1, w, h);
                 r.fill_rect(cell_bg_rect).unwrap();
@@ -410,6 +412,30 @@ fn colour_mul(colour: Color, scale: f32) -> Color {
         Color::RGB(r, g, b) => Color::RGB((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8),
         Color::RGBA(r, g, b, a) => Color::RGBA((r as f32 * scale) as u8, (g as f32 * scale) as u8, (b as f32 * scale) as u8, a),
     }
+}
+
+fn rainbow_colour(cycle_complete_percent: f32) -> Color {
+
+    let rainbow_point = match cycle_complete_percent {
+        n if n > 1.0 => 1.0,
+        n if n < 0.0 => 0.0,
+        n => n
+    };
+    let center = 128.0;
+    let width = 127.0;
+    let red_frequency = 0.7;
+    let green_frequency = 0.8;
+    let blue_frequency = 0.9;
+    let len = 250.0;
+    let red_phase = 0.0;
+    let green_phase = 2.0;
+    let blue_phase = 4.0;
+    let i = len - (rainbow_point * len);
+    let red = (red_frequency * i + red_phase) * width + center;
+    let green = (green_frequency * i + green_phase) * width + center;
+    let blue = (blue_frequency * i + blue_phase) * width + center;
+
+    Color::RGB(red as u8, green as u8, blue as u8)
 }
 
 /// Return a Rect that is centered within a parent rectangle. The rectangle will be scaled down to fit within the parent rectangle
