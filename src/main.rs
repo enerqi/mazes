@@ -24,7 +24,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
 
 Options:
     -h --help              Show this screen.
@@ -52,6 +52,7 @@ struct MazeArgs {
     cmd_aldous_broder: bool,
     cmd_wilson: bool,
     cmd_hunt_kill: bool,
+    cmd_recursive_backtracker: bool,
     cmd_text: bool,
     flag_text_out: String,
     cmd_image: bool,
@@ -160,6 +161,9 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
         }
         else if maze_args.cmd_hunt_kill {
             generators::hunt_and_kill(&mut maze_grid);
+        }
+        else if maze_args.cmd_recursive_backtracker {
+            generators::recursive_backtracker(&mut maze_grid);
         }
     } else {
         generators::sidewinder(&mut maze_grid);

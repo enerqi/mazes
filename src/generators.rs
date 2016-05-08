@@ -325,6 +325,12 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     }
 }
 
+pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+    where GridIndexType: IndexType
+{
+
+}
+
 fn two_perpendicular_directions(rng: &mut ThreadRng) -> [GridDirection; 2] {
     [rand_vertical_direction(rng), rand_horizontal_direction(rng)]
 }
