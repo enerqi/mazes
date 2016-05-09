@@ -1,5 +1,6 @@
 use bit_set::BitSet;
 use petgraph::graph::IndexType;
+use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
@@ -16,7 +17,7 @@ use utils;
 pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
-    let mut rng = utils::xor_shift_rng();
+    let mut rng = rand::weak_rng();
     let neighbours_to_check = two_perpendicular_directions(&mut rng);
 
     for cell_coord in grid.iter() {
@@ -60,7 +61,7 @@ pub fn binary_tree<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
-    let mut rng = utils::xor_shift_rng();
+    let mut rng = rand::weak_rng();
 
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
@@ -116,7 +117,7 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 {
     let cells_count = grid.size();
 
-    let mut rng = utils::xor_shift_rng();
+    let mut rng = rand::weak_rng();
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
     let mut current_cell = grid.random_cell();
@@ -145,7 +146,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 {
     let cells_count = grid.size();
 
-    let mut rng = utils::xor_shift_rng();
+    let mut rng = rand::weak_rng();
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
 
@@ -259,7 +260,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 {
     let cells_count = grid.size();
 
-    let mut rng = utils::xor_shift_rng();
+    let mut rng = rand::weak_rng();
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
     let mut current_cell = grid.random_cell();

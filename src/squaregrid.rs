@@ -1,12 +1,12 @@
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
 use petgraph::graph::IndexType;
+use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 use std::convert::From;
 use std::fmt;
 use std::rc::Rc;
-use utils;
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
 pub struct GridCoordinate {
@@ -94,7 +94,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn random_cell(&self) -> GridCoordinate {
-        let mut rng = utils::xor_shift_rng();
+        let mut rng = rand::weak_rng();
         let index = rng.gen::<usize>() % self.size();
         index_to_grid_coordinate(self.dimension_size, index)
     }
