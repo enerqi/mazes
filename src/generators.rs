@@ -6,7 +6,6 @@ use smallvec::SmallVec;
 
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, SquareGrid};
 use squaregrid;
-use utils;
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -122,7 +121,7 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut visited_count = 0;
     let mut current_cell = grid.random_cell();
 
-    visit_cell(current_cell, &mut visited_cells, &mut visited_count, &grid);
+    visit_cell(current_cell, &mut visited_cells, Some(&mut visited_count), &grid);
 
     while visited_count < cells_count {
 
@@ -133,7 +132,7 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 grid.link(current_cell, new_cell)
                     .expect("Failed to link a cell on random walk.");
 
-                visit_cell(new_cell, &mut visited_cells, &mut visited_count, &grid);
+                visit_cell(new_cell, &mut visited_cells, Some(&mut visited_count), &grid);
             }
 
             current_cell = new_cell;
@@ -175,7 +174,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     // Visit one cell randomly to start things off
     visit_cell(random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng),
                &mut visited_cells,
-               &mut visited_count,
+               Some(&mut visited_count),
                &grid);
 
     // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
@@ -205,7 +204,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 // Link up the cells and visit them.
                 for (walk_index, cell) in random_walk_path.iter().enumerate() {
 
-                    visit_cell(*cell, &mut visited_cells, &mut visited_count, &grid);
+                    visit_cell(*cell, &mut visited_cells, Some(&mut visited_count), &grid);
 
                     if walk_index > 0 {
 
@@ -301,7 +300,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
             .all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
     };
 
-    visit_cell(current_cell, &mut visited_cells, &mut visited_count, &grid);
+    visit_cell(current_cell, &mut visited_cells, Some(&mut visited_count), &grid);
 
     while visited_count < cells_count {
 
@@ -312,7 +311,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 grid.link(current_cell, new_cell)
                     .expect("Failed to link a cell on random walk.");
 
-                visit_cell(new_cell, &mut visited_cells, &mut visited_count, &grid);
+                visit_cell(new_cell, &mut visited_cells, Some(&mut visited_count), &grid);
 
                 current_cell = new_cell;
 
@@ -345,7 +344,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                                                    hunteds_visited_neighbours.len()];
                     grid.link(hunted_cell, random_visited_neighbour)
                         .expect("Failed to link the hunted cell to a random visited neighbour.");
-                    visit_cell(hunted_cell, &mut visited_cells, &mut visited_count, &grid);
+                    visit_cell(hunted_cell, &mut visited_cells, Some(&mut visited_count), &grid);
                     current_cell = hunted_cell;
                 }
             }
@@ -360,7 +359,54 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
+    let cells_count = grid.size();
+    let start_cell = grid.random_cell();
+    let mut rng = rand::weak_rng();
+    let mut visited_cells = BitSet::with_capacity(cells_count);
+    let mut dfs_stack = vec![start_cell];
 
+    let unvisited_neighbours = |cell: GridCoordinate,
+                                visited_set: &BitSet,
+                                grid: &SquareGrid<GridIndexType>|
+                                -> Option<CoordinateSmallVec> {
+        let vn: CoordinateSmallVec = grid.neighbours(cell)
+                                         .iter()
+                                         .cloned()
+                                         .filter(|c| {
+                                             !is_cell_in_visited_set(*c, &visited_set, &grid)
+                                         })
+                                         .collect();
+        if vn.is_empty() {
+            None
+        } else {
+            Some(vn)
+        }
+    };
+
+    while !dfs_stack.is_empty() {
+
+        let cell = *dfs_stack.last().expect("dfs stack should not be empty");
+        visit_cell(cell, &mut visited_cells, None, &grid);
+
+        let unvisited_neighbours_opt = unvisited_neighbours(cell, &visited_cells, &grid);
+
+        if let Some(unvisited) = unvisited_neighbours_opt {
+
+            let unvisited_count = unvisited.len();
+            let next_cell = match unvisited_count {
+                1 => unvisited[0],
+                _ => unvisited[rng.gen::<usize>() % unvisited_count],
+            };
+
+            grid.link(cell, next_cell)
+                .expect("Failed to link cells in depth first search walk.");
+            dfs_stack.push(next_cell);
+
+        } else {
+
+            dfs_stack.pop();
+        }
+    }
 }
 
 fn two_perpendicular_directions<R: Rng>(rng: &mut R) -> [GridDirection; 2] {
@@ -423,17 +469,22 @@ fn is_cell_in_visited_set<GridIndexType>(cell: GridCoordinate,
 
 fn visit_cell<GridIndexType>(cell: GridCoordinate,
                              visited_set: &mut BitSet,
-                             visited_count: &mut usize,
+                             visited_count: Option<&mut usize>,
                              grid: &SquareGrid<GridIndexType>)
                              -> bool
     where GridIndexType: IndexType
 {
     let is_previously_unvisited = visited_set.insert(bit_index(cell, &grid));
-    if is_previously_unvisited {
-        *visited_count += 1;
-        true
+    if let Some(count) = visited_count {
+
+        if is_previously_unvisited {
+            *count += 1;
+        }
+        is_previously_unvisited
+
     } else {
-        false
+
+        is_previously_unvisited
     }
 }
 
