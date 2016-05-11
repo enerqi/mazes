@@ -37,7 +37,7 @@ Options:
     --start-point-y=<y>    y coordinate of the path start
     --end-point-x=<e1>     x coordinate of the path end
     --end-point-y=<e2>     y coordinate of the path end
-    --image-out=<path>     Output file path for an image rendering of a maze.
+    --image-out=<path>     Output file path for an image rendering of a maze. Always PNG format.
     --cell-pixels=<n>      Pixel count to render one cell wall in a maze [default: 10] max 255.
     --colour-distances     Indicate the distance from a starting point to any cell by the cell's background colour.
     --screen-view          When rendering to an image and saving to a file, also show the image on the screen.

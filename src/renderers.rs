@@ -9,6 +9,7 @@ use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Renderer, Texture};
 use sdl2::surface::Surface;
+use sdl2_image::SaveSurface;
 use sdl2_ttf;
 
 use sdl;
@@ -169,10 +170,8 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     let maze_surface: Surface =
         software_renderer.into_surface().expect("Failed to get surface from software renderer");
 
-    // WTF: the trait `sdl2_image::SaveSurface` is not implemented for the type `sdl2::surface::Surface<'_>`
-    // (&maze_surface as &sdl2_image::SaveSurface).save(&Path::new("./maze_render.png")).expect("Failed to save surface as PNG");
     if let Some(file_path) = options.output_file {
-        maze_surface.save_bmp(file_path).expect("Failed to save surface as BMP");
+        maze_surface.save(file_path).expect("Failed to save surface");
     }
 
     if options.show_on_screen {
