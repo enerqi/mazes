@@ -533,16 +533,16 @@ fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCo
     match dir {
         GridDirection::North => {
             if y > 0 {
-                Some(GridCoordinate { y: y - 1, ..coord })
+                Some(GridCoordinate { x: coord.x, y: y - 1 })
             } else {
                 None
             }
         }
-        GridDirection::South => Some(GridCoordinate { y: y + 1, ..coord }),
-        GridDirection::East => Some(GridCoordinate { x: x + 1, ..coord }),
+        GridDirection::South => Some(GridCoordinate { x: coord.x, y: y + 1 }),
+        GridDirection::East => Some(GridCoordinate { x: x + 1, y: coord.y }),
         GridDirection::West => {
             if x > 0 {
-                Some(GridCoordinate { x: x - 1, ..coord })
+                Some(GridCoordinate { x: x - 1, y: coord.y })
             } else {
                 None
             }

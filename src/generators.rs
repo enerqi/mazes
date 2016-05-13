@@ -452,10 +452,7 @@ fn bit_index<GridIndexType>(cell: GridCoordinate, grid: &SquareGrid<GridIndexTyp
     where GridIndexType: IndexType
 {
     grid.grid_coordinate_to_index(cell)
-        .expect(format!("GridCoordinate {:?} is invalid for Grid with dimension {}.",
-                        cell,
-                        grid.dimension())
-                    .as_ref())
+        .expect("bit_index impossible: invalid cell")
 }
 
 fn is_cell_in_visited_set<GridIndexType>(cell: GridCoordinate,

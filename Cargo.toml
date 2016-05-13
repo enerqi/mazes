@@ -35,6 +35,9 @@ walkdir = "^0.1.5"
 default = []
 test = []
 
+[profile.bench]
+debug = true
+
 [[bin]]
 name = "mazes_driver"
 test = false
