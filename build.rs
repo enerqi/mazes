@@ -8,15 +8,20 @@ use walkdir::{DirEntry, WalkDir};
 
 fn main() {
 
-    // Assume libsdl2*-dev etc. are installed with the package manager on unix family systems.
-    //
-    // On a windows OS we look for the C built sdl2 libraries for the relevant platform/architecture
-    // and add them to the Link arguments.
+    // Assume libsdl2*-dev is installed on BSD, but the link search path may not include the directory
+    // containing the libs.
+    if cfg!(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd", target_os = "dragonfly")) {
+        println!("cargo:rustc-link-search=/usr/local/lib");
+    }
+
+    // Assume libsdl2*-dev etc. are installed with the package manager on unix family systems but on
+    // a windows OS we look for the C built sdl2 libraries for the relevant platform/architecture to be
+    // provided in a sub-directory and add them to the Link arguments.
     // We also ensure that the DLLs have been copied to the project root (or SDL_DLLS_RUN_DIR env var dir)
     // so that cargo run can find them.
     if cfg!(target_family = "windows") {
 
-        // Assuming cargo always sets this environment variable.
+        // Assuming cargo always sets this environment variable!
         let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
         let win_sdl_dlls_dir = if let Ok(dir) = env::var("SDL_DLLS_RUN_DIR") {
