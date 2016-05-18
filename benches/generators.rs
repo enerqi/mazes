@@ -16,25 +16,9 @@ fn bench_binary_maze_32_u16(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_binary_maze_500(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u32>::new(500);
-
-    b.iter(|| generators::binary_tree(&mut g));
-}
-
-#[bench]
 fn bench_sidewinder_maze_32_u16(b: &mut Bencher) {
 
     let mut g = SquareGrid::<u16>::new(32);
-
-    b.iter(|| generators::sidewinder(&mut g));
-}
-
-#[bench]
-fn bench_sidewinder_maze_500(b: &mut Bencher) {
-
-    let mut g = SquareGrid::<u32>::new(500);
 
     b.iter(|| generators::sidewinder(&mut g));
 }
@@ -61,4 +45,13 @@ fn bench_hunt_and_kill_maze_32_u16(b: &mut Bencher) {
     let mut g = SquareGrid::<u16>::new(32);
 
     b.iter(|| generators::hunt_and_kill(&mut g));
+}
+
+
+#[bench]
+fn bench_recursive_backtracker_maze_32_u16(b: &mut Bencher) {
+
+    let mut g = SquareGrid::<u16>::new(32);
+
+    b.iter(|| generators::recursive_backtracker(&mut g));
 }
