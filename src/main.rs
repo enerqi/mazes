@@ -256,7 +256,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
         let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
                                                                GridCoordinate::new(x, y))
                             .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
-        let furthest_points = pathing::furthest_points_on_grid(&maze_grid, &distances);
+        let furthest_points = distances.furthest_points_on_grid();
         let end_coord = furthest_points[0];
         pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
     } else {

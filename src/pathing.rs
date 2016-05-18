@@ -28,7 +28,6 @@
 // - Weak (requires downgrading an RC<T>) pointer or RC<T>
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
-use std::cmp::Ordering::{Equal, Greater};
 use std::fmt::{Debug, Display, LowerHex};
 use std::ops::Add;
 
@@ -128,7 +127,19 @@ impl<MaxDistanceT> DijkstraDistances<MaxDistanceT>
     pub fn distance_from_start_to(&self, coord: GridCoordinate) -> Option<MaxDistanceT> {
         self.distances.get(&coord).cloned()
     }
-}
+
+    pub fn furthest_points_on_grid(&self) -> CoordinateSmallVec {
+        let mut furthest = CoordinateSmallVec::new();
+        let furthest_distance = self.max();
+
+        for (coord, distance) in self.distances.iter() {
+            if *distance == furthest_distance {
+                furthest.push(*coord);
+            }
+        }
+        furthest
+    }
+ }
 
 impl<MaxDistanceT> GridDisplay for DijkstraDistances<MaxDistanceT>
     where MaxDistanceT: MaxDistance
@@ -210,33 +221,6 @@ impl GridDisplay for PathDisplay {
     }
 }
 
-pub fn furthest_points_on_grid<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>,
-                                                            distances_from_start: &DijkstraDistances<MaxDistanceT>) -> CoordinateSmallVec
-    where GridIndexType: IndexType, MaxDistanceT: MaxDistance
-{
-    let mut furthest = CoordinateSmallVec::new();
-    let mut furthest_distance: MaxDistanceT = Zero::zero();
-    for coord in grid.iter() {
-
-        // If the cell is reachable from the start coordinate...
-        if let Some(d) = distances_from_start.distance_from_start_to(coord) {
-            match d.cmp(&furthest_distance) {
-
-                Greater => {
-                    furthest.clear();
-                    furthest.push(coord);
-                    furthest_distance = d;
-                }
-                Equal => {
-                    furthest.push(coord);
-                }
-                _ => {}
-            }
-        }
-    }
-    furthest
-}
-
 pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>,
                                                   distances_from_start: &DijkstraDistances<MaxDistanceT>,
                                                   end_point: GridCoordinate) -> Option<Vec<GridCoordinate>>
@@ -312,12 +296,12 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<Grid
                               .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
-    let long_path_start_coordinate = furthest_points_on_grid(&grid, &first_distances)[0];
+    let long_path_start_coordinate = first_distances.furthest_points_on_grid()[0];
 
     let distances_from_start = DijkstraDistances::<MaxDistanceT>::new(grid,
                                                                       long_path_start_coordinate)
                                    .unwrap();
-    let end_point = furthest_points_on_grid(&grid, &distances_from_start)[0];
+    let end_point = distances_from_start.furthest_points_on_grid()[0];
 
     shortest_path(&grid, &distances_from_start, end_point)
 }
@@ -401,6 +385,23 @@ mod tests {
         assert_eq!(distances.distance_from_start_to(top_right), Some(1));
         assert_eq!(distances.distance_from_start_to(bottom_left), Some(1));
         assert_eq!(distances.distance_from_start_to(bottom_right), Some(2));
+    }
+
+    #[test]
+    fn max_distance() {
+        let mut g = SmallGrid::new(2);
+        let gc = |x, y| GridCoordinate::new(x, y);
+        let top_left = gc(0, 0);
+        let top_right = gc(1, 0);
+        let bottom_left = gc(0, 1);
+        let bottom_right = gc(1, 1);
+        g.link(top_left, top_right).expect("Link Failed");
+        g.link(top_left, bottom_left).expect("Link Failed");
+        g.link(top_right, bottom_right).expect("Link Failed");
+        g.link(bottom_left, bottom_right).expect("Link Failed");
+        let start_coordinate = gc(0, 0);
+        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        assert_eq!(distances.max(), 2);
     }
 
     #[test]

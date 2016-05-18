@@ -34,7 +34,7 @@ cargo run -- --help
 
 # Examples
 cargo run -- render recursive-backtracker image --grid-size=60 --mark-start-end --colour-distances --show-path
-cargo run -- render wilson text image --text-out=="maze.text" --grid-size=40
+cargo run -- render wilson text image --text-out="maze.text" --grid-size=40
 ```
 
 ## Doc Links
