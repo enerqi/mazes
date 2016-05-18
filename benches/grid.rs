@@ -3,6 +3,7 @@
 extern crate mazes;
 extern crate test;
 
+use mazes::squaregrid;
 use mazes::squaregrid::SquareGrid;
 use test::Bencher;
 
@@ -40,4 +41,11 @@ fn bench_maze_128_u32(b: &mut Bencher) {
 fn bench_maze_500(b: &mut Bencher) {
 
     b.iter(|| SquareGrid::<u32>::new(500));
+}
+
+#[bench]
+fn bench_index_to_gridcoordinate(b: &mut Bencher) {
+    let g = SquareGrid::<u32>::new(11);
+    let dim = g.dimension();
+    b.iter(|| squaregrid::index_to_grid_coordinate(dim, 93));
 }

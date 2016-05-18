@@ -519,7 +519,7 @@ pub fn index_to_grid_coordinate(dimension_size: u32,
                                 one_dimensional_index: usize)
                                 -> GridCoordinate {
     let y = one_dimensional_index / dimension_size as usize;
-    let x = one_dimensional_index - (y * dimension_size as usize);
+    let x = one_dimensional_index % dimension_size as usize;
     GridCoordinate {
         x: x as u32,
         y: y as u32,
