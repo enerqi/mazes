@@ -63,3 +63,10 @@ path = "./benches/pathing.rs"
 test = false
 bench = true
 doc = false
+
+[[bench]]
+name = "renderers"
+path = "./benches/renderers.rs"
+test = false
+bench = true
+doc = false
