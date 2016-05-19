@@ -1,6 +1,6 @@
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
-use petgraph::graph::IndexType;
+pub use petgraph::graph::IndexType;
 use rand;
 use rand::Rng;
 use smallvec::SmallVec;

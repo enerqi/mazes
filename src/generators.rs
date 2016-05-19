@@ -1,10 +1,9 @@
 use bit_set::BitSet;
-use petgraph::graph::IndexType;
 use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
-use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, SquareGrid};
+use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, IndexType, SquareGrid};
 use squaregrid;
 
 /// Apply the binary tree maze generation algorithm to a grid

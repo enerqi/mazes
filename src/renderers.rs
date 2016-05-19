@@ -1,7 +1,6 @@
 use std::cmp;
 use std::path::Path;
 
-use petgraph::graph::IndexType;
 use sdl2;
 use sdl2::event::{Event, WindowEventId};
 use sdl2::hint;
@@ -15,7 +14,7 @@ use sdl2_ttf;
 use sdl;
 use sdl::SdlSetup;
 use pathing;
-use squaregrid::{GridCoordinate, GridDirection, SquareGrid};
+use squaregrid::{GridCoordinate, GridDirection, IndexType, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;

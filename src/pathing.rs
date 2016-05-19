@@ -33,10 +33,9 @@ use std::ops::Add;
 
 use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
-use petgraph::graph::IndexType;
 use smallvec::SmallVec;
 
-use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
+use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, IndexType, SquareGrid};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
 
