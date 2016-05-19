@@ -19,6 +19,7 @@
 
 extern crate bit_set;
 extern crate fnv;
+extern crate image;
 extern crate itertools;
 extern crate num;
 extern crate petgraph;
@@ -32,6 +33,7 @@ extern crate smallvec;
 extern crate quickcheck;
 
 pub mod generators;
+pub mod masks;
 pub mod pathing;
 pub mod renderers;
 pub mod squaregrid;
