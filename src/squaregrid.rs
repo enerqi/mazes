@@ -1,7 +1,6 @@
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
 pub use petgraph::graph::IndexType;
-use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 use std::convert::From;
@@ -93,8 +92,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.dimension_size
     }
 
-    pub fn random_cell(&self) -> GridCoordinate {
-        let mut rng = rand::weak_rng();
+    pub fn random_cell<R: Rng>(&self, rng: &mut R) -> GridCoordinate {
         let index = rng.gen::<usize>() % self.size();
         index_to_grid_coordinate(self.dimension_size, index)
     }
@@ -556,6 +554,7 @@ mod tests {
 
     use super::*;
     use itertools::Itertools; // a trait
+    use rand;
     use smallvec::SmallVec;
     use std::u32;
 
@@ -682,8 +681,9 @@ mod tests {
     fn random_cell() {
         let g = SmallGrid::new(4);
         let cells_count = 4 * 4;
+        let mut rng = rand::weak_rng();
         for _ in 0..1000 {
-            let coord = g.random_cell();
+            let coord = g.random_cell(&mut rng);
             assert!(coord.x < cells_count);
             assert!(coord.y < cells_count);
         }

@@ -59,6 +59,13 @@ bench = true
 doc = false
 
 [[bench]]
+name = "masks"
+path = "./benches/masks.rs"
+test = false
+bench = true
+doc = false
+
+[[bench]]
 name = "pathing"
 path = "./benches/pathing.rs"
 test = false

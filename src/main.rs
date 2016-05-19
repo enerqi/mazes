@@ -2,6 +2,7 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
 extern crate docopt;
+extern crate image;
 extern crate mazes;
 extern crate rustc_serialize;
 
@@ -16,6 +17,7 @@ use docopt::Docopt;
 
 use mazes::squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
 use mazes::generators;
+use mazes::masks;
 use mazes::renderers;
 use mazes::pathing;
 
@@ -24,7 +26,7 @@ const USAGE: &'static str = "Mazes
 Usage:
     mazes_driver -h | --help
     mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>]
+    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>) (--start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end] [--grid-size=<n>] [--mask-file=<path>]
 
 Options:
     -h --help              Show this screen.
@@ -42,6 +44,7 @@ Options:
     --colour-distances     Indicate the distance from a starting point to any cell by the cell's background colour.
     --screen-view          When rendering to an image and saving to a file, also show the image on the screen.
     --mark-start-end       Draw an 'S' (start) and 'E' (end) to show the path start and end points.
+    --mask-file=<path>     Path to a mask data image file (e.g. grayscale), where each pixel acts as a grid cell mask or not depending upon its intensity.
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
@@ -68,6 +71,7 @@ struct MazeArgs {
     flag_start_point_y: Option<u32>,
     flag_end_point_x: Option<u32>,
     flag_end_point_y: Option<u32>,
+    flag_mask_file: String,
 }
 
 
@@ -150,6 +154,13 @@ fn main() {
 
 fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs) {
 
+    let mask = if !maze_args.flag_mask_file.is_empty() {
+            let img = image::open(&Path::new(&maze_args.flag_mask_file)).unwrap();
+            Some(masks::BinaryMask2D::from_image(&img))
+        } else {
+            None
+        };
+
     if maze_args.cmd_render {
         if maze_args.cmd_binary {
             generators::binary_tree(&mut maze_grid);
@@ -162,7 +173,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
         } else if maze_args.cmd_hunt_kill {
             generators::hunt_and_kill(&mut maze_grid);
         } else if maze_args.cmd_recursive_backtracker {
-            generators::recursive_backtracker(&mut maze_grid);
+            generators::recursive_backtracker(&mut maze_grid, mask.as_ref());
         }
     } else {
         generators::sidewinder(&mut maze_grid);

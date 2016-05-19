@@ -3,6 +3,7 @@ use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
+use masks::BinaryMask2D;
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, IndexType, SquareGrid};
 use squaregrid;
 
@@ -118,7 +119,7 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut rng = rand::weak_rng();
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
-    let mut current_cell = grid.random_cell();
+    let mut current_cell = grid.random_cell(&mut rng);
 
     visit_cell(current_cell, &mut visited_cells, Some(&mut visited_count), &grid);
 
@@ -261,7 +262,7 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut rng = rand::weak_rng();
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
-    let mut current_cell = grid.random_cell();
+    let mut current_cell = grid.random_cell(&mut rng);
 
     let has_any_visited_neighbour = |cell,
                                      visited_set: &BitSet,
@@ -355,26 +356,52 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 /// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
 /// Compute efficient - visits each cell exactly twice
 /// Memory challenged - the search stack can get very deep, up to grid size deep.
-pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
-    let cells_count = grid.size();
-    let start_cell = grid.random_cell();
     let mut rng = rand::weak_rng();
-    let mut visited_cells = BitSet::with_capacity(cells_count);
+    let cells_count = grid.size();
+    let unmasked_cells_count = if let Some(m) = mask {
+            m.count_unmasked_within_dimensions(grid.dimension(), grid.dimension())
+        } else {
+            cells_count
+        };
+
+    let start_cell_opt: Option<GridCoordinate> = if let Some(m) = mask {
+            random_unmasked_cell(&grid, m, unmasked_cells_count)
+        } else {
+            Some(grid.random_cell(&mut rng))
+        };
+
+    // No unmasked cell to start at?
+    if start_cell_opt.is_none() {
+        return;
+    }
+
+    let start_cell = start_cell_opt.unwrap();
+    let mut visited_cells = BitSet::with_capacity(unmasked_cells_count);
     let mut dfs_stack = vec![start_cell];
 
     let unvisited_neighbours = |cell: GridCoordinate,
                                 visited_set: &BitSet,
                                 grid: &SquareGrid<GridIndexType>|
                                 -> Option<CoordinateSmallVec> {
-        let vn: CoordinateSmallVec = grid.neighbours(cell)
-                                         .iter()
-                                         .cloned()
-                                         .filter(|c| {
-                                             !is_cell_in_visited_set(*c, &visited_set, &grid)
-                                         })
-                                         .collect();
+
+        let vn: CoordinateSmallVec = if let Some(m) = mask {
+                grid.neighbours(cell)
+                    .iter()
+                    .cloned()
+                    .filter(|c: &GridCoordinate| !is_cell_in_visited_set(*c, &visited_set, &grid) &&
+                                                 !m.is_masked(*c))
+                    .collect()
+            } else {
+                grid.neighbours(cell)
+                    .iter()
+                    .cloned()
+                    .filter(|c: &GridCoordinate| !is_cell_in_visited_set(*c, &visited_set, &grid))
+                    .collect()
+            };
+
         if vn.is_empty() {
             None
         } else {
@@ -503,3 +530,26 @@ fn undo_cell_visit<GridIndexType>(cell: GridCoordinate,
 
     was_present
 }
+
+fn random_unmasked_cell<GridIndexType>(grid: &SquareGrid<GridIndexType>, mask: &BinaryMask2D, unmasked_cells: usize) -> Option<GridCoordinate>
+    where GridIndexType: IndexType
+{
+    if unmasked_cells != 0 {
+
+        let mut rng = rand::weak_rng();
+        let n = rng.gen::<usize>() % unmasked_cells;
+        let cells_count = grid.size();
+        let cell_index = (0..cells_count)
+                             .filter(|i| {
+                                let coord = squaregrid::index_to_grid_coordinate(grid.dimension(), *i);
+                                !mask.is_masked(coord)
+                             })
+                             .nth(n)
+                             .unwrap();
+        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
+
+    } else {
+        None
+    }
+}
+
