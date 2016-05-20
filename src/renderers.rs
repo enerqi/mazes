@@ -236,8 +236,23 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
             r.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
-        let must_draw_east_wall = !grid.is_neighbour_linked(cell, GridDirection::East);
-        let must_draw_south_wall = !grid.is_neighbour_linked(cell, GridDirection::South);
+        // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
+        // and no links to the neighbour it shares a wall with then the wall need not be drawn.
+        let are_links_count_of_valid_cells_zero = |c: GridCoordinate, neighbour_direction: GridDirection| -> bool {
+            let cell_links_count_is_zero = |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
+
+            if cell_links_count_is_zero(c) {
+                grid.neighbour_at_direction(c, neighbour_direction)
+                    .map_or(false, |neighbour| cell_links_count_is_zero(neighbour))
+            } else {
+                false
+            }
+        };
+
+        let must_draw_east_wall = !grid.is_neighbour_linked(cell, GridDirection::East) &&
+                                  !are_links_count_of_valid_cells_zero(cell, GridDirection::East);
+        let must_draw_south_wall = !grid.is_neighbour_linked(cell, GridDirection::South) &&
+                                   !are_links_count_of_valid_cells_zero(cell, GridDirection::South);
 
         if must_draw_east_wall {
             r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
@@ -247,8 +262,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         }
 
         let distance_to_cell = if let Some(dist) = options.distances {
-            dist.distance_from_start_to(cell)
-                .expect("Coordinate invalid for distances_from_start data.")
+            // The cell maybe unreachable
+            dist.distance_from_start_to(cell).unwrap_or(max_cell_distance)
         } else {
             0
         };
