@@ -167,7 +167,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
         } else if maze_args.cmd_sidewinder {
             generators::sidewinder(&mut maze_grid);
         } else if maze_args.cmd_aldous_broder {
-            generators::aldous_broder(&mut maze_grid);
+            generators::aldous_broder(&mut maze_grid, mask.as_ref());
         } else if maze_args.cmd_wilson {
             generators::wilson(&mut maze_grid);
         } else if maze_args.cmd_hunt_kill {
