@@ -35,6 +35,7 @@ use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 
+use masks::BinaryMask2D;
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, IndexType, SquareGrid};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
@@ -285,13 +286,24 @@ pub fn shortest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexTyp
 }
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
-pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>)
+/// If the mask creates disconnected subgraphs it may not be the longest path.
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT>(grid: &SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
                                                           -> Option<Vec<GridCoordinate>>
     where GridIndexType: IndexType,
           MaxDistanceT: MaxDistance
 {
     // Distances to everywhere from an arbitrary start coordinate
-    let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, GridCoordinate::new(0, 0))
+    let arbitrary_start_point = if let Some(m) = mask {
+        m.first_unmasked_coordinate()
+    } else {
+        Some(GridCoordinate::new(0, 0))
+    };
+
+    if arbitrary_start_point.is_none() {
+        return None;
+    }
+
+    let first_distances = DijkstraDistances::<MaxDistanceT>::new(grid, arbitrary_start_point.unwrap())
                               .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point

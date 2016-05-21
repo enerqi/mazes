@@ -17,7 +17,7 @@ use docopt::Docopt;
 
 use mazes::squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
 use mazes::generators;
-use mazes::masks;
+use mazes::masks::BinaryMask2D;
 use mazes::renderers;
 use mazes::pathing;
 
@@ -74,7 +74,6 @@ struct MazeArgs {
     flag_mask_file: String,
 }
 
-// todo - handle main() auto picking start point based on a longest path which inappropriately involves masked areas.
 fn main() {
 
     let args: MazeArgs = Docopt::new(USAGE)
@@ -92,9 +91,11 @@ fn main() {
 
     let mut maze_grid = SquareGrid::<u32>::new(grid_size);
 
-    generate_maze_on_grid(&mut maze_grid, &args);
+    let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
-    let longest_path = longest_path_from_arg_constraints(&args, &maze_grid);
+    generate_maze_on_grid(&mut maze_grid, &args, mask.as_ref());
+
+    let longest_path = longest_path_from_arg_constraints(&args, &maze_grid, mask.as_ref());
 
     if do_text_render {
 
@@ -152,14 +153,7 @@ fn main() {
     }
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs) {
-
-    let mask = if !maze_args.flag_mask_file.is_empty() {
-            let img = image::open(&Path::new(&maze_args.flag_mask_file)).unwrap();
-            Some(masks::BinaryMask2D::from_image(&img))
-        } else {
-            None
-        };
+fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs, mask: Option<&BinaryMask2D>) {
 
     if maze_args.cmd_render {
         if maze_args.cmd_binary {
@@ -167,13 +161,13 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeAr
         } else if maze_args.cmd_sidewinder {
             generators::sidewinder(&mut maze_grid);
         } else if maze_args.cmd_aldous_broder {
-            generators::aldous_broder(&mut maze_grid, mask.as_ref());
+            generators::aldous_broder(&mut maze_grid, mask);
         } else if maze_args.cmd_wilson {
             generators::wilson(&mut maze_grid);
         } else if maze_args.cmd_hunt_kill {
             generators::hunt_and_kill(&mut maze_grid);
         } else if maze_args.cmd_recursive_backtracker {
-            generators::recursive_backtracker(&mut maze_grid, mask.as_ref());
+            generators::recursive_backtracker(&mut maze_grid, mask);
         }
     } else {
         generators::sidewinder(&mut maze_grid);
@@ -250,7 +244,7 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &SquareGrid<u32>)
+                                     maze_grid: &SquareGrid<u32>, mask: Option<&BinaryMask2D>)
                                      -> Vec<GridCoordinate> {
 
     let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
@@ -286,7 +280,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
             pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
             // No points given, just find the actual longest path
-            pathing::dijkstra_longest_path::<_, u32>(&maze_grid).unwrap_or_else(Vec::new)
+            pathing::dijkstra_longest_path::<_, u32>(&maze_grid, mask).unwrap_or_else(Vec::new)
         }
     }
 }
@@ -328,6 +322,22 @@ fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
 
 fn as_coordinate_smallvec(coord: GridCoordinate) -> CoordinateSmallVec {
     [coord].into_iter().cloned().collect::<CoordinateSmallVec>()
+}
+
+fn mask_from_maze_args(maze_args: &MazeArgs) -> Option<BinaryMask2D> {
+    if !maze_args.flag_mask_file.is_empty() {
+        Some(load_binary_mask(&maze_args.flag_mask_file))
+    } else {
+        None
+    }
+}
+
+fn load_binary_mask(file_path_str: &str) -> BinaryMask2D {
+
+    let img = image::open(&Path::new(file_path_str))
+            .expect(format!("Unable to open and read mask image file {}", file_path_str).as_ref());
+
+    BinaryMask2D::from_image(&img)
 }
 
 fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {

@@ -70,4 +70,23 @@ impl BinaryMask2D {
 
         count
     }
+
+    pub fn first_unmasked_coordinate(&self) -> Option<GridCoordinate> {
+
+        // A bit in the set means masked off
+        // The bitset iterator returns indices of masked values, so we cannot use that
+        // (A BitVec would be more convenient for that purpose, and faster as bitset::contains
+        //  does a length check)
+        let mask_size = self.width * self.height;
+        let index: Option<usize> = (0..mask_size)
+                                   .position(|bit_index| !self.mask.contains(bit_index as usize));
+
+        if let Some(i) = index {
+            let x = i % self.width as usize;
+            let y = i / self.height as usize;
+            Some(GridCoordinate::new(x as u32, y as u32))
+        } else {
+            None
+        }
+    }
 }
