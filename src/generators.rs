@@ -119,22 +119,16 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: 
 {
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(&grid, mask);
-
     let mut rng = rand::weak_rng();
+
+    let current_cell_opt = random_cell(&grid, mask.map(|m| (m, unmasked_count)), &mut rng);
+    if current_cell_opt.is_none() {
+        return;
+    }
 
     // We may not need a bit set that large, but we want to keep the bit_index mapping predictable.
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
-
-    let current_cell_opt: Option<GridCoordinate> = if let Some(m) = mask {
-            random_unmasked_cell(&grid, m, unmasked_count)
-        } else {
-            Some(grid.random_cell(&mut rng))
-        };
-    // No unmasked cell to start at?
-    if current_cell_opt.is_none() {
-        return;
-    }
 
     let mut current_cell = current_cell_opt.unwrap();
 
@@ -167,12 +161,21 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: 
     }
 }
 
-pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+/// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
+///       and causing the algorithm to run forever.
+pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
     let cells_count = grid.size();
-
+    let unmasked_count = unmasked_cells_count(&grid, mask);
     let mut rng = rand::weak_rng();
+
+    let current_cell_opt = random_cell(&grid, mask.map(|m| (m, unmasked_count)), &mut rng);
+    if current_cell_opt.is_none() {
+        return;
+    }
+
+    // We may not need a bit set that large, but we want to keep the bit_index mapping predictable.
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
 
@@ -210,7 +213,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     let mut cells_on_random_walk = BitSet::with_capacity(cells_count);
     let mut random_walk_path: Vec<GridCoordinate> = Vec::new();
 
-    while visited_count < cells_count {
+    while visited_count < unmasked_count {
 
         // A loop erased random walk until any visited cell is encountered
         // Keep walking randomly until we find a visited cell then link up all the cells on the path to the visited cell found.
@@ -390,13 +393,7 @@ pub fn recursive_backtracker<GridIndexType>(grid: &mut SquareGrid<GridIndexType>
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(&grid, mask);
 
-    let start_cell_opt: Option<GridCoordinate> = if let Some(m) = mask {
-            random_unmasked_cell(&grid, m, unmasked_count)
-        } else {
-            Some(grid.random_cell(&mut rng))
-        };
-
-    // No unmasked cell to start at?
+    let start_cell_opt = random_cell(&grid, mask.map(|m| (m, unmasked_count)), &mut rng);
     if start_cell_opt.is_none() {
         return;
     }
@@ -498,6 +495,18 @@ fn random_neighbour<GridIndexType, R>(cell: GridCoordinate,
     grid.neighbour_at_direction(cell, rand_direction(&mut rng))
 }
 
+fn random_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
+                                 mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
+                                 mut rng: &mut R) -> Option<GridCoordinate>
+    where GridIndexType: IndexType, R: Rng
+{
+    if let Some((m, unmasked_count)) = mask_with_unmasked_count {
+        random_unmasked_cell(&grid, m, unmasked_count, &mut rng)
+    } else {
+        Some(grid.random_cell(&mut rng))
+    }
+}
+
 fn bit_index<GridIndexType>(cell: GridCoordinate, grid: &SquareGrid<GridIndexType>) -> usize
     where GridIndexType: IndexType
 {
@@ -579,12 +588,11 @@ fn random_unmasked_neighbour<GridIndexType, R>(cell: GridCoordinate,
     }
 }
 
-fn random_unmasked_cell<GridIndexType>(grid: &SquareGrid<GridIndexType>, mask: &BinaryMask2D, unmasked_cells: usize) -> Option<GridCoordinate>
-    where GridIndexType: IndexType
+fn random_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>, mask: &BinaryMask2D, unmasked_cells: usize, mut rng: &mut R) -> Option<GridCoordinate>
+    where GridIndexType: IndexType, R: Rng
 {
     if unmasked_cells != 0 {
 
-        let mut rng = rand::weak_rng();
         let n = rng.gen::<usize>() % unmasked_cells;
         let cells_count = grid.size();
         let cell_index = (0..cells_count)
