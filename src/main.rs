@@ -74,7 +74,7 @@ struct MazeArgs {
     flag_mask_file: String,
 }
 
-
+// todo - handle main() auto picking start point based on a longest path which inappropriately involves masked areas.
 fn main() {
 
     let args: MazeArgs = Docopt::new(USAGE)

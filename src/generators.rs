@@ -111,6 +111,9 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 /// Randomly walk from one cell to another until all have been visited. A new cell
 /// in the walk is linked to the previous one in the walks path whenever it is unvisited.
 /// Warning: can be painfully slow to visit all cells in a large grid due to the pure random walking.
+///
+/// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
+///       and causing the algorithm to run forever.
 pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
@@ -145,6 +148,10 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: 
             random_neighbour(current_cell, &grid, &mut rng)
         };
 
+        // The random neighbour may not return a new cell that we can go to it, but it
+        // will at least eventually backtrack.
+        // random_unmasked_neighbour should achieve the same, even if the only unmasked neighbour
+        // is backtracking to a previously visited cell
         if let Some(new_cell) = next_cell {
 
             if !is_cell_in_visited_set(new_cell, &visited_cells, &grid) {
@@ -273,7 +280,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
 /// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
 /// Memory efficient - little beyond the grid to maintain.
 /// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
-/// Executing the hunt phase many times can visit a cell many times though.
+/// Executing the hunt phase many times can visit a cell many times.
 pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     where GridIndexType: IndexType
 {
