@@ -146,9 +146,9 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
     let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
-                               .expect("Surface creation failed.");
+        .expect("Surface creation failed.");
     let mut software_renderer = Renderer::from_surface(software_surface)
-                                    .expect("Software renderer creation failed.");
+        .expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
@@ -166,8 +166,8 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     draw_maze(&mut software_renderer, &grid, &options, &sdl_setup);
 
     // Getting the surface from the renderer drops the renderer.
-    let maze_surface: Surface =
-        software_renderer.into_surface().expect("Failed to get surface from software renderer");
+    let maze_surface: Surface = software_renderer.into_surface()
+        .expect("Failed to get surface from software renderer");
 
     if let Some(file_path) = options.output_file {
         maze_surface.save(file_path).expect("Failed to save surface");
@@ -198,8 +198,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
     let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
     let mut font = sdl_setup.ttf_context
-                            .load_font(&font_path, font_px_size)
-                            .expect("Failed to load font");
+        .load_font(&font_path, font_px_size)
+        .expect("Failed to load font");
     font.set_style(sdl2_ttf::STYLE_BOLD);
 
     // Start and end symbol letters rendered to different surfaces
@@ -238,16 +238,18 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
 
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
-        let are_links_count_of_valid_cells_zero = |c: GridCoordinate, neighbour_direction: GridDirection| -> bool {
-            let cell_links_count_is_zero = |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
+        let are_links_count_of_valid_cells_zero =
+            |c: GridCoordinate, neighbour_direction: GridDirection| -> bool {
+                let cell_links_count_is_zero =
+                    |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
 
-            if cell_links_count_is_zero(c) {
-                grid.neighbour_at_direction(c, neighbour_direction)
-                    .map_or(false, |neighbour| cell_links_count_is_zero(neighbour))
-            } else {
-                false
-            }
-        };
+                if cell_links_count_is_zero(c) {
+                    grid.neighbour_at_direction(c, neighbour_direction)
+                        .map_or(false, |neighbour| cell_links_count_is_zero(neighbour))
+                } else {
+                    false
+                }
+            };
 
         let must_draw_east_wall = !grid.is_neighbour_linked(cell, GridDirection::East) &&
                                   !are_links_count_of_valid_cells_zero(cell, GridDirection::East);
@@ -312,9 +314,9 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 };
                 if is_start {
                     s_surface.blit(None,
-                                   r.surface_mut().unwrap(),
-                                   Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
-                             .expect("S blit to maze surface failed");
+                              r.surface_mut().unwrap(),
+                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                        .expect("S blit to maze surface failed");
                 }
 
                 let is_end = if let Some(end_coord) = options.end {
@@ -329,9 +331,9 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                         &e_black_surface
                     };
                     end_surface.blit(None,
-                                     r.surface_mut().unwrap(),
-                                     Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
-                               .expect("E blit to maze surface failed");
+                              r.surface_mut().unwrap(),
+                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                        .expect("E blit to maze surface failed");
                 }
             }
         }
@@ -373,8 +375,8 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
                 r.draw_line(Point::from(path_line_point_1),
-                            Point::from(path_line_point_2))
-                 .unwrap();
+                               Point::from(path_line_point_2))
+                    .unwrap();
 
                 last_cell_draw_pos = path_line_point_2;
             }
@@ -394,16 +396,16 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
 
     let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_w, window_h);
     let window = window_builder.position_centered()
-                               .resizable()
-                               .allow_highdpi()
-                               .build()
-                               .unwrap();
+        .resizable()
+        .allow_highdpi()
+        .build()
+        .unwrap();
     let mut renderer = window.renderer()
-                             .present_vsync()
-                             .accelerated()
-                             .target_texture()
-                             .build()
-                             .unwrap();
+        .present_vsync()
+        .accelerated()
+        .target_texture()
+        .build()
+        .unwrap();
 
     let maze_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
     let mut maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
@@ -412,11 +414,14 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     'running: loop {
         for event in events.poll_iter() {
             match event {
-                Event::Quit{..} | Event::KeyDown{keycode: Some(sdl2::keyboard::Keycode::Q), ..} => {
-                    break 'running
-                }
-                Event::Window{win_event_id: WindowEventId::Resized, data1: new_width, data2: new_height, ..} => {
-                    maze_target_rect = centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
+                Event::Quit { .. } |
+                Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Q), .. } => break 'running,
+                Event::Window { win_event_id: WindowEventId::Resized,
+                                data1: new_width,
+                                data2: new_height,
+                                .. } => {
+                    maze_target_rect =
+                        centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
                 }
                 _ => continue,
                 // todo allow resolution > display size?
@@ -453,9 +458,9 @@ fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
 {
     // Setup to draw to the given texture. The texture is moved/owned by the `set` call.
     r.render_target()
-     .expect("This platform doesn't support render targets")
-     .set(t)
-     .unwrap(); // Returns the old render target if the function is successful, which we ignore.
+        .expect("This platform doesn't support render targets")
+        .set(t)
+        .unwrap(); // Returns the old render target if the function is successful, which we ignore.
 
     draw_maze(r, &grid, &options, &sdl_setup);
 

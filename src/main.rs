@@ -77,8 +77,8 @@ struct MazeArgs {
 fn main() {
 
     let args: MazeArgs = Docopt::new(USAGE)
-                             .and_then(|d| d.decode())
-                             .unwrap_or_else(|e| e.exit());
+        .and_then(|d| d.decode())
+        .unwrap_or_else(|e| e.exit());
 
     let grid_size = args.flag_grid_size;
     let any_render_option = args.cmd_text || args.cmd_image;
@@ -138,22 +138,24 @@ fn main() {
             None
         };
         let render_options = renderers::RenderOptionsBuilder::new()
-                                 .show_on_screen(args.flag_screen_view || !is_image_path_set)
-                                 .colour_distances(args.flag_colour_distances)
-                                 .mark_start_end(args.flag_mark_start_end)
-                                 .start(start_opt.map(GridCoordinate::from))
-                                 .end(end_opt.map(GridCoordinate::from))
-                                 .show_path(args.flag_show_path)
-                                 .distances(distances.as_ref())
-                                 .output_file(out_image_path)
-                                 .path(path_opt)
-                                 .cell_side_pixels_length(args.flag_cell_pixels)
-                                 .build();
+            .show_on_screen(args.flag_screen_view || !is_image_path_set)
+            .colour_distances(args.flag_colour_distances)
+            .mark_start_end(args.flag_mark_start_end)
+            .start(start_opt.map(GridCoordinate::from))
+            .end(end_opt.map(GridCoordinate::from))
+            .show_path(args.flag_show_path)
+            .distances(distances.as_ref())
+            .output_file(out_image_path)
+            .path(path_opt)
+            .cell_side_pixels_length(args.flag_cell_pixels)
+            .build();
         renderers::render_square_grid(&maze_grid, &render_options);
     }
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>, maze_args: &MazeArgs, mask: Option<&BinaryMask2D>) {
+fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>,
+                         maze_args: &MazeArgs,
+                         mask: Option<&BinaryMask2D>) {
 
     if maze_args.cmd_render {
         if maze_args.cmd_binary {
@@ -207,9 +209,8 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
             let (end_x, end_y) = end_opt.unwrap();
 
             // Given a start and end point - show the shortest path between these two points
-            let path_opt = pathing::shortest_path(&maze_grid,
-                                                  &distances,
-                                                  GridCoordinate::new(end_x, end_y));
+            let path_opt =
+                pathing::shortest_path(&maze_grid, &distances, GridCoordinate::new(end_x, end_y));
 
             if let Some(path) = path_opt {
                 let display_path = Rc::new(pathing::PathDisplay::new(&path));
@@ -244,7 +245,8 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &SquareGrid<u32>, mask: Option<&BinaryMask2D>)
+                                     maze_grid: &SquareGrid<u32>,
+                                     mask: Option<&BinaryMask2D>)
                                      -> Vec<GridCoordinate> {
 
     let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
@@ -260,7 +262,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     if let Some((x, y)) = single_point {
         let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
                                                                GridCoordinate::new(x, y))
-                            .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
+            .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
         let furthest_points = distances.furthest_points_on_grid();
         let end_coord = furthest_points[0];
         pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
@@ -272,10 +274,10 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                 maze_args.flag_end_point_x,
                 maze_args.flag_end_point_y) {
 
-            let distances =
-                pathing::DijkstraDistances::<u32>::new(&maze_grid,
-                                                       GridCoordinate::new(start_x, start_y))
-                    .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
+            let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
+                                                                   GridCoordinate::new(start_x,
+                                                                                       start_y))
+                .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
             let end_coord = GridCoordinate::new(end_x, end_y);
             pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
@@ -335,7 +337,7 @@ fn mask_from_maze_args(maze_args: &MazeArgs) -> Option<BinaryMask2D> {
 fn load_binary_mask(file_path_str: &str) -> BinaryMask2D {
 
     let img = image::open(&Path::new(file_path_str))
-            .expect(format!("Unable to open and read mask image file {}", file_path_str).as_ref());
+        .expect(format!("Unable to open and read mask image file {}", file_path_str).as_ref());
 
     BinaryMask2D::from_image(&img)
 }

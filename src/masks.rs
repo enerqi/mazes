@@ -5,14 +5,12 @@ use squaregrid::GridCoordinate;
 
 #[derive(Debug)]
 pub struct BinaryMask2D {
-
     mask: BitSet,
     pub width: u32,
     pub height: u32,
 }
 
 impl BinaryMask2D {
-
     pub fn from_image(data_image: &DynamicImage) -> BinaryMask2D {
 
         let w = data_image.width();
@@ -28,7 +26,7 @@ impl BinaryMask2D {
                 let off = gray_scale_value < 128;
 
                 if off {
-                   mask.insert((y * w + x) as usize);
+                    mask.insert((y * w + x) as usize);
                 }
             }
         }
@@ -36,7 +34,7 @@ impl BinaryMask2D {
         BinaryMask2D {
             mask: mask,
             width: w,
-            height: h
+            height: h,
         }
     }
 
@@ -79,7 +77,7 @@ impl BinaryMask2D {
         //  does a length check)
         let mask_size = self.width * self.height;
         let index: Option<usize> = (0..mask_size)
-                                   .position(|bit_index| !self.mask.contains(bit_index as usize));
+            .position(|bit_index| !self.mask.contains(bit_index as usize));
 
         if let Some(i) = index {
             let x = i % self.width as usize;

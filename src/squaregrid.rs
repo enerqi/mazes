@@ -143,13 +143,12 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         if let Some(graph_node_index) = self.grid_coordinate_graph_index(coord) {
 
             let linked_cells = self.graph
-                                   .edges(graph_node_index)
-                                   .map(|index_edge_data_pair| {
-                                       let grid_node_index = index_edge_data_pair.0;
-                                       index_to_grid_coordinate(self.dimension_size,
-                                                                grid_node_index.index())
-                                   })
-                                   .collect();
+                .edges(graph_node_index)
+                .map(|index_edge_data_pair| {
+                    let grid_node_index = index_edge_data_pair.0;
+                    index_to_grid_coordinate(self.dimension_size, grid_node_index.index())
+                })
+                .collect();
             Some(linked_cells)
         } else {
             None
@@ -349,7 +348,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
                 // Cell Body
                 if let Some(ref displayer) = self.grid_display {
                     row_middle_section_render.push_str(displayer.render_cell_body(cell_coord)
-                                                                .as_str());
+                        .as_str());
                 } else {
                     row_middle_section_render.push_str(default_cell_body.as_str());
                 }
@@ -490,15 +489,15 @@ impl Iterator for BatchIter {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_index < self.dimension_size {
             let coords = (0..self.dimension_size)
-                             .into_iter()
-                             .map(|i: u32| {
-                                 if let BatchIterType::Row = self.iter_type {
-                                     GridCoordinate::new(i, self.current_index)
-                                 } else {
-                                     GridCoordinate::new(self.current_index, i)
-                                 }
-                             })
-                             .collect();
+                .into_iter()
+                .map(|i: u32| {
+                    if let BatchIterType::Row = self.iter_type {
+                        GridCoordinate::new(i, self.current_index)
+                    } else {
+                        GridCoordinate::new(self.current_index, i)
+                    }
+                })
+                .collect();
             self.current_index += 1;
             Some(coords)
         } else {
@@ -574,8 +573,8 @@ mod tests {
         let check_expected_neighbours = |coord, expected_neighbours: &[GridCoordinate]| {
             let node_indices: Vec<GridCoordinate> = g.neighbours(coord).iter().cloned().sorted();
             let expected_indices: Vec<GridCoordinate> = expected_neighbours.into_iter()
-                                                                           .cloned()
-                                                                           .sorted();
+                .cloned()
+                .sorted();
             assert_eq!(node_indices, expected_indices);
         };
         let gc = |x, y| GridCoordinate::new(x, y);
@@ -601,14 +600,13 @@ mod tests {
         let g = SmallGrid::new(2);
         let gc = |x, y| GridCoordinate::new(x, y);
 
-        let check_neighbours = |coord,
-                                dirs: &[GridDirection],
-                                neighbour_opts: &[Option<GridCoordinate>]| {
+        let check_neighbours =
+            |coord, dirs: &[GridDirection], neighbour_opts: &[Option<GridCoordinate>]| {
 
-            let neighbour_options: CoordinateOptionSmallVec = g.neighbours_at_directions(coord,
-                                                                                         dirs);
-            assert_eq!(&*neighbour_options, neighbour_opts);
-        };
+                let neighbour_options: CoordinateOptionSmallVec =
+                    g.neighbours_at_directions(coord, dirs);
+                assert_eq!(&*neighbour_options, neighbour_opts);
+            };
         check_neighbours(gc(0, 0), &[], &[]);
         check_neighbours(gc(0, 0), &[GridDirection::North], &[None]);
         check_neighbours(gc(0, 0), &[GridDirection::West], &[None]);
@@ -667,8 +665,8 @@ mod tests {
         let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
                        gc(1, 2), gc(2, 2)];
         let indices: Vec<Option<usize>> = coords.into_iter()
-                                                .map(|coord| g.grid_coordinate_to_index(*coord))
-                                                .collect();
+            .map(|coord| g.grid_coordinate_to_index(*coord))
+            .collect();
         let expected = (0..9).map(|n| Some(n)).collect::<Vec<Option<usize>>>();
         assert_eq!(expected, indices);
 
@@ -736,27 +734,23 @@ mod tests {
         }
 
         // Testing `is_neighbour_linked` for all directions
-        let all_dirs = [GridDirection::North,
-                        GridDirection::South,
-                        GridDirection::East,
-                        GridDirection::West];
+        let all_dirs =
+            [GridDirection::North, GridDirection::South, GridDirection::East, GridDirection::West];
 
-        let directional_links_check = |grid: &SmallGrid,
-                                       coord: GridCoordinate,
-                                       expected_dirs_linked: &[GridDirection]| {
+        let directional_links_check =
+            |grid: &SmallGrid, coord: GridCoordinate, expected_dirs_linked: &[GridDirection]| {
 
-            let expected_complement: SmallVec<[GridDirection; 4]> =
-                all_dirs.iter()
-                        .cloned()
-                        .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
-                        .collect();
-            for exp_dir in expected_dirs_linked {
-                assert!(grid.is_neighbour_linked(coord, *exp_dir));
-            }
-            for not_exp_dir in expected_complement.iter() {
-                assert!(!grid.is_neighbour_linked(coord, *not_exp_dir));
-            }
-        };
+                let expected_complement: SmallVec<[GridDirection; 4]> = all_dirs.iter()
+                    .cloned()
+                    .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
+                    .collect();
+                for exp_dir in expected_dirs_linked {
+                    assert!(grid.is_neighbour_linked(coord, *exp_dir));
+                }
+                for not_exp_dir in expected_complement.iter() {
+                    assert!(!grid.is_neighbour_linked(coord, *not_exp_dir));
+                }
+            };
         macro_rules! check_directional_links {
             ($coord:expr, $expected:expr) => (directional_links_check(&g, $coord, &$expected))
         }
