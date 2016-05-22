@@ -277,7 +277,8 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
 /// Memory efficient - little beyond the grid to maintain.
 /// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
 /// Executing the hunt phase many times can visit a cell many times.
-pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
+pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>,
+                                    mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
     let unmasked_count = unmasked_cells_count(&grid, mask);
@@ -320,14 +321,19 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: 
         }
     };
 
-    let are_all_neighbours_visited_or_masked =
-        |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>| -> bool {
-            if let Some(m) = mask {
-                grid.neighbours(cell).iter().all(|c| is_cell_in_visited_set(*c, &visited_set, &grid) || m.is_masked(*c))
-            } else {
-                grid.neighbours(cell).iter().all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
-            }
-        };
+    let are_all_neighbours_visited_or_masked = |cell,
+                                                visited_set: &BitSet,
+                                                grid: &SquareGrid<GridIndexType>,
+                                                mask: Option<&BinaryMask2D>|
+                                                -> bool {
+        if let Some(m) = mask {
+            grid.neighbours(cell)
+                .iter()
+                .all(|c| is_cell_in_visited_set(*c, &visited_set, &grid) || m.is_masked(*c))
+        } else {
+            grid.neighbours(cell).iter().all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
+        }
+    };
 
     visit_cell(current_cell,
                &mut visited_cells,
