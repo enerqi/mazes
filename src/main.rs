@@ -167,7 +167,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>,
         } else if maze_args.cmd_wilson {
             generators::wilson(&mut maze_grid, mask);
         } else if maze_args.cmd_hunt_kill {
-            generators::hunt_and_kill(&mut maze_grid);
+            generators::hunt_and_kill(&mut maze_grid, mask);
         } else if maze_args.cmd_recursive_backtracker {
             generators::recursive_backtracker(&mut maze_grid, mask);
         }

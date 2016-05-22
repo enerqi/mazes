@@ -171,27 +171,23 @@ pub fn aldous_broder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>,
 pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
-    let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(&grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
         mask.map(|m| (m, unmasked_count));
     let mut rng = rand::weak_rng();
 
-    let current_cell_opt = random_cell(&grid, mask_with_unmasked_count, &mut rng);
-    if current_cell_opt.is_none() {
+    let start_cell = random_cell(&grid, mask_with_unmasked_count, &mut rng);
+    if start_cell.is_none() {
         return;
     }
 
+    let cells_count = grid.size();
     // We may not need a bit set that large, but we want to keep the bit_index mapping predictable.
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
 
     // Visit one cell randomly to start things off
-    visit_cell(random_unvisited_unmasked_cell(&grid,
-                                              Some((&visited_cells, visited_count)),
-                                              mask_with_unmasked_count,
-                                              &mut rng)
-                   .expect("Error exhausted unmasked/unvisited cells"),
+    visit_cell(start_cell.unwrap(),
                &mut visited_cells,
                Some(&mut visited_count),
                &grid);
@@ -281,17 +277,27 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
 /// Memory efficient - little beyond the grid to maintain.
 /// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
 /// Executing the hunt phase many times can visit a cell many times.
-pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
+pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType
 {
+    let unmasked_count = unmasked_cells_count(&grid, mask);
+    let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
+        mask.map(|m| (m, unmasked_count));
+    let mut rng = rand::weak_rng();
+
+    let start_cell = random_cell(&grid, mask_with_unmasked_count, &mut rng);
+    if start_cell.is_none() {
+        return;
+    }
+    let mut current_cell = start_cell.unwrap();
+
     let cells_count = grid.size();
 
-    let mut rng = rand::weak_rng();
+    // We may not need a bit set that large, but we want to keep the bit_index mapping predictable.
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
-    let mut current_cell = grid.random_cell(&mut rng);
 
-    let has_any_visited_neighbour =
+    let is_any_neighbour_visited =
         |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>| -> bool {
             grid.neighbours(cell)
                 .iter()
@@ -314,11 +320,13 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
         }
     };
 
-    let are_all_neighbours_visited =
-        |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>| -> bool {
-            grid.neighbours(cell)
-                .iter()
-                .all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
+    let are_all_neighbours_visited_or_masked =
+        |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType>, mask: Option<&BinaryMask2D>| -> bool {
+            if let Some(m) = mask {
+                grid.neighbours(cell).iter().all(|c| is_cell_in_visited_set(*c, &visited_set, &grid) || m.is_masked(*c))
+            } else {
+                grid.neighbours(cell).iter().all(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
+            }
         };
 
     visit_cell(current_cell,
@@ -326,9 +334,15 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                Some(&mut visited_count),
                &grid);
 
-    while visited_count < cells_count {
+    while visited_count < unmasked_count {
 
-        if let Some(new_cell) = random_neighbour(current_cell, &grid, &mut rng) {
+        let next_cell = if let Some(m) = mask {
+            random_unmasked_neighbour(current_cell, &grid, &m, &mut rng)
+        } else {
+            random_neighbour(current_cell, &grid, &mut rng)
+        };
+
+        if let Some(new_cell) = next_cell {
 
             if !is_cell_in_visited_set(new_cell, &visited_cells, &grid) {
 
@@ -347,22 +361,20 @@ pub fn hunt_and_kill<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
                 // The new_cell has been seen before, we are not allowed to go here...
                 // We will just try another random neighbour unless there are no unvisited neighbours
                 // in which case we take special steps to find one
-                if are_all_neighbours_visited(current_cell, &visited_cells, &grid) {
+                if are_all_neighbours_visited_or_masked(current_cell, &visited_cells, &grid, mask) {
 
                     // There are no other unvisited cells next to this
                     // Start from (0,0) in the grid and find the first *unvisited* cell that is next to a visited one.
                     let (hunted_cell, hunteds_visited_neighbours): (GridCoordinate, CoordinateSmallVec) =
                         grid.iter()
-                            .skip_while(|cell| !has_any_visited_neighbour(*cell, &visited_cells, &grid) ||
-                                               is_cell_in_visited_set(*cell, &visited_cells, &grid))
+                            .skip_while(|cell| is_cell_in_visited_set(*cell, &visited_cells, &grid) ||
+                                               mask.map_or(false, |m| m.is_masked(*cell)) ||
+                                               !is_any_neighbour_visited(*cell, &visited_cells, &grid))
                             .take(1)
                             .fold(None, |_, cell|
                                         Some((cell, visited_neighbours(cell, &visited_cells, &grid)
                                               .expect("This cell should have 1+ visited neighbours"))))
                             .expect("We should always be able to find a cell in the grid with at least one visited neighbour.");
-
-                    assert!(!is_cell_in_visited_set(hunted_cell, &visited_cells, &grid));
-                    assert!(has_any_visited_neighbour(hunted_cell, &visited_cells, &grid));
 
                     // Link the hunted_cell to any random neighbour that is visited
                     // Visit the hunted cell and make it the new current cell in the walk
