@@ -1,11 +1,13 @@
 use bit_set::BitSet;
 use rand;
-use rand::{Rng, XorShiftRng};
+use rand::Rng;
 use smallvec::SmallVec;
 
 use masks::BinaryMask2D;
 use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, IndexType, SquareGrid};
 use squaregrid;
+use utils;
+use utils::FnvHashSet;
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -168,9 +170,10 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
 {
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(&grid, mask);
+    let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> = mask.map(|m| (m, unmasked_count));
     let mut rng = rand::weak_rng();
 
-    let current_cell_opt = random_cell(&grid, mask.map(|m| (m, unmasked_count)), &mut rng);
+    let current_cell_opt = random_cell(&grid, mask_with_unmasked_count, &mut rng);
     if current_cell_opt.is_none() {
         return;
     }
@@ -179,38 +182,16 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
     let mut visited_cells = BitSet::with_capacity(cells_count);
     let mut visited_count = 0;
 
-    let random_unvisited_cell = |visited_set: &BitSet,
-                                 visited_count: usize,
-                                 grid: &SquareGrid<GridIndexType>,
-                                 rng: &mut XorShiftRng|
-                                 -> GridCoordinate {
-
-        let remaining_unvisited_count = cells_count - visited_count;
-        if remaining_unvisited_count > 0 {
-
-            let n = rng.gen::<usize>() % remaining_unvisited_count;
-
-            let cell_index = (0..cells_count)
-                                 .filter(|bit_index| !visited_set.contains(*bit_index))
-                                 .nth(n)
-                                 .unwrap();
-            squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index)
-
-        } else {
-            panic!("Error, looking for unvisited cell when all visited.");
-        }
-    };
-
     // Visit one cell randomly to start things off
-    visit_cell(random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng),
+    visit_cell(random_unvisited_unmasked_cell(&grid, Some((&visited_cells, visited_count)), mask_with_unmasked_count, &mut rng)
+                                             .expect("Error exhausted unmasked/unvisited cells"),
                &mut visited_cells,
                Some(&mut visited_count),
                &grid);
 
     // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
     // The path is a sequence, i.e. Vec/Stack, but we want a quick way to look up if any particular coordinate is in that path.
-    // Crates.io has a linked-hash-map crate but not linked-hash-set, so use a manual hashset/bitset + vec combination.
-    let mut cells_on_random_walk = BitSet::with_capacity(cells_count);
+    let mut cells_on_random_walk: FnvHashSet<GridCoordinate> = utils::fnv_hashset(grid.dimension() as usize);
     let mut random_walk_path: Vec<GridCoordinate> = Vec::new();
 
     while visited_count < unmasked_count {
@@ -220,9 +201,10 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
         cells_on_random_walk.clear();
         random_walk_path.clear();
 
-        let walk_start_cell = random_unvisited_cell(&visited_cells, visited_count, &grid, &mut rng);
+        let walk_start_cell = random_unvisited_unmasked_cell(&grid, Some((&visited_cells, visited_count)), mask_with_unmasked_count, &mut rng)
+                              .expect("Error exhausted unmasked/unvisited cells");
         random_walk_path.push(walk_start_cell);
-        cells_on_random_walk.insert(bit_index(walk_start_cell, &grid));
+        cells_on_random_walk.insert(walk_start_cell);
 
         'walking: loop {
 
@@ -240,7 +222,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
 
                         let path_previous_cell = random_walk_path[walk_index - 1];
                         grid.link(*cell, path_previous_cell)
-                            .expect("Failed to link a cell on loop erased random walk path.");;
+                            .expect("Failed to link a cell on loop erased random walk path.");
                     }
                 }
 
@@ -250,10 +232,16 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
             } else {
 
                 // Still randomly walking...
-                if let Some(new_cell) = random_neighbour(current_walk_cell, &grid, &mut rng) {
+                let walk_next = if let Some(m) = mask {
+                    random_unmasked_neighbour(current_walk_cell, &grid, &m, &mut rng)
+                } else {
+                    random_neighbour(current_walk_cell, &grid, &mut rng)
+                };
 
-                    // We have new cell that is within the bounds of the maze grid...
-                    if is_cell_in_visited_set(new_cell, &cells_on_random_walk, &grid) {
+                if let Some(new_cell) = walk_next {
+
+                    // We have new cell that is within the bounds of the maze grid and not masked...
+                    if cells_on_random_walk.contains(&new_cell) {
 
                         // There is a loop in the current walk, erase it by dropping the path after this point.
                         // We also have to remove the dropped cells from the bitset
@@ -264,7 +252,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
                                                                .unwrap();
                         let altered_path_length = loop_start_index + 1;
                         for cell in random_walk_path.iter().skip(altered_path_length) {
-                            undo_cell_visit(*cell, &mut cells_on_random_walk, None, &grid);
+                            cells_on_random_walk.remove(cell);
                         }
                         random_walk_path.truncate(altered_path_length);
 
@@ -272,7 +260,7 @@ pub fn wilson<GridIndexType>(grid: &mut SquareGrid<GridIndexType>, mask: Option<
 
                         // Extend the walk
                         random_walk_path.push(new_cell);
-                        cells_on_random_walk.insert(bit_index(new_cell, &grid));
+                        cells_on_random_walk.insert(new_cell);
                     }
                 }
             }
@@ -500,8 +488,8 @@ fn random_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
                                  mut rng: &mut R) -> Option<GridCoordinate>
     where GridIndexType: IndexType, R: Rng
 {
-    if let Some((m, unmasked_count)) = mask_with_unmasked_count {
-        random_unmasked_cell(&grid, m, unmasked_count, &mut rng)
+    if let Some(mask_and_count) = mask_with_unmasked_count {
+        random_unmasked_cell(&grid, mask_and_count, &mut rng)
     } else {
         Some(grid.random_cell(&mut rng))
     }
@@ -564,6 +552,93 @@ fn undo_cell_visit<GridIndexType>(cell: GridCoordinate,
     was_present
 }
 
+fn random_unvisited_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
+                                           visited_set_with_count: (&BitSet, usize),
+                                           mut rng: &mut R) -> Option<GridCoordinate>
+    where GridIndexType: IndexType, R: Rng
+{
+    let cells_count = grid.size();
+    let (visited_set, visited_count) = visited_set_with_count;
+    let remaining_unvisited_count = cells_count - visited_count;
+    if remaining_unvisited_count > 0 {
+
+        let n = rng.gen::<usize>() % remaining_unvisited_count;
+
+        let cell_index = (0..cells_count)
+                             .filter(|bit_index| !visited_set.contains(*bit_index))
+                             .nth(n)
+                             .unwrap();
+
+        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
+
+    } else {
+        None
+    }
+}
+
+fn random_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>, mask_with_unmasked_count: (&BinaryMask2D, usize), mut rng: &mut R) -> Option<GridCoordinate>
+    where GridIndexType: IndexType, R: Rng
+{
+    let (mask, unmasked_cells) = mask_with_unmasked_count;
+    if unmasked_cells != 0 {
+
+        let n = rng.gen::<usize>() % unmasked_cells;
+        let cells_count = grid.size();
+        let cell_index = (0..cells_count)
+                             .filter(|i| {
+                                let coord = squaregrid::index_to_grid_coordinate(grid.dimension(), *i);
+                                !mask.is_masked(coord)
+                             })
+                             .nth(n)
+                             .unwrap();
+        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
+
+    } else {
+        None
+    }
+}
+
+fn random_unvisited_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
+                                                    visited_set_with_count: Option<(&BitSet, usize)>,
+                                                    mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
+                                                    mut rng: &mut R) -> Option<GridCoordinate>
+    where GridIndexType: IndexType, R: Rng
+{
+    match (visited_set_with_count, mask_with_unmasked_count) {
+
+        (None, None) => Some(grid.random_cell(&mut rng)),
+
+        (None, Some(mask_and_count)) => random_unmasked_cell(&grid, mask_and_count, &mut rng),
+
+        (Some(set_and_count), None) => random_unvisited_cell(&grid, set_and_count, &mut rng),
+
+        (Some((visited, visited_count)), Some((mask, unmasked_count))) => {
+
+            let cells_count = grid.size();
+            let masked_count = cells_count - unmasked_count;
+            let remaining_cells = cells_count - visited_count - masked_count;
+
+            if remaining_cells != 0 {
+
+                let n = rng.gen::<usize>() % remaining_cells;
+                let grid_dim = grid.dimension();
+                let cell_index = (0..cells_count)
+                                 .filter(|i| {
+                                    let coord = squaregrid::index_to_grid_coordinate(grid_dim, *i);
+                                    !visited.contains(bit_index(coord, &grid)) && !mask.is_masked(coord)
+                                 })
+                                 .nth(n)
+                                 .unwrap();
+
+                Some(squaregrid::index_to_grid_coordinate(grid_dim, cell_index))
+
+            } else {
+                None
+            }
+        }
+    }
+}
+
 fn random_unmasked_neighbour<GridIndexType, R>(cell: GridCoordinate,
                                                grid: &SquareGrid<GridIndexType>,
                                                mask: &BinaryMask2D,
@@ -583,27 +658,6 @@ fn random_unmasked_neighbour<GridIndexType, R>(cell: GridCoordinate,
             _ => unmasked_neighbours[rng.gen::<usize>() % count],
         };
         Some(neighbour_cell)
-    } else {
-        None
-    }
-}
-
-fn random_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>, mask: &BinaryMask2D, unmasked_cells: usize, mut rng: &mut R) -> Option<GridCoordinate>
-    where GridIndexType: IndexType, R: Rng
-{
-    if unmasked_cells != 0 {
-
-        let n = rng.gen::<usize>() % unmasked_cells;
-        let cells_count = grid.size();
-        let cell_index = (0..cells_count)
-                             .filter(|i| {
-                                let coord = squaregrid::index_to_grid_coordinate(grid.dimension(), *i);
-                                !mask.is_masked(coord)
-                             })
-                             .nth(n)
-                             .unwrap();
-        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
-
     } else {
         None
     }
