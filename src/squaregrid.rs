@@ -11,6 +11,9 @@ use coordinates::Cartesian2DCoordinate;
 
 // refactors
 //
+// mask is_masked
+//   convert to cartesian2d
+//
 // pub fn neighbours(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec
 //  handle different type of Coordinate -> 2D, Polar etc.
 //  only a part of the Grid impl to bounds check the offset neighbours
