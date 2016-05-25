@@ -7,11 +7,11 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::GridCoordinate;
+use coordinates::Cartesian2DCoordinate;
 
 // refactors
 //
-// pub fn neighbours(&self, coord: GridCoordinate) -> CoordinateSmallVec
+// pub fn neighbours(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec
 //  handle different type of Coordinate -> 2D, Polar etc.
 //  only a part of the Grid impl to bounds check the offset neighbours
 //
@@ -41,8 +41,8 @@ use coordinates::GridCoordinate;
 //
 // CellIter
 
-pub type CoordinateSmallVec = SmallVec<[GridCoordinate; 4]>;
-pub type CoordinateOptionSmallVec = SmallVec<[Option<GridCoordinate>; 4]>;
+pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
+pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum GridDirection {
@@ -61,7 +61,7 @@ pub enum CellLinkError {
 pub trait GridDisplay {
     /// Render the contents of a grid cell as text.
     /// The String should be 3 glyphs long, padded if required.
-    fn render_cell_body(&self, _: GridCoordinate) -> String {
+    fn render_cell_body(&self, _: Cartesian2DCoordinate) -> String {
         String::from("   ")
     }
 }
@@ -110,7 +110,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.dimension_size
     }
 
-    pub fn random_cell<R: Rng>(&self, rng: &mut R) -> GridCoordinate {
+    pub fn random_cell<R: Rng>(&self, rng: &mut R) -> Cartesian2DCoordinate {
         let index = rng.gen::<usize>() % self.size();
         index_to_grid_coordinate(self.dimension_size, index)
     }
@@ -121,7 +121,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     ///      - better to change the API to take an index and GridDirection
     ///
     /// Panics if a cell does not exist.
-    pub fn link(&mut self, a: GridCoordinate, b: GridCoordinate) -> Result<(), CellLinkError> {
+    pub fn link(&mut self, a: Cartesian2DCoordinate, b: Cartesian2DCoordinate) -> Result<(), CellLinkError> {
         if a == b {
             Err(CellLinkError::SelfLink)
         } else {
@@ -139,7 +139,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Unlink two cells, if the grid coordinates are valid and a link exists between them.
     /// Returns true if an unlink occurred.
-    pub fn unlink(&mut self, a: GridCoordinate, b: GridCoordinate) -> bool {
+    pub fn unlink(&mut self, a: Cartesian2DCoordinate, b: Cartesian2DCoordinate) -> bool {
         let a_index_opt = self.grid_coordinate_graph_index(a);
         let b_index_opt = self.grid_coordinate_graph_index(b);
 
@@ -156,7 +156,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     /// Cell nodes that are linked to a particular node by a passage.
-    pub fn links(&self, coord: GridCoordinate) -> Option<CoordinateSmallVec> {
+    pub fn links(&self, coord: Cartesian2DCoordinate) -> Option<CoordinateSmallVec> {
 
         if let Some(graph_node_index) = self.grid_coordinate_graph_index(coord) {
 
@@ -175,14 +175,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours(&self, coord: GridCoordinate) -> CoordinateSmallVec {
+    pub fn neighbours(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec {
 
         [offset_coordinate(coord, GridDirection::North),
          offset_coordinate(coord, GridDirection::South),
          offset_coordinate(coord, GridDirection::East),
          offset_coordinate(coord, GridDirection::West)]
             .into_iter()
-            .filter(|adjacent_coord_opt: &&Option<GridCoordinate>| {
+            .filter(|adjacent_coord_opt: &&Option<Cartesian2DCoordinate>| {
                 if let Some(adjacent_coord) = **adjacent_coord_opt {
                     self.is_valid_coordinate(adjacent_coord)
                 } else {
@@ -194,7 +194,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn neighbours_at_directions(&self,
-                                    coord: GridCoordinate,
+                                    coord: Cartesian2DCoordinate,
                                     dirs: &[GridDirection])
                                     -> CoordinateOptionSmallVec {
         dirs.iter()
@@ -203,9 +203,9 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     pub fn neighbour_at_direction(&self,
-                                  coord: GridCoordinate,
+                                  coord: Cartesian2DCoordinate,
                                   direction: GridDirection)
-                                  -> Option<GridCoordinate> {
+                                  -> Option<Cartesian2DCoordinate> {
         let neighbour_coord_opt = offset_coordinate(coord, direction);
 
         neighbour_coord_opt.and_then(|neighbour_coord| {
@@ -218,7 +218,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     /// Are two cells in the grid linked?
-    pub fn is_linked(&self, a: GridCoordinate, b: GridCoordinate) -> bool {
+    pub fn is_linked(&self, a: Cartesian2DCoordinate, b: Cartesian2DCoordinate) -> bool {
         let a_index_opt = self.grid_coordinate_graph_index(a);
         let b_index_opt = self.grid_coordinate_graph_index(b);
         if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
@@ -228,7 +228,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         }
     }
 
-    pub fn is_neighbour_linked(&self, coord: GridCoordinate, direction: GridDirection) -> bool {
+    pub fn is_neighbour_linked(&self, coord: Cartesian2DCoordinate, direction: GridDirection) -> bool {
         self.neighbour_at_direction(coord, direction)
             .map_or(false,
                     |neighbour_coord| self.is_linked(coord, neighbour_coord))
@@ -236,7 +236,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
-    pub fn grid_coordinate_to_index(&self, coord: GridCoordinate) -> Option<usize> {
+    pub fn grid_coordinate_to_index(&self, coord: Cartesian2DCoordinate) -> Option<usize> {
         if self.is_valid_coordinate(coord) {
             Some((coord.y as usize * self.dimension_size as usize) + coord.x as usize)
         } else {
@@ -270,18 +270,18 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
-    pub fn is_valid_coordinate(&self, coord: GridCoordinate) -> bool {
+    pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
         coord.x < self.dimension_size && coord.y < self.dimension_size
     }
 
-    fn is_neighbour(&self, a: GridCoordinate, b: GridCoordinate) -> bool {
+    fn is_neighbour(&self, a: Cartesian2DCoordinate, b: Cartesian2DCoordinate) -> bool {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
     /// Returns None if the grid coordinate is invalid (out of the grid's dimensions).
     fn grid_coordinate_graph_index(&self,
-                                   coord: GridCoordinate)
+                                   coord: Cartesian2DCoordinate)
                                    -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
         grid_index_raw_opt.map(graph::NodeIndex::<GridIndexType>::new)
@@ -313,7 +313,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
         let rows_count = columns_count;
 
         // Start by special case rendering the text for the north most boundary
-        let first_grid_row: &Vec<GridCoordinate> =
+        let first_grid_row: &Vec<Cartesian2DCoordinate> =
             &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
@@ -460,7 +460,7 @@ pub struct CellIter {
     cells_count: usize,
 }
 impl Iterator for CellIter {
-    type Item = GridCoordinate;
+    type Item = Cartesian2DCoordinate;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
             let coord = index_to_grid_coordinate(self.dimension_size, self.current_cell_number);
@@ -483,7 +483,7 @@ impl Iterator for CellIter {
 // but seems unhelpful when you already have a reference then we need to do &*grid which
 // it just plain uglier than `grid.iter()`
 impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<GridIndexType> {
-    type Item = GridCoordinate;
+    type Item = Cartesian2DCoordinate;
     type IntoIter = CellIter;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -503,16 +503,16 @@ pub struct BatchIter {
     dimension_size: u32,
 }
 impl Iterator for BatchIter {
-    type Item = Vec<GridCoordinate>;
+    type Item = Vec<Cartesian2DCoordinate>;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_index < self.dimension_size {
             let coords = (0..self.dimension_size)
                 .into_iter()
                 .map(|i: u32| {
                     if let BatchIterType::Row = self.iter_type {
-                        GridCoordinate::new(i, self.current_index)
+                        Cartesian2DCoordinate::new(i, self.current_index)
                     } else {
-                        GridCoordinate::new(self.current_index, i)
+                        Cartesian2DCoordinate::new(self.current_index, i)
                     }
                 })
                 .collect();
@@ -532,32 +532,32 @@ impl Iterator for BatchIter {
 
 pub fn index_to_grid_coordinate(dimension_size: u32,
                                 one_dimensional_index: usize)
-                                -> GridCoordinate {
+                                -> Cartesian2DCoordinate {
     let x = one_dimensional_index % dimension_size as usize;
     let y = one_dimensional_index / dimension_size as usize;
-    GridCoordinate {
+    Cartesian2DCoordinate {
         x: x as u32,
         y: y as u32,
     }
 }
 
-/// Create a new `GridCoordinate` offset 1 cell away in the given direction.
+/// Create a new `Cartesian2DCoordinate` offset 1 cell away in the given direction.
 /// Returns None if the Coordinate is not representable (x < 0 or y < 0).
-fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCoordinate> {
+fn offset_coordinate(coord: Cartesian2DCoordinate, dir: GridDirection) -> Option<Cartesian2DCoordinate> {
     let (x, y) = (coord.x, coord.y);
     match dir {
         GridDirection::North => {
             if y > 0 {
-                Some(GridCoordinate { x: x, y: y - 1 })
+                Some(Cartesian2DCoordinate { x: x, y: y - 1 })
             } else {
                 None
             }
         }
-        GridDirection::South => Some(GridCoordinate { x: x, y: y + 1 }),
-        GridDirection::East => Some(GridCoordinate { x: x + 1, y: y }),
+        GridDirection::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
+        GridDirection::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
         GridDirection::West => {
             if x > 0 {
-                Some(GridCoordinate { x: x - 1, y: y })
+                Some(Cartesian2DCoordinate { x: x - 1, y: y })
             } else {
                 None
             }
@@ -570,7 +570,7 @@ fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCo
 mod tests {
 
     use super::*;
-    use coordinates::GridCoordinate;
+    use coordinates::Cartesian2DCoordinate;
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;
@@ -589,14 +589,14 @@ mod tests {
     fn neighbour_cells() {
         let g = SmallGrid::new(10);
 
-        let check_expected_neighbours = |coord, expected_neighbours: &[GridCoordinate]| {
-            let node_indices: Vec<GridCoordinate> = g.neighbours(coord).iter().cloned().sorted();
-            let expected_indices: Vec<GridCoordinate> = expected_neighbours.into_iter()
+        let check_expected_neighbours = |coord, expected_neighbours: &[Cartesian2DCoordinate]| {
+            let node_indices: Vec<Cartesian2DCoordinate> = g.neighbours(coord).iter().cloned().sorted();
+            let expected_indices: Vec<Cartesian2DCoordinate> = expected_neighbours.into_iter()
                 .cloned()
                 .sorted();
             assert_eq!(node_indices, expected_indices);
         };
-        let gc = |x, y| GridCoordinate::new(x, y);
+        let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
         // corners
         check_expected_neighbours(gc(0, 0), &[gc(1, 0), gc(0, 1)]);
@@ -617,10 +617,10 @@ mod tests {
     #[test]
     fn neighbours_at_dirs() {
         let g = SmallGrid::new(2);
-        let gc = |x, y| GridCoordinate::new(x, y);
+        let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
         let check_neighbours =
-            |coord, dirs: &[GridDirection], neighbour_opts: &[Option<GridCoordinate>]| {
+            |coord, dirs: &[GridDirection], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
 
                 let neighbour_options: CoordinateOptionSmallVec =
                     g.neighbours_at_directions(coord, dirs);
@@ -650,7 +650,7 @@ mod tests {
     #[test]
     fn neighbour_at_dir() {
         let g = SmallGrid::new(2);
-        let gc = |x, y| GridCoordinate::new(x, y);
+        let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let check_neighbour = |coord, dir: GridDirection, expected| {
             assert_eq!(g.neighbour_at_direction(coord, dir), expected);
         };
@@ -680,7 +680,7 @@ mod tests {
     #[test]
     fn grid_coordinate_as_index() {
         let g = SmallGrid::new(3);
-        let gc = |x, y| GridCoordinate::new(x, y);
+        let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
                        gc(1, 2), gc(2, 2)];
         let indices: Vec<Option<usize>> = coords.into_iter()
@@ -709,38 +709,38 @@ mod tests {
     #[test]
     fn cell_iter() {
         let g = SmallGrid::new(2);
-        assert_eq!(g.iter().collect::<Vec<GridCoordinate>>(),
-                   &[GridCoordinate::new(0, 0),
-                     GridCoordinate::new(1, 0),
-                     GridCoordinate::new(0, 1),
-                     GridCoordinate::new(1, 1)]);
+        assert_eq!(g.iter().collect::<Vec<Cartesian2DCoordinate>>(),
+                   &[Cartesian2DCoordinate::new(0, 0),
+                     Cartesian2DCoordinate::new(1, 0),
+                     Cartesian2DCoordinate::new(0, 1),
+                     Cartesian2DCoordinate::new(1, 1)]);
     }
 
     #[test]
     fn row_iter() {
         let g = SmallGrid::new(2);
-        assert_eq!(g.iter_row().collect::<Vec<Vec<GridCoordinate>>>(),
-                   &[&[GridCoordinate::new(0, 0), GridCoordinate::new(1, 0)],
-                     &[GridCoordinate::new(0, 1), GridCoordinate::new(1, 1)]]);
+        assert_eq!(g.iter_row().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
+                   &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(1, 0)],
+                     &[Cartesian2DCoordinate::new(0, 1), Cartesian2DCoordinate::new(1, 1)]]);
     }
 
     #[test]
     fn column_iter() {
         let g = SmallGrid::new(2);
-        assert_eq!(g.iter_column().collect::<Vec<Vec<GridCoordinate>>>(),
-                   &[&[GridCoordinate::new(0, 0), GridCoordinate::new(0, 1)],
-                     &[GridCoordinate::new(1, 0), GridCoordinate::new(1, 1)]]);
+        assert_eq!(g.iter_column().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
+                   &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(0, 1)],
+                     &[Cartesian2DCoordinate::new(1, 0), Cartesian2DCoordinate::new(1, 1)]]);
     }
 
     #[test]
     fn linking_cells() {
         let mut g = SmallGrid::new(4);
-        let a = GridCoordinate::new(0, 1);
-        let b = GridCoordinate::new(0, 2);
-        let c = GridCoordinate::new(0, 3);
+        let a = Cartesian2DCoordinate::new(0, 1);
+        let b = Cartesian2DCoordinate::new(0, 2);
+        let c = Cartesian2DCoordinate::new(0, 3);
 
         // Testing the expected grid `links`
-        let sorted_links = |grid: &SmallGrid, coord| -> Vec<GridCoordinate> {
+        let sorted_links = |grid: &SmallGrid, coord| -> Vec<Cartesian2DCoordinate> {
             grid.links(coord).expect("coordinate is invalid").iter().cloned().sorted()
         };
         macro_rules! links_sorted {
@@ -757,7 +757,7 @@ mod tests {
             [GridDirection::North, GridDirection::South, GridDirection::East, GridDirection::West];
 
         let directional_links_check =
-            |grid: &SmallGrid, coord: GridCoordinate, expected_dirs_linked: &[GridDirection]| {
+            |grid: &SmallGrid, coord: Cartesian2DCoordinate, expected_dirs_linked: &[GridDirection]| {
 
                 let expected_complement: SmallVec<[GridDirection; 4]> = all_dirs.iter()
                     .cloned()
@@ -845,7 +845,7 @@ mod tests {
     #[test]
     fn no_self_linked_cycles() {
         let mut g = SmallGrid::new(4);
-        let a = GridCoordinate::new(0, 0);
+        let a = Cartesian2DCoordinate::new(0, 0);
         let link_result = g.link(a, a);
         assert_eq!(link_result, Err(CellLinkError::SelfLink));
     }
@@ -853,8 +853,8 @@ mod tests {
     #[test]
     fn no_links_to_invalid_coordinates() {
         let mut g = SmallGrid::new(4);
-        let good_coord = GridCoordinate::new(0, 0);
-        let invalid_coord = GridCoordinate::new(100, 100);
+        let good_coord = Cartesian2DCoordinate::new(0, 0);
+        let invalid_coord = Cartesian2DCoordinate::new(100, 100);
         let link_result = g.link(good_coord, invalid_coord);
         assert_eq!(link_result, Err(CellLinkError::InvalidGridCoordinate));
     }
@@ -862,8 +862,8 @@ mod tests {
     #[test]
     fn no_parallel_duplicated_linked_cells() {
         let mut g = SmallGrid::new(4);
-        let a = GridCoordinate::new(0, 0);
-        let b = GridCoordinate::new(0, 1);
+        let a = Cartesian2DCoordinate::new(0, 0);
+        let b = Cartesian2DCoordinate::new(0, 1);
         g.link(a, b).expect("link failed");
         g.link(a, b).expect("link failed");
         assert_smallvec_eq!(g.links(a).unwrap(), &[b]);

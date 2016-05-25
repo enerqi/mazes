@@ -1,7 +1,7 @@
 use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
-use coordinates::GridCoordinate;
+use coordinates::Cartesian2DCoordinate;
 
 #[derive(Debug)]
 pub struct BinaryMask2D {
@@ -41,7 +41,7 @@ impl BinaryMask2D {
     /// Is the given coordinate masked out / turned off?
     ///
     /// A coordinate is not masked if it is outside the bounds of masks 2d space.
-    pub fn is_masked(&self, coord: GridCoordinate) -> bool {
+    pub fn is_masked(&self, coord: Cartesian2DCoordinate) -> bool {
 
         if coord.x < self.width && coord.y < self.height {
             let bit_index = (coord.y * self.width + coord.x) as usize;
@@ -59,7 +59,7 @@ impl BinaryMask2D {
         let mut count = 0;
         for x in 0..width {
             for y in 0..height {
-                let masked = self.is_masked(GridCoordinate::new(x, y));
+                let masked = self.is_masked(Cartesian2DCoordinate::new(x, y));
                 if !masked {
                     count += 1;
                 }
@@ -69,7 +69,7 @@ impl BinaryMask2D {
         count
     }
 
-    pub fn first_unmasked_coordinate(&self) -> Option<GridCoordinate> {
+    pub fn first_unmasked_coordinate(&self) -> Option<Cartesian2DCoordinate> {
 
         // A bit in the set means masked off
         // The bitset iterator returns indices of masked values, so we cannot use that
@@ -82,7 +82,7 @@ impl BinaryMask2D {
         if let Some(i) = index {
             let x = i % self.width as usize;
             let y = i / self.height as usize;
-            Some(GridCoordinate::new(x as u32, y as u32))
+            Some(Cartesian2DCoordinate::new(x as u32, y as u32))
         } else {
             None
         }

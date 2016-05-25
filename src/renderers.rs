@@ -13,7 +13,7 @@ use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
-use coordinates::GridCoordinate;
+use coordinates::Cartesian2DCoordinate;
 use pathing;
 use squaregrid::{GridDirection, IndexType, SquareGrid};
 
@@ -33,12 +33,12 @@ pub struct RenderOptions<'path, 'dist> {
     show_on_screen: bool,
     colour_distances: bool,
     mark_start_end: bool,
-    start: Option<GridCoordinate>,
-    end: Option<GridCoordinate>,
+    start: Option<Cartesian2DCoordinate>,
+    end: Option<Cartesian2DCoordinate>,
     show_path: bool,
     distances: Option<&'dist pathing::DijkstraDistances<u32>>,
     output_file: Option<&'path Path>,
-    path: Option<Vec<GridCoordinate>>,
+    path: Option<Vec<Cartesian2DCoordinate>>,
     cell_side_pixels_length: u8,
 }
 
@@ -80,11 +80,11 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.mark_start_end = on;
         self
     }
-    pub fn start(mut self, start: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn start(mut self, start: Option<Cartesian2DCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.start = start;
         self
     }
-    pub fn end(mut self, end: Option<GridCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn end(mut self, end: Option<Cartesian2DCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.end = end;
         self
     }
@@ -104,7 +104,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.output_file = output_file;
         self
     }
-    pub fn path(mut self, path: Option<Vec<GridCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn path(mut self, path: Option<Vec<Cartesian2DCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.path = path;
         self
     }
@@ -208,7 +208,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     let e_white_surface = font.render("E").blended(WHITE).unwrap();
     let e_black_surface = font.render("E").blended(BLACK).unwrap();
 
-    let calc_cell_screen_coordinates = |cell: GridCoordinate| -> (i32, i32, i32, i32) {
+    let calc_cell_screen_coordinates = |cell: Cartesian2DCoordinate| -> (i32, i32, i32, i32) {
         let column = cell.x as usize;
         let row = cell.y as usize;
         let x1 = (column * cell_size_pixels) as i32;
@@ -240,7 +240,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
-            |c: GridCoordinate, neighbour_direction: GridDirection| -> bool {
+            |c: Cartesian2DCoordinate, neighbour_direction: GridDirection| -> bool {
                 let cell_links_count_is_zero =
                     |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
 
@@ -343,7 +343,7 @@ fn draw_maze<GridIndexType>(r: &mut Renderer,
     if let Some(ref path) = options.path {
 
         let path_long_enough_to_show =
-            |path: &[GridCoordinate], options: &RenderOptions| -> bool {
+            |path: &[Cartesian2DCoordinate], options: &RenderOptions| -> bool {
                 if options.mark_start_end {
                     path.len() >= 4
                 } else {
