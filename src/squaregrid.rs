@@ -24,7 +24,21 @@ use coordinates::Cartesian2DCoordinate;
 // GridCoordinate -> Rename CartesianCoordinate
 // + PolarCoordinate
 // trait Coordinate
-//    type Small
+//    type Small???
+// Coordinate + Directions == Grid Specific Coordinate?? No more like Grid Specific Cell - HexCell
+// e.g hex coord is still a cartesian2d coord but it has 6 sides - north, south, north-east, north-west, south-east, south-west.
+// but for Triangle Nodes we need to know if upright or not, unless the coord was not in the centre of the triangle, e.g. bottom left, but
+// triangles have to alternate facing up or down.... so coord + upright boolean...which means that the directions vary per triangle -> it
+// can have 4 directions, some that do not always apply.
+// offset coordinate therefore really needs to be a part of the Coordinate Trait? or rather "all offsets"
+// direction would need to be a generic type...
+//
+// Can we have varying sorts of grids? - mixed hex, triangle, square, etc?
+// uniform tilings, or Wythoff’s construction, or even Voronoi diagrams
+//
+// pub trait Cell => type Coordinate, type Directions, fn neighbours_not_bounds_checked
+//
+// so HexGrid is grid with HexCell and rows * cols
 //
 // neighbours_at_directions
 //   direction - does that make sense for each coordinate system?
