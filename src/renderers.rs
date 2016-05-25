@@ -13,8 +13,9 @@ use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
+use coordinates::GridCoordinate;
 use pathing;
-use squaregrid::{GridCoordinate, GridDirection, IndexType, SquareGrid};
+use squaregrid::{GridDirection, IndexType, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;

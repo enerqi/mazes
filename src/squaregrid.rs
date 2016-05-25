@@ -1,27 +1,45 @@
+use std::fmt;
+use std::rc::Rc;
+
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
 pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
-use std::convert::From;
-use std::fmt;
-use std::rc::Rc;
 
-#[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
-pub struct GridCoordinate {
-    pub x: u32,
-    pub y: u32,
-}
-impl GridCoordinate {
-    pub fn new(x: u32, y: u32) -> GridCoordinate {
-        GridCoordinate { x: x, y: y }
-    }
-}
-impl From<(u32, u32)> for GridCoordinate {
-    fn from(x_y_pair: (u32, u32)) -> GridCoordinate {
-        GridCoordinate::new(x_y_pair.0, x_y_pair.1)
-    }
-}
+use coordinates::GridCoordinate;
+
+// refactors
+//
+// pub fn neighbours(&self, coord: GridCoordinate) -> CoordinateSmallVec
+//  handle different type of Coordinate -> 2D, Polar etc.
+//  only a part of the Grid impl to bounds check the offset neighbours
+//
+// coordinate smallvecs? More generic return types? SmallVec<[T, 4]> etc?
+// maybe make an associated type of some trait like coordinate
+//
+// GridCoordinate -> Rename CartesianCoordinate
+// + PolarCoordinate
+// trait Coordinate
+//    type Small
+//
+// neighbours_at_directions
+//   direction - does that make sense for each coordinate system?
+//   only a part of the Grid impl to bounds check the offset neighbours
+//
+// is_neighbour_linked
+//   same reliance on direction concept
+//
+// grid_coordinate_to_index
+//   important for node indices, need per coordinate type mapping?
+//
+// is_valid_coordinate
+//   grid instance specific, needs generic info from the coordinate
+//
+// index to grid coordinate
+//   coordinate type specific tranformation given a dimension
+//
+// CellIter
 
 pub type CoordinateSmallVec = SmallVec<[GridCoordinate; 4]>;
 pub type CoordinateOptionSmallVec = SmallVec<[Option<GridCoordinate>; 4]>;
@@ -552,6 +570,7 @@ fn offset_coordinate(coord: GridCoordinate, dir: GridDirection) -> Option<GridCo
 mod tests {
 
     use super::*;
+    use coordinates::GridCoordinate;
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;

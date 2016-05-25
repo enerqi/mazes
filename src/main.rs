@@ -15,7 +15,8 @@ use std::rc::Rc;
 
 use docopt::Docopt;
 
-use mazes::squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, SquareGrid};
+use mazes::coordinates::GridCoordinate;
+use mazes::squaregrid::{CoordinateSmallVec, GridDisplay, SquareGrid};
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;

@@ -3,8 +3,9 @@ use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 
+use coordinates::GridCoordinate;
 use masks::BinaryMask2D;
-use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDirection, IndexType, SquareGrid};
+use squaregrid::{CoordinateSmallVec, GridDirection, IndexType, SquareGrid};
 use squaregrid;
 use utils;
 use utils::FnvHashSet;

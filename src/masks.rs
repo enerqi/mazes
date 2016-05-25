@@ -1,7 +1,7 @@
 use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
-use squaregrid::GridCoordinate;
+use coordinates::GridCoordinate;
 
 #[derive(Debug)]
 pub struct BinaryMask2D {

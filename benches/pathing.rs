@@ -3,7 +3,8 @@
 extern crate mazes;
 extern crate test;
 
-use mazes::squaregrid::{GridCoordinate, SquareGrid};
+use mazes::coordinates::GridCoordinate
+use mazes::squaregrid::SquareGrid;
 use mazes::generators;
 use mazes::pathing;
 use test::Bencher;

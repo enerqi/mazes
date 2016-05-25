@@ -35,8 +35,9 @@ use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 
+use coordinates::GridCoordinate;
 use masks::BinaryMask2D;
-use squaregrid::{CoordinateSmallVec, GridCoordinate, GridDisplay, IndexType, SquareGrid};
+use squaregrid::{CoordinateSmallVec, GridDisplay, IndexType, SquareGrid};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
 
@@ -325,7 +326,8 @@ mod tests {
     use quickcheck::quickcheck;
 
     use super::*;
-    use squaregrid::{GridCoordinate, SquareGrid};
+    use coordinates::GridCoordinate;
+    use squaregrid::SquareGrid;
 
     type SmallGrid = SquareGrid<u8>;
     type SmallDistances = DijkstraDistances<u8>;
