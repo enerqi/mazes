@@ -1,17 +1,19 @@
 use std::convert::From;
 
-use smallvec::SmallVec;
+use smallvec::{SmallVec, SmallVecMoveIterator};
 
 
 pub trait Cell {
 
     type Coord;
     type Direction;
-    type CoordinateSmallVec;
+                                           // fn into_iter<'a>(&'a mut self) -> SmallVecMoveIterator<'a, A::Item>
+                                           // no, it's not a trait
+    type CoordinateSmallVec: SmallVecMoveIterator; // ah mess, smallvec does not implement many traits. VecLike (Indexable, len, push). smallvec::SmallVecMoveIterator?
     type DirectionSmallVec;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(&self) -> Self::DirectionSmallVec;
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec;
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
@@ -41,12 +43,12 @@ pub enum CompassPrimary {
 pub struct SquareCell;
 
 impl Cell for SquareCell {
-    type Coord = Cartesian2DCoordinate;
+    type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
     type Direction = CompassPrimary;
     type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
     type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(&self) -> Self::DirectionSmallVec {
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec {
         [CompassPrimary::North,
          CompassPrimary::South,
          CompassPrimary::East,

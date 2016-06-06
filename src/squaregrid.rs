@@ -7,7 +7,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::Cartesian2DCoordinate;
+use coordinates::{Cell, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -57,6 +57,10 @@ use coordinates::Cartesian2DCoordinate;
 //   coordinate type specific tranformation given a dimension
 //
 // CellIter
+//
+// Prepare Grid - varies -> Polar vs Other etc.
+// Random cell_coord
+// Drawing
 
 pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
 pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
@@ -83,17 +87,20 @@ pub trait GridDisplay {
     }
 }
 
-pub struct SquareGrid<GridIndexType: IndexType> {
+pub struct SquareGrid<GridIndexType: IndexType> { //, CellType: Cell=SquareCell
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: u32,
     grid_display: Option<Rc<GridDisplay>>,
 }
+
+                                              // Note we do not need the Cell trait for this function
 impl<GridIndexType: IndexType> fmt::Debug for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "SquareGrid {:?} {:?}", self.graph, self.dimension_size)
     }
 }
 
+//impl<GridIndexType: IndexType, CellType: Cell=SquareCell> SquareGrid<GridIndexType> {
 impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType> {
 
@@ -192,12 +199,15 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec {
+    pub fn neighbours<CellType: Cell>(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec {
 
-        [offset_coordinate(coord, GridDirection::North),
-         offset_coordinate(coord, GridDirection::South),
-         offset_coordinate(coord, GridDirection::East),
-         offset_coordinate(coord, GridDirection::West)]
+        let all_dirs: CellType::DirectionSmallVec = CellType::offset_directions(Some(coord));
+
+        // [offset_coordinate(coord, GridDirection::North),
+        //  offset_coordinate(coord, GridDirection::South),
+        //  offset_coordinate(coord, GridDirection::East),
+        //  offset_coordinate(coord, GridDirection::West)]
+        all_dirs
             .into_iter()
             .filter(|adjacent_coord_opt: &&Option<Cartesian2DCoordinate>| {
                 if let Some(adjacent_coord) = **adjacent_coord_opt {
@@ -305,6 +315,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 }
 
+//impl<GridIndexType: IndexType, CellType: Cell> fmt::Display for SquareGrid<GridIndexType, CellType> {
 impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
@@ -499,14 +510,14 @@ impl Iterator for CellIter {
 // This form is useful if you have the SquareGrid by value and take a reference to it
 // but seems unhelpful when you already have a reference then we need to do &*grid which
 // it just plain uglier than `grid.iter()`
-impl<'a, GridIndexType: IndexType> IntoIterator for &'a SquareGrid<GridIndexType> {
-    type Item = Cartesian2DCoordinate;
-    type IntoIter = CellIter;
+// impl<'a, GridIndexType: IndexType, CellType: Cell> IntoIterator for &'a SquareGrid<GridIndexType, CellType> {
+//     type Item = CellType::Coord;
+//     type IntoIter = CellIter;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.iter()
+//     }
+// }
 
 #[derive(Debug, Copy, Clone)]
 enum BatchIterType {
