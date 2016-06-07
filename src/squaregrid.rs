@@ -59,8 +59,16 @@ use coordinates::{Cell, Coordinate, SquareCell, Cartesian2DCoordinate};
 // CellIter
 //
 // Prepare Grid - varies -> Polar vs Other etc.
-// Random cell_coord
+// Random cell_coord - select value from each dimension and form grid index from it
 // Drawing
+//
+// point of coordinate?
+// batch iteration in 2 dimensions
+// conversion to graph index (which is really a 1D concept)
+// bounds check on 2 dimensions (could be 1+ I suppose) -> graph could store the limit of each dimension, WxHxD etc.
+// Does polar fit in with this idea? The polar grid tends to try to create areas of roughly the same size, so the
+// number of cells increases at each outer layer of the circle
+
 
 pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
 pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
