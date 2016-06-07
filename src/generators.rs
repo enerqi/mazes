@@ -73,7 +73,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType>)
     };
 
     for coordinates_line in batch_iter {
-        let mut run = SmallVec::<[&Cartesian2DCoordinate; 12]>::new(); // 1/5000 chance to get a run of 12 coin flips
+        let mut run = SmallVec::<[&Cartesian2DCoordinate; 12]>::new(); // 1/5000 chance to get a run of 12 coin flips. SmallVec is still growable.
 
         for coord in &coordinates_line {
             run.push(coord);

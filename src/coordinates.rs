@@ -1,19 +1,21 @@
 use std::convert::From;
+use std::iter::FromIterator;
+use std::iter::Iterator;
 
+use arrayvec::ArrayVec;
 use smallvec::{SmallVec, SmallVecMoveIterator};
 
 
 pub trait Cell {
 
-    type Coord;
+    type Coord: Coordinate;
     type Direction;
-                                           // fn into_iter<'a>(&'a mut self) -> SmallVecMoveIterator<'a, A::Item>
-                                           // no, it's not a trait
-    type CoordinateSmallVec: SmallVecMoveIterator; // ah mess, smallvec does not implement many traits. VecLike (Indexable, len, push). smallvec::SmallVecMoveIterator?
-    type DirectionSmallVec;
+    type CoordinateFixedSizeVec: IntoIterator + FromIterator<Self::Coord>;
+    type CoordinateOptionFixedSizeVec: IntoIterator + FromIterator<Option<Self::Coord>>;
+    type DirectionFixedSizeVec: IntoIterator + FromIterator<Self::Direction>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec;
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec;
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
@@ -45,15 +47,16 @@ pub struct SquareCell;
 impl Cell for SquareCell {
     type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
     type Direction = CompassPrimary;
-    type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
-    type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
+    type CoordinateFixedSizeVec = ArrayVec<[Self::Coord; 4]>;
+    type CoordinateOptionFixedSizeVec = ArrayVec<[Option<Self::Coord>; 4]>;
+    type DirectionFixedSizeVec = ArrayVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec {
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
         [CompassPrimary::North,
          CompassPrimary::South,
          CompassPrimary::East,
          CompassPrimary::West]
-        .into_iter().cloned().collect::<Self::DirectionSmallVec>()
+        .into_iter().cloned().collect::<Self::DirectionFixedSizeVec>()
     }
 
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
@@ -89,7 +92,7 @@ impl Cartesian2DCoordinate {
 impl Coordinate for Cartesian2DCoordinate {
 
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {
-        self.clone()
+        *self
     }
 }
 

@@ -17,6 +17,7 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", allow(similar_names))]
 
+extern crate arrayvec;
 extern crate bit_set;
 extern crate fnv;
 extern crate image;

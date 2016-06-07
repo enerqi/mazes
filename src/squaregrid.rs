@@ -7,7 +7,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cell, SquareCell, Cartesian2DCoordinate};
+use coordinates::{Cell, Coordinate, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -199,23 +199,32 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours<CellType: Cell>(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec {
+    pub fn neighbours<CellType: Cell>(&self, coord: CellType::Coord) -> CellType::CoordinateFixedSizeVec {
 
-        let all_dirs: CellType::DirectionSmallVec = CellType::offset_directions(Some(coord));
-
+        let all_dirs: CellType::DirectionFixedSizeVec = CellType::offset_directions(&Some(coord));
+        let offsets: CellType::CoordinateOptionFixedSizeVec = all_dirs.into_iter()
+                                                                 .map(|dir| Cell::offset_coordinate(coord, dir))
+                                                                 .collect();
+       //CellType::CoordinateFixedSizeVec::new()
+      // CoordinateSmallVec::new()
         // [offset_coordinate(coord, GridDirection::North),
         //  offset_coordinate(coord, GridDirection::South),
         //  offset_coordinate(coord, GridDirection::East),
         //  offset_coordinate(coord, GridDirection::West)]
-        all_dirs
+        offsets
             .into_iter()
-            .filter(|adjacent_coord_opt: &&Option<Cartesian2DCoordinate>| {
-                if let Some(adjacent_coord) = **adjacent_coord_opt {
-                    self.is_valid_coordinate(adjacent_coord)
+            //.map(|dir| Cell::offset_coordinate(coord, dir))
+            .filter(|adjacent_coord_opt| {
+                if let Some(adjacent_coord) = adjacent_coord_opt {
+                    self.is_valid_coordinate(adjacent_coord.as_cartesian_2d())
                 } else {
                     false
                 }
             })
+                // no unwrap defined by the trait itself `CoordinateOptionFixedSizeVec`
+                // need custom trait for unwrap/extract e.g. Monad::run ?
+                // why do I want to unwrap? I really want to map it from Option to Coord directly.
+                // so Option<Coord> to Coord. Not that Option<Coord> is explicit in the trait.
             .map(|some_valid_coord| some_valid_coord.unwrap())
             .collect()
     }
@@ -229,14 +238,14 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
             .collect()
     }
 
-    pub fn neighbour_at_direction(&self,
-                                  coord: Cartesian2DCoordinate,
-                                  direction: GridDirection)
-                                  -> Option<Cartesian2DCoordinate> {
-        let neighbour_coord_opt = offset_coordinate(coord, direction);
+    pub fn neighbour_at_direction<CellType: Cell>(&self,
+                                  coord: CellType::Coord,
+                                  direction: CellType::Direction)
+                                  -> Option<CellType::Coord> {
+        let neighbour_coord_opt = Cell::offset_coordinate(coord, direction);
 
-        neighbour_coord_opt.and_then(|neighbour_coord| {
-            if self.is_valid_coordinate(neighbour_coord) {
+        neighbour_coord_opt.and_then(|neighbour_coord: CellType::Coord| {
+            if self.is_valid_coordinate(neighbour_coord.as_cartesian_2d()) {
                 Some(neighbour_coord)
             } else {
                 None
@@ -301,7 +310,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         coord.x < self.dimension_size && coord.y < self.dimension_size
     }
 
-    fn is_neighbour(&self, a: Cartesian2DCoordinate, b: Cartesian2DCoordinate) -> bool {
+    fn is_neighbour<CellType: Cell>(&self, a: CellType::Coord, b: CellType::Coord) -> bool {
         self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
