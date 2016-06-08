@@ -10,9 +10,14 @@ pub trait Cell {
 
     type Coord: Coordinate;
     type Direction;
-    type CoordinateFixedSizeVec: IntoIterator + FromIterator<Self::Coord>;
-    type CoordinateOptionFixedSizeVec: IntoIterator + FromIterator<Option<Self::Coord>>;
-    type DirectionFixedSizeVec: IntoIterator + FromIterator<Self::Direction>;
+                          // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
+                          // we get type errors saying a general CoordinateOptionFixedSizeVec IntoIterator::Item cannot `unwrap`.
+                          // associated type specification, not trait type parameter, but almost same syntax...
+                          // e.g. FromIterator<T> is a type parameter to the trait
+                          //      IntoIterator<Item=T> is an associated type specialisation
+    type CoordinateFixedSizeVec: IntoIterator<Item=Self::Coord> + FromIterator<Self::Coord>;
+    type CoordinateOptionFixedSizeVec: IntoIterator<Item=Option<Self::Coord>> + FromIterator<Option<Self::Coord>>;
+    type DirectionFixedSizeVec: IntoIterator<Item=Self::Direction> + FromIterator<Self::Direction>;
 
     /// Creates a small vec of the possible directions away from this Cell.
     fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec;
@@ -48,7 +53,13 @@ impl Cell for SquareCell {
     type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
     type Direction = CompassPrimary;
     type CoordinateFixedSizeVec = ArrayVec<[Self::Coord; 4]>;
+
+    // do not really want this indirection as it requires me to make option itself, unwrapping a trait?
+    // prefer the const 4, but they do not exist in the language yet
+    // could just dynamically query the size of CoordinateFixedSizeVec? No then the option variant is not a compile time decision
+    // argh
     type CoordinateOptionFixedSizeVec = ArrayVec<[Option<Self::Coord>; 4]>;
+
     type DirectionFixedSizeVec = ArrayVec<[CompassPrimary; 4]>;
 
     fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {

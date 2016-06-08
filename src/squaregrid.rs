@@ -68,6 +68,7 @@ use coordinates::{Cell, Coordinate, SquareCell, Cartesian2DCoordinate};
 // bounds check on 2 dimensions (could be 1+ I suppose) -> graph could store the limit of each dimension, WxHxD etc.
 // Does polar fit in with this idea? The polar grid tends to try to create areas of roughly the same size, so the
 // number of cells increases at each outer layer of the circle
+// directions -> inward, outward (multiple! not static) is a list, clockwise, counter-clockwise
 
 
 pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
@@ -210,31 +211,20 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     pub fn neighbours<CellType: Cell>(&self, coord: CellType::Coord) -> CellType::CoordinateFixedSizeVec {
 
         let all_dirs: CellType::DirectionFixedSizeVec = CellType::offset_directions(&Some(coord));
-        let offsets: CellType::CoordinateOptionFixedSizeVec = all_dirs.into_iter()
-                                                                 .map(|dir| Cell::offset_coordinate(coord, dir))
-                                                                 .collect();
-       //CellType::CoordinateFixedSizeVec::new()
-      // CoordinateSmallVec::new()
-        // [offset_coordinate(coord, GridDirection::North),
-        //  offset_coordinate(coord, GridDirection::South),
-        //  offset_coordinate(coord, GridDirection::East),
-        //  offset_coordinate(coord, GridDirection::West)]
-        offsets
-            .into_iter()
-            //.map(|dir| Cell::offset_coordinate(coord, dir))
-            .filter(|adjacent_coord_opt| {
-                if let Some(adjacent_coord) = adjacent_coord_opt {
-                    self.is_valid_coordinate(adjacent_coord.as_cartesian_2d())
-                } else {
-                    false
-                }
-            })
-                // no unwrap defined by the trait itself `CoordinateOptionFixedSizeVec`
-                // need custom trait for unwrap/extract e.g. Monad::run ?
-                // why do I want to unwrap? I really want to map it from Option to Coord directly.
-                // so Option<Coord> to Coord. Not that Option<Coord> is explicit in the trait.
-            .map(|some_valid_coord| some_valid_coord.unwrap())
-            .collect()
+        all_dirs.into_iter()
+                .map(|dir: CellType::Direction| Cell::offset_coordinate(coord, dir))
+                .filter_map(|adjacent_coord_opt: Option<CellType::Coord>| {
+                    if let Some(adjacent_coord) = adjacent_coord_opt {
+                        if self.is_valid_coordinate(adjacent_coord.as_cartesian_2d()) {
+                            adjacent_coord_opt
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect()
     }
 
     pub fn neighbours_at_directions(&self,
@@ -319,7 +309,10 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     fn is_neighbour<CellType: Cell>(&self, a: CellType::Coord, b: CellType::Coord) -> bool {
-        self.neighbours(a).iter().any(|&coord| coord == b)
+                                // no generic .iter
+                                // what about &[T] which has .iter
+                                // slices implemenet IntoIterator for (&T) in the &[T] case
+        self.neighbours::<CellType>(a).iter().any(|&coord| coord == b)
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
