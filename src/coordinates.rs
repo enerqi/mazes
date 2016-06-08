@@ -1,6 +1,7 @@
 use std::convert::From;
 use std::iter::FromIterator;
 use std::iter::Iterator;
+use std::ops::Deref;
 
 use arrayvec::ArrayVec;
 use smallvec::{SmallVec, SmallVecMoveIterator};
@@ -8,15 +9,16 @@ use smallvec::{SmallVec, SmallVecMoveIterator};
 
 pub trait Cell {
 
-    type Coord: Coordinate;
+    type Coord: Coordinate + PartialEq;
     type Direction;
                           // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
                           // we get type errors saying a general CoordinateOptionFixedSizeVec IntoIterator::Item cannot `unwrap`.
                           // associated type specification, not trait type parameter, but almost same syntax...
                           // e.g. FromIterator<T> is a type parameter to the trait
                           //      IntoIterator<Item=T> is an associated type specialisation
-    type CoordinateFixedSizeVec: IntoIterator<Item=Self::Coord> + FromIterator<Self::Coord>;
-    type CoordinateOptionFixedSizeVec: IntoIterator<Item=Option<Self::Coord>> + FromIterator<Option<Self::Coord>>;
+                          // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
+    type CoordinateFixedSizeVec: IntoIterator<Item=Self::Coord> + FromIterator<Self::Coord> + Deref<Target=[Self::Coord]>;
+    type CoordinateOptionFixedSizeVec: IntoIterator<Item=Option<Self::Coord>> + FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
     type DirectionFixedSizeVec: IntoIterator<Item=Self::Direction> + FromIterator<Self::Direction>;
 
     /// Creates a small vec of the possible directions away from this Cell.

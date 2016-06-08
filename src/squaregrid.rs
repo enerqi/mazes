@@ -309,9 +309,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
     }
 
     fn is_neighbour<CellType: Cell>(&self, a: CellType::Coord, b: CellType::Coord) -> bool {
-                                // no generic .iter
-                                // what about &[T] which has .iter
-                                // slices implemenet IntoIterator for (&T) in the &[T] case
+                                // For .iter Coord satifies `Deref<Target=[Self::Coord]>`
         self.neighbours::<CellType>(a).iter().any(|&coord| coord == b)
     }
 
