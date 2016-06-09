@@ -1,4 +1,5 @@
 use std::fmt;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 use petgraph::{Graph, Undirected};
@@ -278,12 +279,12 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         }
     }
 
-    pub fn iter(&self) -> CellIter {
-        let dim_size = self.dimension_size;
+    pub fn iter<T: Cell>(&self) -> CellIter<T> {
         CellIter {
             current_cell_number: 0,
-            dimension_size: dim_size,
+            dimension_size: self.dimension_size as usize,
             cells_count: self.size(),
+            coordinate_type: PhantomData,
         }
     }
 
@@ -490,16 +491,17 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct CellIter {
+pub struct CellIter<T> {
     current_cell_number: usize,
     dimension_size: usize,
     cells_count: usize,
+    coordinate_type: PhantomData<T>
 }
-impl<CellT> Iterator<Item=CellT::Coord> for CellIter where CellT: Cell {
-    type Item = CellT::Coord;
+impl<T: Cell> Iterator for CellIter<T> {
+    type Item = T::Coord;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
-            let coord = CellT::Coord::from_row_major_index(self.current_cell_number, DimensionSize(self.dimension_size));
+            let coord = Self::Item::from_row_major_index(self.current_cell_number, DimensionSize(self.dimension_size));
             self.current_cell_number += 1;
             Some(coord)
         } else {
