@@ -7,7 +7,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cell, Coordinate, SquareCell, Cartesian2DCoordinate};
+use coordinates::{Cell, Coordinate, DimensionSize, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -143,9 +143,9 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         self.dimension_size
     }
 
-    pub fn random_cell<R: Rng>(&self, rng: &mut R) -> Cartesian2DCoordinate {
+    pub fn random_cell<CellType: Cell, R: Rng>(&self, rng: &mut R) -> CellType::Coord {
         let index = rng.gen::<usize>() % self.size();
-        index_to_grid_coordinate(self.dimension_size, index)
+        CellType::Coord::from_row_major_index(index, DimensionSize(self.dimension_size as usize))
     }
 
     /// Link two cells
@@ -197,11 +197,8 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
                 .edges(graph_node_index)
                 .map(|index_edge_data_pair| {
                     let grid_node_index = index_edge_data_pair.0;
-                    index_to_grid_coordinate(self.dimension_size, grid_node_index.index())
-                    // ? where <CellType as coordinates::Cell>::CoordinateFixedSizeVec: std::iter::FromIterator<coordinates::Cartesian2DCoordinate>` bound
-                    // for random_cell, CellIter and this function we need a way to convert the index_to_grid_coordinate result back to the real coordinate type
-                    // or we need a generic way to convert a 1d index within a grid of X/Y/Z/P sizes back to the coordinate...which is part of teh grids
-                    // responsibility to keep track of
+                    CellType::Coord::from_row_major_index(grid_node_index.index(),
+                                                          DimensionSize(self.dimension_size as usize))
                 })
                 .collect();
             Some(linked_cells)
@@ -495,14 +492,14 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
 #[derive(Debug, Copy, Clone)]
 pub struct CellIter {
     current_cell_number: usize,
-    dimension_size: u32,
+    dimension_size: usize,
     cells_count: usize,
 }
-impl Iterator for CellIter {
-    type Item = Cartesian2DCoordinate;
+impl<CellT> Iterator<Item=CellT::Coord> for CellIter where CellT: Cell {
+    type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
-            let coord = index_to_grid_coordinate(self.dimension_size, self.current_cell_number);
+            let coord = CellT::Coord::from_row_major_index(self.current_cell_number, DimensionSize(self.dimension_size));
             self.current_cell_number += 1;
             Some(coord)
         } else {
@@ -569,40 +566,42 @@ impl Iterator for BatchIter {
     }
 }
 
-pub fn index_to_grid_coordinate(dimension_size: u32,
-                                one_dimensional_index: usize)
-                                -> Cartesian2DCoordinate {
-    let x = one_dimensional_index % dimension_size as usize;
-    let y = one_dimensional_index / dimension_size as usize;
-    Cartesian2DCoordinate {
-        x: x as u32,
-        y: y as u32,
-    }
-}
+// ExactSizeIterator?
+
+// pub fn index_to_grid_coordinate(dimension_size: u32,
+//                                 one_dimensional_index: usize)
+//                                 -> Cartesian2DCoordinate {
+//     let x = one_dimensional_index % dimension_size as usize;
+//     let y = one_dimensional_index / dimension_size as usize;
+//     Cartesian2DCoordinate {
+//         x: x as u32,
+//         y: y as u32,
+//     }
+// }
 
 /// Create a new `Cartesian2DCoordinate` offset 1 cell away in the given direction.
 /// Returns None if the Coordinate is not representable (x < 0 or y < 0).
-fn offset_coordinate(coord: Cartesian2DCoordinate, dir: GridDirection) -> Option<Cartesian2DCoordinate> {
-    let (x, y) = (coord.x, coord.y);
-    match dir {
-        GridDirection::North => {
-            if y > 0 {
-                Some(Cartesian2DCoordinate { x: x, y: y - 1 })
-            } else {
-                None
-            }
-        }
-        GridDirection::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
-        GridDirection::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
-        GridDirection::West => {
-            if x > 0 {
-                Some(Cartesian2DCoordinate { x: x - 1, y: y })
-            } else {
-                None
-            }
-        }
-    }
-}
+// fn offset_coordinate(coord: Cartesian2DCoordinate, dir: GridDirection) -> Option<Cartesian2DCoordinate> {
+//     let (x, y) = (coord.x, coord.y);
+//     match dir {
+//         GridDirection::North => {
+//             if y > 0 {
+//                 Some(Cartesian2DCoordinate { x: x, y: y - 1 })
+//             } else {
+//                 None
+//             }
+//         }
+//         GridDirection::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
+//         GridDirection::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
+//         GridDirection::West => {
+//             if x > 0 {
+//                 Some(Cartesian2DCoordinate { x: x - 1, y: y })
+//             } else {
+//                 None
+//             }
+//         }
+//     }
+// }
 
 
 #[cfg(test)]

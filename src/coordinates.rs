@@ -29,8 +29,11 @@ pub trait Cell {
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
 }
 
+pub struct DimensionSize(pub usize);
+
 pub trait Coordinate {
 
+    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Self;
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
 
@@ -50,6 +53,8 @@ pub enum CompassPrimary {
 
 #[derive(Copy, Clone, Debug)]
 pub struct SquareCell;
+
+
 
 impl Cell for SquareCell {
     type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
@@ -103,6 +108,14 @@ impl Cartesian2DCoordinate {
     }
 }
 impl Coordinate for Cartesian2DCoordinate {
+
+    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Cartesian2DCoordinate {
+        let DimensionSize(size) = row_size;
+        let x = index % size as usize;
+        let y = index / size as usize;
+
+        Cartesian2DCoordinate::new(x as u32, y as u32)
+    }
 
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {
         *self
