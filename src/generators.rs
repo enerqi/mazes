@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 
 use coordinates::Cartesian2DCoordinate;
 use masks::BinaryMask2D;
-use squaregrid::{CoordinateSmallVec, GridDirection, IndexType, SquareGrid};
-use squaregrid;
+use grids::{CoordinateSmallVec, GridDirection, IndexType, SquareGrid};
+use grids;
 use utils;
 use utils::FnvHashSet;
 
@@ -605,7 +605,7 @@ fn random_unvisited_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
             .nth(n)
             .unwrap();
 
-        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
+        Some(grids::index_to_grid_coordinate(grid.dimension(), cell_index))
 
     } else {
         None
@@ -626,12 +626,12 @@ fn random_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexType>,
         let cells_count = grid.size();
         let cell_index = (0..cells_count)
             .filter(|i| {
-                let coord = squaregrid::index_to_grid_coordinate(grid.dimension(), *i);
+                let coord = grids::index_to_grid_coordinate(grid.dimension(), *i);
                 !mask.is_masked(coord)
             })
             .nth(n)
             .unwrap();
-        Some(squaregrid::index_to_grid_coordinate(grid.dimension(), cell_index))
+        Some(grids::index_to_grid_coordinate(grid.dimension(), cell_index))
 
     } else {
         None
@@ -668,13 +668,13 @@ fn random_unvisited_unmasked_cell<GridIndexType, R>(grid: &SquareGrid<GridIndexT
                 let grid_dim = grid.dimension();
                 let cell_index = (0..cells_count)
                     .filter(|i| {
-                        let coord = squaregrid::index_to_grid_coordinate(grid_dim, *i);
+                        let coord = grids::index_to_grid_coordinate(grid_dim, *i);
                         !visited.contains(bit_index(coord, &grid)) && !mask.is_masked(coord)
                     })
                     .nth(n)
                     .unwrap();
 
-                Some(squaregrid::index_to_grid_coordinate(grid_dim, cell_index))
+                Some(grids::index_to_grid_coordinate(grid_dim, cell_index))
 
             } else {
                 None

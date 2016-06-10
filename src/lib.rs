@@ -35,9 +35,9 @@ extern crate quickcheck;
 
 pub mod coordinates;
 pub mod generators;
+pub mod grids;
 pub mod masks;
 pub mod pathing;
 pub mod renderers;
-pub mod squaregrid;
 mod sdl;
 mod utils;

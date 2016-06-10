@@ -16,7 +16,7 @@ use std::rc::Rc;
 use docopt::Docopt;
 
 use mazes::coordinates::Cartesian2DCoordinate;
-use mazes::squaregrid::{CoordinateSmallVec, GridDisplay, SquareGrid};
+use mazes::grids::{CoordinateSmallVec, GridDisplay, SquareGrid};
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;

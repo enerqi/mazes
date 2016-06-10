@@ -37,7 +37,7 @@ use smallvec::SmallVec;
 
 use coordinates::Cartesian2DCoordinate;
 use masks::BinaryMask2D;
-use squaregrid::{CoordinateSmallVec, GridDisplay, IndexType, SquareGrid};
+use grids::{CoordinateSmallVec, GridDisplay, IndexType, SquareGrid};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
 

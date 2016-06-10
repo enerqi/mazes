@@ -15,7 +15,7 @@ use sdl;
 use sdl::SdlSetup;
 use coordinates::Cartesian2DCoordinate;
 use pathing;
-use squaregrid::{GridDirection, IndexType, SquareGrid};
+use grids::{GridDirection, IndexType, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
