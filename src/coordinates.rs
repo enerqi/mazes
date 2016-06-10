@@ -34,6 +34,7 @@ pub struct DimensionSize(pub usize);
 pub trait Coordinate {
 
     fn from_row_major_index(index: usize, row_size: DimensionSize) -> Self;
+    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self;
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
 
@@ -115,6 +116,10 @@ impl Coordinate for Cartesian2DCoordinate {
         let y = index / size as usize;
 
         Cartesian2DCoordinate::new(x as u32, y as u32)
+    }
+
+    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self {
+        Cartesian2DCoordinate::new(col_index as u32, row_index as u32)
     }
 
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {

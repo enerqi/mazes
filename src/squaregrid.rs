@@ -72,8 +72,8 @@ use coordinates::{Cell, Coordinate, DimensionSize, SquareCell, Cartesian2DCoordi
 // directions -> inward, outward (multiple! not static) is a list, clockwise, counter-clockwise
 
 
-pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
-pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
+// pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
+// pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum GridDirection {
@@ -288,19 +288,21 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         }
     }
 
-    pub fn iter_row(&self) -> BatchIter {
+    pub fn iter_row<T: Cell>(&self) -> BatchIter<T> {
         BatchIter {
             iter_type: BatchIterType::Row,
             current_index: 0,
-            dimension_size: self.dimension_size,
+            dimension_size: self.dimension_size as usize,
+            coordinate_type: PhantomData,
         }
     }
 
-    pub fn iter_column(&self) -> BatchIter {
+    pub fn iter_column<T: Cell>(&self) -> BatchIter<T> {
         BatchIter {
             iter_type: BatchIterType::Column,
             current_index: 0,
-            dimension_size: self.dimension_size,
+            dimension_size: self.dimension_size as usize,
+            coordinate_type: PhantomData,
         }
     }
 
@@ -535,22 +537,23 @@ enum BatchIterType {
     Column,
 }
 #[derive(Debug, Copy, Clone)]
-pub struct BatchIter {
+pub struct BatchIter<T> {
     iter_type: BatchIterType,
-    current_index: u32,
-    dimension_size: u32,
+    current_index: usize,
+    dimension_size: usize,
+    coordinate_type: PhantomData<T>,
 }
-impl Iterator for BatchIter {
-    type Item = Vec<Cartesian2DCoordinate>;
+impl<T: Cell> Iterator for BatchIter<T> {
+    type Item = Vec<T::Coord>;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_index < self.dimension_size {
             let coords = (0..self.dimension_size)
                 .into_iter()
-                .map(|i: u32| {
+                .map(|i: usize| {
                     if let BatchIterType::Row = self.iter_type {
-                        Cartesian2DCoordinate::new(i, self.current_index)
+                        T::Coord::from_row_column_indices(i, self.current_index)
                     } else {
-                        Cartesian2DCoordinate::new(self.current_index, i)
+                        T::Coord::from_row_column_indices(self.current_index, i)
                     }
                 })
                 .collect();
@@ -562,49 +565,13 @@ impl Iterator for BatchIter {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let lower_bound = (self.dimension_size - self.current_index) as usize;
+        let lower_bound = self.dimension_size - self.current_index;
         let upper_bound = lower_bound;
         (lower_bound, Some(upper_bound))
     }
 }
 
 // ExactSizeIterator?
-
-// pub fn index_to_grid_coordinate(dimension_size: u32,
-//                                 one_dimensional_index: usize)
-//                                 -> Cartesian2DCoordinate {
-//     let x = one_dimensional_index % dimension_size as usize;
-//     let y = one_dimensional_index / dimension_size as usize;
-//     Cartesian2DCoordinate {
-//         x: x as u32,
-//         y: y as u32,
-//     }
-// }
-
-/// Create a new `Cartesian2DCoordinate` offset 1 cell away in the given direction.
-/// Returns None if the Coordinate is not representable (x < 0 or y < 0).
-// fn offset_coordinate(coord: Cartesian2DCoordinate, dir: GridDirection) -> Option<Cartesian2DCoordinate> {
-//     let (x, y) = (coord.x, coord.y);
-//     match dir {
-//         GridDirection::North => {
-//             if y > 0 {
-//                 Some(Cartesian2DCoordinate { x: x, y: y - 1 })
-//             } else {
-//                 None
-//             }
-//         }
-//         GridDirection::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
-//         GridDirection::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
-//         GridDirection::West => {
-//             if x > 0 {
-//                 Some(Cartesian2DCoordinate { x: x - 1, y: y })
-//             } else {
-//                 None
-//             }
-//         }
-//     }
-// }
-
 
 #[cfg(test)]
 mod tests {
