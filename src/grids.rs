@@ -89,30 +89,30 @@ pub enum CellLinkError {
     SelfLink,
 }
 
-pub trait GridDisplay {
+pub trait GridDisplay<CellT: Cell> {
     /// Render the contents of a grid cell as text.
     /// The String should be 3 glyphs long, padded if required.
-    fn render_cell_body(&self, _: Cartesian2DCoordinate) -> String {
+    fn render_cell_body(&self, _: CellT) -> String {
         String::from("   ")
     }
 }
 
-pub struct SquareGrid<GridIndexType: IndexType> { //, CellType: Cell=SquareCell
+pub struct SquareGrid<GridIndexType: IndexType, CellT: Cell> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: u32,
-    grid_display: Option<Rc<GridDisplay>>,
+    grid_display: Option<Rc<GridDisplay<CellT>>>,
+    cell_type: PhantomData<CellT>
 }
 
                                               // Note we do not need the Cell trait for this function
-impl<GridIndexType: IndexType> fmt::Debug for SquareGrid<GridIndexType> {
+impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for SquareGrid<GridIndexType, CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "SquareGrid {:?} {:?}", self.graph, self.dimension_size)
     }
 }
 
-//impl<GridIndexType: IndexType, CellType: Cell=SquareCell> SquareGrid<GridIndexType> {
-impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
-    pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType> {
+impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
+    pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType, CellT> {
 
         let dim_size = dimension_size as usize;
         let cells_count = dim_size * dim_size;
@@ -131,7 +131,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
         grid
     }
 
-    pub fn set_grid_display(&mut self, grid_display: Option<Rc<GridDisplay>>) {
+    pub fn set_grid_display(&mut self, grid_display: Option<Rc<GridDisplay<CellT>>>) {
         self.grid_display = grid_display;
     }
 
@@ -327,7 +327,7 @@ impl<GridIndexType: IndexType> SquareGrid<GridIndexType> {
 }
 
 //impl<GridIndexType: IndexType, CellType: Cell> fmt::Display for SquareGrid<GridIndexType, CellType> {
-impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType> {
+impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridIndexType, CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         const WALL_L: &'static str = "╴";
