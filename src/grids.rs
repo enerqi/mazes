@@ -210,12 +210,12 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours<CellType: Cell>(&self, coord: CellType::Coord) -> CellType::CoordinateFixedSizeVec {
+    pub fn neighbours<CellT: Cell>(&self, coord: CellT::Coord) -> CellT::CoordinateFixedSizeVec {
 
-        let all_dirs: CellType::DirectionFixedSizeVec = CellType::offset_directions(&Some(coord));
+        let all_dirs: CellT::DirectionFixedSizeVec = CellT::offset_directions(&Some(coord));
         all_dirs.into_iter()
-                .map(|dir: CellType::Direction| Cell::offset_coordinate(coord, dir))
-                .filter_map(|adjacent_coord_opt: Option<CellType::Coord>| {
+                .map(|dir: CellT::Direction| Cell::offset_coordinate(coord, dir))
+                .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| {
                     if let Some(adjacent_coord) = adjacent_coord_opt {
                         if self.is_valid_coordinate(adjacent_coord.as_cartesian_2d()) {
                             adjacent_coord_opt
