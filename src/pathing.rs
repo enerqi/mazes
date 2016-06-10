@@ -146,11 +146,12 @@ impl<CoordT, MaxDistanceT> DijkstraDistances<CoordT, MaxDistanceT>
     }
 }
 
-impl<CoordT, MaxDistanceT> GridDisplay<CoordT> for DijkstraDistances<CoordT, MaxDistanceT>
+impl<CoordT, CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<CoordT, MaxDistanceT>
     where CoordT: Coordinate,
+          CellT: Cell,
           MaxDistanceT: MaxDistance
 {
-    fn render_cell_body(&self, coord: CoordT) -> String {
+    fn render_cell_body(&self, coord: CellT) -> String {
 
         // In case DijkstraDistances is used with a different grid check for Vec access being in bounds.
         // N.B.
@@ -218,7 +219,7 @@ impl<Coord: Coordinate> PathDisplay<Coord> {
         PathDisplay { on_path_coordinates: path.iter().cloned().collect() }
     }
 }
-impl<Coord: Coordinate> GridDisplay<Coord> for PathDisplay<Coord> {
+impl<Coord: Coordinate, CellT: Cell> GridDisplay<CellT> for PathDisplay<Coord> {
     fn render_cell_body(&self, coord: Coord) -> String {
         if self.on_path_coordinates.contains(&coord) {
             String::from(" . ")

@@ -55,8 +55,6 @@ pub enum CompassPrimary {
 #[derive(Copy, Clone, Debug)]
 pub struct SquareCell;
 
-
-
 impl Cell for SquareCell {
     type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
     type Direction = CompassPrimary;

@@ -13,7 +13,7 @@ use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
-use coordinates::Cartesian2DCoordinate;
+use coordinates::{Cell, Coordinate, Cartesian2DCoordinate};
 use pathing;
 use grids::{GridDirection, IndexType, SquareGrid};
 
@@ -36,7 +36,7 @@ pub struct RenderOptions<'path, 'dist> {
     start: Option<Cartesian2DCoordinate>,
     end: Option<Cartesian2DCoordinate>,
     show_path: bool,
-    distances: Option<&'dist pathing::DijkstraDistances<u32>>,
+    distances: Option<&'dist pathing::DijkstraDistances<Cartesian2DCoordinate, u32>>,
     output_file: Option<&'path Path>,
     path: Option<Vec<Cartesian2DCoordinate>>,
     cell_side_pixels_length: u8,
@@ -93,7 +93,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self
     }
     pub fn distances(mut self,
-                     distances: Option<&'dist pathing::DijkstraDistances<u32>>)
+                     distances: Option<&'dist pathing::DijkstraDistances<Cartesian2DCoordinate, u32>>)
                      -> RenderOptionsBuilder<'path, 'dist> {
         self.options.distances = distances;
         self
@@ -120,8 +120,9 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
 }
 
 
-pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, options: &RenderOptions)
-    where GridIndexType: IndexType
+pub fn render_square_grid<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>, options: &RenderOptions)
+    where GridIndexType: IndexType,
+          CellT: Cell
 {
     let sdl_setup = sdl::init();
 
@@ -179,11 +180,12 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType>, optio
     }
 }
 
-fn draw_maze<GridIndexType>(r: &mut Renderer,
-                            grid: &SquareGrid<GridIndexType>,
+fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
+                            grid: &SquareGrid<GridIndexType, CellT>,
                             options: &RenderOptions,
                             sdl_setup: &SdlSetup)
-    where GridIndexType: IndexType
+    where GridIndexType: IndexType,
+          CellT: Cell
 {
     // clear the texture background to white
     r.set_draw_color(WHITE);
@@ -437,10 +439,11 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     }
 }
 
-fn maze_image_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
+fn maze_image_dimensions<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
                                         options: &RenderOptions)
                                         -> (u32, u32)
-    where GridIndexType: IndexType
+    where GridIndexType: IndexType,
+          CellT: Cell
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels as u32 * grid.dimension();
@@ -449,13 +452,14 @@ fn maze_image_dimensions<GridIndexType>(grid: &SquareGrid<GridIndexType>,
     (img_width + 1, img_height + 1)
 }
 
-fn draw_maze_to_texture<GridIndexType>(r: &mut Renderer,
+fn draw_maze_to_texture<GridIndexType, CellT>(r: &mut Renderer,
                                        t: Texture,
-                                       grid: &SquareGrid<GridIndexType>,
+                                       grid: &SquareGrid<GridIndexType, CellT>,
                                        options: &RenderOptions,
                                        sdl_setup: &SdlSetup)
                                        -> Texture
-    where GridIndexType: IndexType
+    where GridIndexType: IndexType,
+          CellT: Cell
 {
     // Setup to draw to the given texture. The texture is moved/owned by the `set` call.
     r.render_target()
