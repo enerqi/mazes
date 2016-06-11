@@ -151,7 +151,7 @@ impl<CoordT, CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<Coord
           CellT: Cell,
           MaxDistanceT: MaxDistance
 {
-    fn render_cell_body(&self, coord: CellT) -> String {
+    fn render_cell_body(&self, coord: CellT::Coord) -> String {
 
         // In case DijkstraDistances is used with a different grid check for Vec access being in bounds.
         // N.B.
@@ -211,16 +211,16 @@ impl<CellT: Cell> GridDisplay<CellT> for StartEndPointsDisplay<CellT> {
 }
 
 #[derive(Debug)]
-pub struct PathDisplay<Coord: Coordinate> {
-    on_path_coordinates: FnvHashSet<Coord>,
+pub struct PathDisplay<CellT: Cell> {
+    on_path_coordinates: FnvHashSet<CellT::Coord>,
 }
-impl<Coord: Coordinate> PathDisplay<Coord> {
-    pub fn new(path: &[Coord]) -> Self {
+impl<CellT: Cell> PathDisplay<CellT> {
+    pub fn new(path: &[CellT::Coord]) -> Self {
         PathDisplay { on_path_coordinates: path.iter().cloned().collect() }
     }
 }
-impl<Coord: Coordinate, CellT: Cell> GridDisplay<CellT> for PathDisplay<Coord> {
-    fn render_cell_body(&self, coord: Coord) -> String {
+impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
+    fn render_cell_body(&self, coord: CellT::Coord) -> String {
         if self.on_path_coordinates.contains(&coord) {
             String::from(" . ")
         } else {

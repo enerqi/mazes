@@ -92,7 +92,7 @@ pub enum CellLinkError {
 pub trait GridDisplay<CellT: Cell> {
     /// Render the contents of a grid cell as text.
     /// The String should be 3 glyphs long, padded if required.
-    fn render_cell_body(&self, _: CellT) -> String {
+    fn render_cell_body(&self, _: CellT::Coord) -> String {
         String::from("   ")
     }
 }
