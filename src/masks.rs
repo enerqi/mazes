@@ -41,7 +41,7 @@ impl BinaryMask2D {
     /// Is the given coordinate masked out / turned off?
     ///
     /// A coordinate is not masked if it is outside the bounds of masks 2d space.
-    pub fn is_masked<C: Coordinate>(&self, coord: C) -> bool {
+    pub fn is_masked<CoordT: Coordinate>(&self, coord: CoordT) -> bool {
 
         let mask_coordinate = coord.as_cartesian_2d();
 
@@ -71,7 +71,7 @@ impl BinaryMask2D {
         count
     }
 
-    pub fn first_unmasked_coordinate(&self) -> Option<Cartesian2DCoordinate> {
+    pub fn first_unmasked_coordinate<CoordT: Coordinate>(&self) -> Option<CoordT> {
 
         // A bit in the set means masked off
         // The bitset iterator returns indices of masked values, so we cannot use that
@@ -84,7 +84,7 @@ impl BinaryMask2D {
         if let Some(i) = index {
             let x = i % self.width as usize;
             let y = i / self.height as usize;
-            Some(Cartesian2DCoordinate::new(x as u32, y as u32))
+            Some(CoordT::from_row_column_indices(x, y))
         } else {
             None
         }

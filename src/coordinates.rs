@@ -1,4 +1,6 @@
 use std::convert::From;
+use std::fmt::Debug;
+use std::hash::Hash;
 use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
@@ -7,9 +9,18 @@ use arrayvec::ArrayVec;
 use smallvec::{SmallVec, SmallVecMoveIterator};
 
 
+pub struct DimensionSize(pub usize);
+
+pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
+
+    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Self;
+    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self;
+    fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
+}
+
 pub trait Cell {
 
-    type Coord: Coordinate + PartialEq;
+    type Coord: Coordinate;
     type Direction;
                           // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
                           // we get type errors saying a general CoordinateOptionFixedSizeVec IntoIterator::Item cannot `unwrap`.
@@ -27,15 +38,6 @@ pub trait Cell {
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
-}
-
-pub struct DimensionSize(pub usize);
-
-pub trait Coordinate {
-
-    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Self;
-    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self;
-    fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
