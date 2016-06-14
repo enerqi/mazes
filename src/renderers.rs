@@ -378,7 +378,7 @@ fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
                 r.draw_line(Point::from(path_line_point_1),
-                               Point::from(path_line_point_2))
+                            Point::from(path_line_point_2))
                     .unwrap();
 
                 last_cell_draw_pos = path_line_point_2;
