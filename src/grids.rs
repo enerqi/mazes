@@ -6,7 +6,7 @@ use petgraph::{Graph, Undirected};
 use petgraph::graph;
 pub use petgraph::graph::IndexType;
 use rand::Rng;
-use smallvec::SmallVec;
+//use smallvec::SmallVec;
 
 use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesian2DCoordinate};
 
@@ -75,13 +75,13 @@ use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, C
 // pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
 // pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
-pub enum GridDirection {
-    North,
-    South,
-    East,
-    West,
-}
+// #[derive(Eq, PartialEq, Copy, Clone, Debug)]
+// pub enum GridDirection {
+//     North,
+//     South,
+//     East,
+//     West,
+// }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum CellLinkError {
@@ -237,9 +237,9 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     }
 
     pub fn neighbour_at_direction(&self,
-                                                  coord: CellT::Coord,
-                                                  direction: CellT::Direction)
-                                                  -> Option<CellT::Coord> {
+                                  coord: CellT::Coord,
+                                  direction: CellT::Direction)
+                                  -> Option<CellT::Coord> {
         let neighbour_coord_opt = CellT::offset_coordinate(coord, direction);
 
         neighbour_coord_opt.and_then(|neighbour_coord: CellT::Coord| {
@@ -362,7 +362,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, Square
             if is_east_open {
                 output.push_str(WALL_LR);
             } else {
-                let is_last_cell = index == (columns_count - 1) as usize;
+                let is_last_cell = index == (columns_count - 1);
                 if is_last_cell {
                     output.push_str(WALL_LD);
                 } else {
@@ -374,7 +374,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, Square
 
         for (index_row, row) in self.iter_row().enumerate() {
 
-            let is_last_row = index_row == (rows_count - 1) as usize;
+            let is_last_row = index_row == (rows_count - 1);
 
             // Starts of by special case rendering the west most boundary of the row
             // The top section of the cell is done by the previous row.
@@ -394,7 +394,7 @@ impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, Square
                         })
                 };
                 let is_first_column = index_column == 0;
-                let is_last_column = index_column == (columns_count - 1) as usize;
+                let is_last_column = index_column == (columns_count - 1);
                 let east_open = self.is_neighbour_linked(cell_coord, CompassPrimary::East);
                 let south_open = self.is_neighbour_linked(cell_coord, CompassPrimary::South);
 

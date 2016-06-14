@@ -250,7 +250,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridI
         let current_distance_to_start = distances_from_start.distance_from_start_to(current_coord)
             .expect("Coordinate invalid for distances_from_start data.");
 
-        let mut linked_neighbours = grid.neighbours(current_coord)
+        let linked_neighbours = grid.neighbours(current_coord)
             .iter()
             .cloned()
             .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))

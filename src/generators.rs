@@ -6,7 +6,6 @@ use smallvec::SmallVec;
 use coordinates::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
 use masks::BinaryMask2D;
 use grids::{IndexType, SquareGrid};
-use grids;
 use utils;
 use utils::FnvHashSet;
 
@@ -656,7 +655,7 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<Gri
             if remaining_cells != 0 {
 
                 let n = rng.gen::<usize>() % remaining_cells;
-                let grid_dim = grid.dimension() as usize;
+                let grid_dim = grid.dimension();
                 let cell_index = (0..cells_count)
                     .filter(|i| {
                         let coord = CellT::Coord::from_row_major_index(*i, DimensionSize(grid_dim));

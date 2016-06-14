@@ -6,16 +6,16 @@ use sdl2::event::{Event, WindowEventId};
 use sdl2::hint;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
-use sdl2::render::{Renderer, Texture};
+use sdl2::render::Renderer; //  Teuxture
 use sdl2::surface::Surface;
 use sdl2_image::SaveSurface;
 use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
-use coordinates::{Cell, Coordinate, Cartesian2DCoordinate, SquareCell};
+use coordinates::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
 use pathing;
-use grids::{GridDirection, IndexType, SquareGrid};
+use grids::{IndexType, SquareGrid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
@@ -120,9 +120,9 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
 }
 
 
-pub fn render_square_grid<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>, options: &RenderOptions)
-    where GridIndexType: IndexType,
-          CellT: Cell
+pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType, SquareCell>, options: &RenderOptions)
+    where GridIndexType: IndexType
+          // CellT: Cell
 {
     let sdl_setup = sdl::init();
 
@@ -180,12 +180,12 @@ pub fn render_square_grid<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType,
     }
 }
 
-fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
-                            grid: &SquareGrid<GridIndexType, CellT>,
-                            options: &RenderOptions,
-                            sdl_setup: &SdlSetup)
-    where GridIndexType: IndexType,
-          CellT: Cell
+fn draw_maze<GridIndexType>(r: &mut Renderer,
+                                   grid: &SquareGrid<GridIndexType, SquareCell>,
+                                   options: &RenderOptions,
+                                   sdl_setup: &SdlSetup)
+    where GridIndexType: IndexType
+          // CellT: Cell
 {
     // clear the texture background to white
     r.set_draw_color(WHITE);
@@ -210,10 +210,9 @@ fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
     let e_white_surface = font.render("E").blended(WHITE).unwrap();
     let e_black_surface = font.render("E").blended(BLACK).unwrap();
 
-    let calc_cell_screen_coordinates = |cell_coord: CellT::Coord| -> (i32, i32, i32, i32) {
-        let canonical_2d_coord = cell_coord.as_cartesian_2d();
-        let column = canonical_2d_coord.x as usize;
-        let row = canonical_2d_coord.y as usize;
+    let calc_cell_screen_coordinates = |cell_coord: Cartesian2DCoordinate| -> (i32, i32, i32, i32) {
+        let column = cell_coord.x as usize;
+        let row = cell_coord.y as usize;
         let x1 = (column * cell_size_pixels) as i32;
         let y1 = (row * cell_size_pixels) as i32;
         let x2 = ((column + 1) * cell_size_pixels) as i32;
@@ -233,17 +232,17 @@ fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
         let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
 
         // special cases north and west to handle first row and column.
-        if grid.neighbour_at_direction(cell, GridDirection::North).is_none() {
+        if grid.neighbour_at_direction(cell, CompassPrimary::North).is_none() {
             r.draw_line(Point::new(x1, y1), Point::new(x2, y1)).unwrap();
         }
-        if grid.neighbour_at_direction(cell, GridDirection::West).is_none() {
+        if grid.neighbour_at_direction(cell, CompassPrimary::West).is_none() {
             r.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
-            |c: Cartesian2DCoordinate, neighbour_direction: GridDirection| -> bool {
+            |c: Cartesian2DCoordinate, neighbour_direction: CompassPrimary| -> bool {
                 let cell_links_count_is_zero =
                     |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
 
@@ -255,10 +254,10 @@ fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
                 }
             };
 
-        let must_draw_east_wall = !grid.is_neighbour_linked(cell, GridDirection::East) &&
-                                  !are_links_count_of_valid_cells_zero(cell, GridDirection::East);
-        let must_draw_south_wall = !grid.is_neighbour_linked(cell, GridDirection::South) &&
-                                   !are_links_count_of_valid_cells_zero(cell, GridDirection::South);
+        let must_draw_east_wall = !grid.is_neighbour_linked(cell, CompassPrimary::East) &&
+                                  !are_links_count_of_valid_cells_zero(cell, CompassPrimary::East);
+        let must_draw_south_wall = !grid.is_neighbour_linked(cell, CompassPrimary::South) &&
+                                   !are_links_count_of_valid_cells_zero(cell, CompassPrimary::South);
 
         if must_draw_east_wall {
             r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
@@ -453,27 +452,27 @@ fn maze_image_dimensions<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, 
     (img_width + 1, img_height + 1)
 }
 
-fn draw_maze_to_texture<GridIndexType, CellT>(r: &mut Renderer,
-                                       t: Texture,
-                                       grid: &SquareGrid<GridIndexType, CellT>,
-                                       options: &RenderOptions,
-                                       sdl_setup: &SdlSetup)
-                                       -> Texture
-    where GridIndexType: IndexType,
-          CellT: Cell
-{
-    // Setup to draw to the given texture. The texture is moved/owned by the `set` call.
-    r.render_target()
-        .expect("This platform doesn't support render targets")
-        .set(t)
-        .unwrap(); // Returns the old render target if the function is successful, which we ignore.
+// fn draw_maze_to_texture<GridIndexType, CellT>(r: &mut Renderer,
+//                                        t: Texture,
+//                                        grid: &SquareGrid<GridIndexType, CellT>,
+//                                        options: &RenderOptions,
+//                                        sdl_setup: &SdlSetup)
+//                                        -> Texture
+//     where GridIndexType: IndexType,
+//           CellT: Cell
+// {
+//     // Setup to draw to the given texture. The texture is moved/owned by the `set` call.
+//     r.render_target()
+//         .expect("This platform doesn't support render targets")
+//         .set(t)
+//         .unwrap(); // Returns the old render target if the function is successful, which we ignore.
 
-    draw_maze(r, &grid, &options, &sdl_setup);
+//     draw_maze(r, &grid, &options, &sdl_setup);
 
-    // Reseting gives us back ownership of the updated texture and restores the default render target
-    let updated_texture: Option<Texture> = r.render_target().unwrap().reset().unwrap();
-    updated_texture.unwrap()
-}
+//     // Reseting gives us back ownership of the updated texture and restores the default render target
+//     let updated_texture: Option<Texture> = r.render_target().unwrap().reset().unwrap();
+//     updated_texture.unwrap()
+// }
 
 fn colour_mul(colour: Color, scale: f32) -> Color {
     match colour {

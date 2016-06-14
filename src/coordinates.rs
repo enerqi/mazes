@@ -6,11 +6,10 @@ use std::iter::Iterator;
 use std::ops::Deref;
 
 use arrayvec::ArrayVec;
-use rand;
 use rand::Rng;
-use smallvec::{SmallVec, SmallVecMoveIterator};
+//use smallvec::{SmallVec, SmallVecMoveIterator};
 
-
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct DimensionSize(pub usize);
 
 pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
@@ -23,7 +22,7 @@ pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + Parti
 pub trait Cell {
 
     type Coord: Coordinate;
-    type Direction;
+    type Direction: Eq + PartialEq + Copy + Clone + Debug;
                           // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
                           // we get type errors saying a general CoordinateOptionFixedSizeVec IntoIterator::Item cannot `unwrap`.
                           // associated type specification, not trait type parameter, but almost same syntax...
@@ -76,7 +75,7 @@ impl Cell for SquareCell {
 
     type DirectionFixedSizeVec = ArrayVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
+    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
         [CompassPrimary::North,
          CompassPrimary::South,
          CompassPrimary::East,
@@ -141,8 +140,8 @@ impl Coordinate for Cartesian2DCoordinate {
 
     fn from_row_major_index(index: usize, row_size: DimensionSize) -> Cartesian2DCoordinate {
         let DimensionSize(size) = row_size;
-        let x = index % size as usize;
-        let y = index / size as usize;
+        let x = index % size;
+        let y = index / size;
 
         Cartesian2DCoordinate::new(x as u32, y as u32)
     }
