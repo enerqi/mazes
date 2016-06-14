@@ -15,8 +15,8 @@ use std::rc::Rc;
 
 use docopt::Docopt;
 
-use mazes::coordinates::SquareCell;
-use mazes::grids::{CoordinateSmallVec, GridDisplay, SquareGrid};
+use mazes::coordinates::{Cartesian2DCoordinate, Cell, SquareCell};
+use mazes::grids::{GridDisplay, SquareGrid};
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;
@@ -49,7 +49,7 @@ Options:
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
-    flag_grid_size: u32,
+    flag_grid_size: usize,
     cmd_render: bool,
     cmd_binary: bool,
     cmd_sidewinder: bool,
@@ -90,7 +90,7 @@ fn main() {
     let do_text_render = args.cmd_render &&
                          (args.cmd_text || (!any_render_option && grid_size < 25));
 
-    let mut maze_grid = SquareGrid::<u32>::new(grid_size);
+    let mut maze_grid = SquareGrid::<u32, SquareCell>::new(grid_size);
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
@@ -124,7 +124,7 @@ fn main() {
         let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
                            args.flag_show_path {
             let (start_x, start_y) = start_opt.unwrap();
-            Some(pathing::DijkstraDistances::<u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+            Some(pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
         } else {
             None
@@ -154,7 +154,7 @@ fn main() {
     }
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>,
+fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32, SquareCell>,
                          maze_args: &MazeArgs,
                          mask: Option<&BinaryMask2D>) {
 
@@ -185,7 +185,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32>,
 /// Default to finding the start and end point of the longest path in the maze if required to show a path
 /// or asked to find the point furthest away from a start point
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
-fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
+fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32, SquareCell>,
                         maze_args: &MazeArgs,
                         longest_path: &[Cartesian2DCoordinate]) {
 
@@ -195,14 +195,14 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
     if maze_args.flag_show_distances || maze_args.flag_show_path {
 
         let (start_x, start_y) = start_opt.unwrap();
-        let distances = Rc::new(pathing::DijkstraDistances::<u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+        let distances = Rc::new(pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                 .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
 
         if maze_args.flag_show_distances {
 
             // Ignore any endpoint or furthest point request (docopt cannot nest these mutual exclusions?)
             // Show the distances to everywhere else
-            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay>));
+            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay<SquareCell>>));
 
         } else if maze_args.flag_show_path {
 
@@ -215,14 +215,14 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
 
             if let Some(path) = path_opt {
                 let display_path = Rc::new(pathing::PathDisplay::new(&path));
-                maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay>));
+                maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay<SquareCell>>));
             } else {
                 // Somehow there is no route, maze generation failed to make a perfect maze
                 let start_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y));
                 let end_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y));
                 let display_start_end_points =
                     Rc::new(pathing::StartEndPointsDisplay::new(start_points, end_points));
-                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
             }
         }
     } else {
@@ -231,22 +231,22 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32>,
         let start_points = if let Some((start_x, start_y)) = start_opt {
             as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y))
         } else {
-            CoordinateSmallVec::new()
+            <SquareCell as Cell>::CoordinateFixedSizeVec::new()
         };
         let end_points = if let Some((end_x, end_y)) = end_opt {
             as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y))
         } else {
-            CoordinateSmallVec::new()
+            <SquareCell as Cell>::CoordinateFixedSizeVec::new()
         };
         let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(start_points,
                                                                                    end_points));
-        maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay>));
+        maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
     }
 }
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &SquareGrid<u32>,
+                                     maze_grid: &SquareGrid<u32, SquareCell>,
                                      mask: Option<&BinaryMask2D>)
                                      -> Vec<Cartesian2DCoordinate> {
 
@@ -261,7 +261,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
+        let distances = pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid,
                                                                Cartesian2DCoordinate::new(x, y))
             .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
         let furthest_points = distances.furthest_points_on_grid();
@@ -275,7 +275,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                 maze_args.flag_end_point_x,
                 maze_args.flag_end_point_y) {
 
-            let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid,
+            let distances = pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid,
                                                                    Cartesian2DCoordinate::new(start_x,
                                                                                        start_y))
                 .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
@@ -283,7 +283,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
             pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
             // No points given, just find the actual longest path
-            pathing::dijkstra_longest_path::<_, u32>(&maze_grid, mask).unwrap_or_else(Vec::new)
+            pathing::dijkstra_longest_path::<u32, u32, SquareCell>(&maze_grid, mask).unwrap_or_else(Vec::new)
         }
     }
 }
@@ -323,8 +323,8 @@ fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
     maze_args.flag_show_path || maze_args.flag_colour_distances || maze_args.flag_mark_start_end
 }
 
-fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> CoordinateSmallVec {
-    [coord].into_iter().cloned().collect::<CoordinateSmallVec>()
+fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> <SquareCell as Cell>::CoordinateFixedSizeVec {
+    [coord].into_iter().cloned().collect::<<SquareCell as Cell>::CoordinateFixedSizeVec>()
 }
 
 fn mask_from_maze_args(maze_args: &MazeArgs) -> Option<BinaryMask2D> {
