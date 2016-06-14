@@ -99,7 +99,7 @@ impl<CellT, MaxDistanceT> DijkstraDistances<CellT, MaxDistanceT>
                     max = distance_to_cell;
                 }
 
-                let links: CellT::CoordinateFixedSizeVec = grid.links(*cell_coord)
+                let links: CellT::CoordinateSmallVec = grid.links(*cell_coord)
                     .expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
 
@@ -179,12 +179,12 @@ impl<CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<CellT, MaxDis
 
 #[derive(Debug)]
 pub struct StartEndPointsDisplay<CellT: Cell> {
-    start_coordinates: CellT::CoordinateFixedSizeVec,
-    end_coordinates: CellT::CoordinateFixedSizeVec,
+    start_coordinates: CellT::CoordinateSmallVec,
+    end_coordinates: CellT::CoordinateSmallVec,
     cell_type: PhantomData<CellT>
 }
 impl<CellT: Cell> StartEndPointsDisplay<CellT> {
-    pub fn new(starts: CellT::CoordinateFixedSizeVec, ends: CellT::CoordinateFixedSizeVec) -> StartEndPointsDisplay<CellT> {
+    pub fn new(starts: CellT::CoordinateSmallVec, ends: CellT::CoordinateSmallVec) -> StartEndPointsDisplay<CellT> {
         StartEndPointsDisplay {
             start_coordinates: starts,
             end_coordinates: ends,
@@ -196,7 +196,7 @@ impl<CellT: Cell> GridDisplay<CellT> for StartEndPointsDisplay<CellT> {
     fn render_cell_body(&self, coord: CellT::Coord) -> String {
 
         let contains_coordinate =
-            |coordinates: &CellT::CoordinateFixedSizeVec| coordinates.iter().any(|&c| c == coord);
+            |coordinates: &CellT::CoordinateSmallVec| coordinates.iter().any(|&c| c == coord);
 
         if contains_coordinate(&self.start_coordinates) {
             String::from(" S ")
@@ -254,16 +254,18 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridI
             .iter()
             .cloned()
             .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
-            .collect::<CellT::CoordinateFixedSizeVec>();
-        let mut neighbour_distances = linked_neighbours.into_iter()
+            .collect::<CellT::CoordinateSmallVec>();
+        let neighbour_distances = &linked_neighbours.iter()
             .map(|coord| {
-                (coord,
-                 distances_from_start.distance_from_start_to(coord)
+                (*coord,
+                 distances_from_start.distance_from_start_to(*coord)
                     .expect("Coordinate invalid for distances_from_start data."))
             })
             .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
-        let closest_to_start = neighbour_distances.into_iter()
-            .fold1(|closest_accumulator, closest_candidate| {
+        let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> = &neighbour_distances.iter()
+            .cloned()
+            .fold1(|closest_accumulator: (CellT::Coord, MaxDistanceT),
+                    closest_candidate: (CellT::Coord, MaxDistanceT)| {
                 if closest_candidate.1 < closest_accumulator.1 {
                     closest_candidate
                 } else {
@@ -271,7 +273,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridI
                 }
             });
 
-        if let Some((closer_coord, closer_distance)) = closest_to_start {
+        if let Some((closer_coord, closer_distance)) = *closest_to_start {
 
             if closer_distance == current_distance_to_start {
                 // We have not got any closer to the final goal, so there is no path there.

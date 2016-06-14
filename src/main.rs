@@ -231,12 +231,12 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32, SquareCell>,
         let start_points = if let Some((start_x, start_y)) = start_opt {
             as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y))
         } else {
-            <SquareCell as Cell>::CoordinateFixedSizeVec::new()
+            <SquareCell as Cell>::CoordinateSmallVec::new()
         };
         let end_points = if let Some((end_x, end_y)) = end_opt {
             as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y))
         } else {
-            <SquareCell as Cell>::CoordinateFixedSizeVec::new()
+            <SquareCell as Cell>::CoordinateSmallVec::new()
         };
         let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(start_points,
                                                                                    end_points));
@@ -323,8 +323,8 @@ fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
     maze_args.flag_show_path || maze_args.flag_colour_distances || maze_args.flag_mark_start_end
 }
 
-fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> <SquareCell as Cell>::CoordinateFixedSizeVec {
-    [coord].into_iter().cloned().collect::<<SquareCell as Cell>::CoordinateFixedSizeVec>()
+fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> <SquareCell as Cell>::CoordinateSmallVec {
+    [coord].into_iter().cloned().collect::<<SquareCell as Cell>::CoordinateSmallVec>()
 }
 
 fn mask_from_maze_args(maze_args: &MazeArgs) -> Option<BinaryMask2D> {

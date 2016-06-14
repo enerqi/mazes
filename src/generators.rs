@@ -31,7 +31,7 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
         let neighbours = coord_opts
             .iter()
             .filter_map(|coord_maybe: &Option<CellT::Coord>| *coord_maybe)
-            .collect::<CellT::CoordinateFixedSizeVec>();
+            .collect::<CellT::CoordinateSmallVec>();
 
         // Unless there are no neighbours, randomly choose a neighbour to connect.
         if !neighbours.is_empty() {
@@ -316,8 +316,8 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
     let visited_neighbours = |cell: CellT::Coord,
                               visited_set: &BitSet,
                               grid: &SquareGrid<GridIndexType, CellT>|
-                              -> Option<CellT::CoordinateFixedSizeVec> {
-        let vn: CellT::CoordinateFixedSizeVec = grid.neighbours(cell)
+                              -> Option<CellT::CoordinateSmallVec> {
+        let vn: CellT::CoordinateSmallVec = grid.neighbours(cell)
             .iter()
             .cloned()
             .filter(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
@@ -379,7 +379,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
 
                     // There are no other unvisited cells next to this
                     // Start from (0,0) in the grid and find the first *unvisited* cell that is next to a visited one.
-                    let (hunted_cell, hunteds_visited_neighbours): (CellT::Coord, CellT::CoordinateFixedSizeVec) =
+                    let (hunted_cell, hunteds_visited_neighbours): (CellT::Coord, CellT::CoordinateSmallVec) =
                         grid.iter()
                             .skip_while(|cell| is_cell_in_visited_set(*cell, &visited_cells, &grid) ||
                                                mask.map_or(false, |m| m.is_masked(*cell)) ||
@@ -434,9 +434,9 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridInd
     let unvisited_neighbours = |cell: CellT::Coord,
                                 visited_set: &BitSet,
                                 grid: &SquareGrid<GridIndexType, CellT>|
-                                -> Option<CellT::CoordinateFixedSizeVec> {
+                                -> Option<CellT::CoordinateSmallVec> {
 
-        let vn: CellT::CoordinateFixedSizeVec = if let Some(m) = mask {
+        let vn: CellT::CoordinateSmallVec = if let Some(m) = mask {
             grid.neighbours(cell)
                 .iter()
                 .cloned()
@@ -683,7 +683,7 @@ fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
           R: Rng
 {
 
-    let unmasked_neighbours: CellT::CoordinateFixedSizeVec = grid.neighbours(cell)
+    let unmasked_neighbours: CellT::CoordinateSmallVec = grid.neighbours(cell)
         .iter()
         .cloned()
         .filter(|c| !mask.is_masked(*c))

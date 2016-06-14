@@ -5,9 +5,8 @@ use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
 
-use arrayvec::ArrayVec;
 use rand::Rng;
-//use smallvec::{SmallVec, SmallVecMoveIterator};
+use smallvec::SmallVec;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct DimensionSize(pub usize);
@@ -29,9 +28,9 @@ pub trait Cell {
                           // e.g. FromIterator<T> is a type parameter to the trait
                           //      IntoIterator<Item=T> is an associated type specialisation
                           // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
-    type CoordinateFixedSizeVec: IntoIterator<Item=Self::Coord> + FromIterator<Self::Coord> + Deref<Target=[Self::Coord]>;
-    type CoordinateOptionFixedSizeVec: IntoIterator<Item=Option<Self::Coord>> + FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
-    type DirectionFixedSizeVec: IntoIterator<Item=Self::Direction> + FromIterator<Self::Direction>;
+    type CoordinateSmallVec: FromIterator<Self::Coord> + Deref<Target=[Self::Coord]>;
+    type CoordinateOptionFixedSizeVec: FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
+    type DirectionFixedSizeVec: FromIterator<Self::Direction> + Deref<Target=[Self::Direction]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
     fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec;
@@ -65,15 +64,15 @@ pub struct SquareCell;
 impl Cell for SquareCell {
     type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
     type Direction = CompassPrimary;
-    type CoordinateFixedSizeVec = ArrayVec<[Self::Coord; 4]>;
+    type CoordinateSmallVec = SmallVec<[Self::Coord; 4]>;
 
     // do not really want this indirection as it requires me to make option itself, unwrapping a trait?
     // prefer the const 4, but they do not exist in the language yet
-    // could just dynamically query the size of CoordinateFixedSizeVec? No then the option variant is not a compile time decision
+    // could just dynamically query the size of CoordinateSmallVec? No then the option variant is not a compile time decision
     // argh
-    type CoordinateOptionFixedSizeVec = ArrayVec<[Option<Self::Coord>; 4]>;
+    type CoordinateOptionFixedSizeVec = SmallVec<[Option<Self::Coord>; 4]>;
 
-    type DirectionFixedSizeVec = ArrayVec<[CompassPrimary; 4]>;
+    type DirectionFixedSizeVec = SmallVec<[CompassPrimary; 4]>;
 
     fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
         [CompassPrimary::North,

@@ -12,16 +12,6 @@ use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, C
 
 // refactors
 //
-// mask is_masked
-//   convert to cartesian2d
-//
-// pub fn neighbours(&self, coord: Cartesian2DCoordinate) -> CoordinateSmallVec
-//  handle different type of Coordinate -> 2D, Polar etc.
-//  only a part of the Grid impl to bounds check the offset neighbours
-//
-// coordinate smallvecs? More generic return types? SmallVec<[T, 4]> etc?
-// maybe make an associated type of some trait like coordinate
-//
 // GridCoordinate -> Rename CartesianCoordinate
 // + PolarCoordinate
 // trait Coordinate
@@ -191,7 +181,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     }
 
     /// Cell nodes that are linked to a particular node by a passage.
-    pub fn links(&self, coord: CellT::Coord) -> Option<CellT::CoordinateFixedSizeVec> {
+    pub fn links(&self, coord: CellT::Coord) -> Option<CellT::CoordinateSmallVec> {
 
         if let Some(graph_node_index) = self.grid_coordinate_graph_index(coord) {
 
@@ -211,12 +201,13 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
 
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
-    pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateFixedSizeVec {
+    pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
 
         let all_dirs: CellT::DirectionFixedSizeVec = CellT::offset_directions(&Some(coord));
-        all_dirs.into_iter()
-                .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
-                .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| {
+        (&all_dirs).iter()
+                 .cloned()
+                 .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
+                 .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| -> Option<CellT::Coord> {
                     if let Some(adjacent_coord) = adjacent_coord_opt {
                         if self.is_valid_coordinate(adjacent_coord.as_cartesian_2d()) {
                             adjacent_coord_opt
@@ -226,8 +217,8 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
                     } else {
                         None
                     }
-                })
-                .collect()
+                 })
+                 .collect::<CellT::CoordinateSmallVec>()
     }
 
     pub fn neighbours_at_directions(&self, coord: CellT::Coord, dirs: &[CellT::Direction]) -> CellT::CoordinateOptionFixedSizeVec {
