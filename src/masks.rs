@@ -56,12 +56,12 @@ impl BinaryMask2D {
     /// Calculates the number of unmasked cells within a 2d space specified by `width` and `height`.
     ///
     /// All cells in the 2d space outside of the masks' own width and height are counted as unmasked.
-    pub fn count_unmasked_within_dimensions(&self, width: u32, height: u32) -> usize {
+    pub fn count_unmasked_within_dimensions(&self, width: usize, height: usize) -> usize {
 
         let mut count = 0;
         for x in 0..width {
             for y in 0..height {
-                let masked = self.is_masked(Cartesian2DCoordinate::new(x, y));
+                let masked = self.is_masked(Cartesian2DCoordinate::new(x as u32, y as u32)); // CellT::Coord from usize?
                 if !masked {
                     count += 1;
                 }

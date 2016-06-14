@@ -3,7 +3,7 @@ use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cartesian2DCoordinate, Cell, DimensionSize};
+use coordinates::{Cartesian2DCoordinate, Cell, Coordinate, DimensionSize};
 use masks::BinaryMask2D;
 use grids::{GridDirection, IndexType, SquareGrid};
 use grids;
@@ -21,14 +21,17 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
           CellT: Cell
 {
     let mut rng = rand::weak_rng();
-    let neighbours_to_check = two_perpendicular_directions(&mut rng);
+    let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng),
+                               CellT::rand_roughly_horizontal_direction(&mut rng)];
 
-    for cell_coord in grid.iter() {
+    for cell_coord in grid.iter::<CellT>() {
 
         // Get the neighbours perpendicular to this cell
-        let neighbours = grid.neighbours_at_directions(cell_coord, &neighbours_to_check)
+        let coord_opts: CellT::CoordinateOptionFixedSizeVec =
+            grid.neighbours_at_directions::<CellT>(cell_coord, &neighbours_to_check);
+        let neighbours = coord_opts
             .iter()
-            .filter_map(|coord_maybe| *coord_maybe)
+            .filter_map(|coord_maybe: &Option<CellT::Coord>| *coord_maybe)
             .collect::<CellT::CoordinateFixedSizeVec>();
 
         // Unless there are no neighbours, randomly choose a neighbour to connect.
@@ -40,7 +43,7 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
                 _ => neighbours[rng.gen::<usize>() % neighbours_count],
             };
 
-            grid.link(cell_coord, link_coord).expect("Failed to link a cell to its neighbour");
+            grid.link::<CellT>(cell_coord, link_coord).expect("Failed to link a cell to its neighbour");
         }
     }
 }
@@ -69,9 +72,9 @@ pub fn sidewinder<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Cel
 
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
-        (GridDirection::East, rand_vertical_direction(&mut rng), grid.iter_row())
+        (GridDirection::East, CellT::rand_roughly_vertical_direction(&mut rng), grid.iter_row())
     } else {
-        (GridDirection::South, rand_horizontal_direction(&mut rng), grid.iter_column())
+        (GridDirection::South, CellT::rand_roughly_horizontal_direction(&mut rng), grid.iter_column())
     };
 
     for coordinates_line in batch_iter {
@@ -199,9 +202,9 @@ pub fn wilson<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>,
 
     // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
     // The path is a sequence, i.e. Vec/Stack, but we want a quick way to look up if any particular coordinate is in that path.
-    let mut cells_on_random_walk: FnvHashSet<Cartesian2DCoordinate> =
-        utils::fnv_hashset(grid.dimension() as usize);
-    let mut random_walk_path: Vec<Cartesian2DCoordinate> = Vec::new();
+    let mut cells_on_random_walk: FnvHashSet<CellT::Coord> =
+        utils::fnv_hashset(grid.dimension());
+    let mut random_walk_path: Vec<CellT::Coord> = Vec::new();
 
     while visited_count < unmasked_count {
 
@@ -483,26 +486,6 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridInd
     }
 }
 
-fn two_perpendicular_directions<R: Rng>(rng: &mut R) -> [GridDirection; 2] {
-    [rand_vertical_direction(rng), rand_horizontal_direction(rng)]
-}
-
-fn rand_vertical_direction<R: Rng>(rng: &mut R) -> GridDirection {
-    if rng.gen() {
-        GridDirection::North
-    } else {
-        GridDirection::South
-    }
-}
-
-fn rand_horizontal_direction<R: Rng>(rng: &mut R) -> GridDirection {
-    if rng.gen() {
-        GridDirection::East
-    } else {
-        GridDirection::West
-    }
-}
-
 fn rand_direction<R: Rng>(rng: &mut R) -> GridDirection {
     const DIRS_COUNT: usize = 4;
     const DIRS: [GridDirection; DIRS_COUNT] =
@@ -511,10 +494,10 @@ fn rand_direction<R: Rng>(rng: &mut R) -> GridDirection {
     DIRS[dir_index]
 }
 
-fn random_neighbour<GridIndexType, CellT, R>(cell: Cartesian2DCoordinate,
+fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
                                       grid: &SquareGrid<GridIndexType, CellT>,
                                       mut rng: &mut R)
-                                      -> Option<Cartesian2DCoordinate>
+                                      -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -523,9 +506,9 @@ fn random_neighbour<GridIndexType, CellT, R>(cell: Cartesian2DCoordinate,
 }
 
 fn random_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
-                                 mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
-                                 mut rng: &mut R)
-                                 -> Option<Cartesian2DCoordinate>
+                                        mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
+                                        mut rng: &mut R)
+                                        -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -537,7 +520,7 @@ fn random_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
     }
 }
 
-fn bit_index<GridIndexType, CellT>(cell: Cartesian2DCoordinate, grid: &SquareGrid<GridIndexType, CellT>) -> usize
+fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &SquareGrid<GridIndexType, CellT>) -> usize
     where GridIndexType: IndexType,
           CellT: Cell
 {
@@ -545,7 +528,7 @@ fn bit_index<GridIndexType, CellT>(cell: Cartesian2DCoordinate, grid: &SquareGri
         .expect("bit_index impossible: invalid cell")
 }
 
-fn is_cell_in_visited_set<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
+fn is_cell_in_visited_set<GridIndexType, CellT>(cell: CellT::Coord,
                                          visited_set: &BitSet,
                                          grid: &SquareGrid<GridIndexType, CellT>)
                                          -> bool
@@ -555,7 +538,7 @@ fn is_cell_in_visited_set<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
     visited_set.contains(bit_index(cell, &grid))
 }
 
-fn visit_cell<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
+fn visit_cell<GridIndexType, CellT>(cell: CellT::Coord,
                              visited_set: &mut BitSet,
                              visited_count: Option<&mut usize>,
                              grid: &SquareGrid<GridIndexType, CellT>)
@@ -577,7 +560,7 @@ fn visit_cell<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
     }
 }
 
-fn undo_cell_visit<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
+fn undo_cell_visit<GridIndexType, CellT>(cell: CellT::Coord,
                                   visited_set: &mut BitSet,
                                   visited_count: Option<&mut usize>,
                                   grid: &SquareGrid<GridIndexType, CellT>)
@@ -599,9 +582,9 @@ fn undo_cell_visit<GridIndexType, CellT>(cell: Cartesian2DCoordinate,
 }
 
 fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
-                                           visited_set_with_count: (&BitSet, usize),
-                                           mut rng: &mut R)
-                                           -> Option<Cartesian2DCoordinate>
+                                                   visited_set_with_count: (&BitSet, usize),
+                                                   mut rng: &mut R)
+                                                   -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -628,7 +611,7 @@ fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexTyp
 fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
                                           mask_with_unmasked_count: (&BinaryMask2D, usize),
                                           mut rng: &mut R)
-                                          -> Option<Cartesian2DCoordinate>
+                                          -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -659,7 +642,7 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<Gri
                                                     mask_with_unmasked_count: Option<(&BinaryMask2D,
                                                                                       usize)>,
                                                     mut rng: &mut R)
-                                                    -> Option<Cartesian2DCoordinate>
+                                                    -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -681,7 +664,7 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<Gri
             if remaining_cells != 0 {
 
                 let n = rng.gen::<usize>() % remaining_cells;
-                let grid_dim = grid.dimension();
+                let grid_dim = grid.dimension() as usize;
                 let cell_index = (0..cells_count)
                     .filter(|i| {
                         let coord = CellT::Coord::from_row_major_index(*i, DimensionSize(grid_dim));
@@ -699,11 +682,11 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<Gri
     }
 }
 
-fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: Cartesian2DCoordinate,
+fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
                                                       grid: &SquareGrid<GridIndexType, CellT>,
                                                       mask: &BinaryMask2D,
                                                       mut rng: &mut R)
-                                                       -> Option<Cartesian2DCoordinate>
+                                                       -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
           R: Rng
@@ -727,7 +710,7 @@ fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: Cartesian2DCoordinat
 }
 
 fn unmasked_cells_count<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
-                                                mask: Option<&BinaryMask2D>)
+                                              mask: Option<&BinaryMask2D>)
                                        -> usize
     where GridIndexType: IndexType,
           CellT: Cell

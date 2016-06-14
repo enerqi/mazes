@@ -6,6 +6,8 @@ use std::iter::Iterator;
 use std::ops::Deref;
 
 use arrayvec::ArrayVec;
+use rand;
+use rand::Rng;
 use smallvec::{SmallVec, SmallVecMoveIterator};
 
 
@@ -38,6 +40,9 @@ pub trait Cell {
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
+
+    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction;
+    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction;
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
@@ -98,6 +103,21 @@ impl Cell for SquareCell {
                     None
                 }
             }
+        }
+    }
+
+    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+        if rng.gen() {
+            CompassPrimary::North
+        } else {
+            CompassPrimary::South
+        }
+    }
+    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+        if rng.gen() {
+            CompassPrimary::East
+        } else {
+            CompassPrimary::West
         }
     }
 }

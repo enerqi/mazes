@@ -99,7 +99,7 @@ pub trait GridDisplay<CellT: Cell> {
 
 pub struct SquareGrid<GridIndexType: IndexType, CellT: Cell> {
     graph: Graph<(), (), Undirected, GridIndexType>,
-    dimension_size: u32,
+    dimension_size: usize,
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>
 }
@@ -112,9 +112,9 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for SquareGrid<GridIndexT
 }
 
 impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
-    pub fn new(dimension_size: u32) -> SquareGrid<GridIndexType, CellT> {
+    pub fn new(dimension_size: usize) -> SquareGrid<GridIndexType, CellT> {
 
-        let dim_size = dimension_size as usize;
+        let dim_size = dimension_size;
         let cells_count = dim_size * dim_size;
         let nodes_count_hint = cells_count;
         let edges_count_hint = 4 * cells_count - 4 * dim_size; // Probably overkill, but don't want any capacity panics
@@ -123,6 +123,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
             dimension_size: dimension_size,
             grid_display: None,
+            cell_type: PhantomData
         };
         for _ in 0..cells_count {
             let _ = grid.graph.add_node(());
@@ -136,17 +137,17 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     }
 
     pub fn size(&self) -> usize {
-        self.dimension_size as usize * self.dimension_size as usize
+        self.dimension_size * self.dimension_size
     }
 
     #[inline]
-    pub fn dimension(&self) -> u32 {
+    pub fn dimension(&self) -> usize {
         self.dimension_size
     }
 
     pub fn random_cell<CellType: Cell, R: Rng>(&self, rng: &mut R) -> CellType::Coord {
         let index = rng.gen::<usize>() % self.size();
-        CellType::Coord::from_row_major_index(index, DimensionSize(self.dimension_size as usize))
+        CellType::Coord::from_row_major_index(index, DimensionSize(self.dimension_size))
     }
 
     /// Link two cells
@@ -199,7 +200,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
                 .map(|index_edge_data_pair| {
                     let grid_node_index = index_edge_data_pair.0;
                     CellType::Coord::from_row_major_index(grid_node_index.index(),
-                                                          DimensionSize(self.dimension_size as usize))
+                                                          DimensionSize(self.dimension_size))
                 })
                 .collect();
             Some(linked_cells)
@@ -273,7 +274,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
 
         let grid_2d_coord = coord.as_cartesian_2d();
         if self.is_valid_coordinate(grid_2d_coord) {
-            Some((grid_2d_coord.y as usize * self.dimension_size as usize) + grid_2d_coord.x as usize)
+            Some((grid_2d_coord.y as usize * self.dimension_size) + grid_2d_coord.x as usize)
         } else {
             None
         }
@@ -282,9 +283,9 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     pub fn iter<T: Cell>(&self) -> CellIter<T> {
         CellIter {
             current_cell_number: 0,
-            dimension_size: self.dimension_size as usize,
+            dimension_size: self.dimension_size,
             cells_count: self.size(),
-            coordinate_type: PhantomData,
+            cell_type: PhantomData,
         }
     }
 
@@ -292,8 +293,8 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
         BatchIter {
             iter_type: BatchIterType::Row,
             current_index: 0,
-            dimension_size: self.dimension_size as usize,
-            coordinate_type: PhantomData,
+            dimension_size: self.dimension_size,
+            cell_type: PhantomData,
         }
     }
 
@@ -301,19 +302,19 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
         BatchIter {
             iter_type: BatchIterType::Column,
             current_index: 0,
-            dimension_size: self.dimension_size as usize,
-            coordinate_type: PhantomData,
+            dimension_size: self.dimension_size,
+            cell_type: PhantomData,
         }
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
-        coord.x < self.dimension_size && coord.y < self.dimension_size
+        (coord.x as usize) < self.dimension_size && (coord.y as usize) < self.dimension_size
     }
 
-    fn is_neighbour<CellType: Cell>(&self, a: CellType::Coord, b: CellType::Coord) -> bool {
+    fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
                                 // For .iter Coord satifies `Deref<Target=[Self::Coord]>`
-        self.neighbours::<CellType>(a).iter().any(|&coord| coord == b)
+        self.neighbours(a).iter().any(|&coord| coord == b)
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
@@ -497,7 +498,7 @@ pub struct CellIter<T> {
     current_cell_number: usize,
     dimension_size: usize,
     cells_count: usize,
-    coordinate_type: PhantomData<T>
+    cell_type: PhantomData<T>
 }
 impl<T: Cell> Iterator for CellIter<T> {
     type Item = T::Coord;
@@ -541,7 +542,7 @@ pub struct BatchIter<T> {
     iter_type: BatchIterType,
     current_index: usize,
     dimension_size: usize,
-    coordinate_type: PhantomData<T>,
+    cell_type: PhantomData<T>,
 }
 impl<T: Cell> Iterator for BatchIter<T> {
     type Item = Vec<T::Coord>;

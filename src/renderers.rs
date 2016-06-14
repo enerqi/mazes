@@ -13,7 +13,7 @@ use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
-use coordinates::{Cell, Coordinate, Cartesian2DCoordinate};
+use coordinates::{Cell, Coordinate, Cartesian2DCoordinate, SquareCell};
 use pathing;
 use grids::{GridDirection, IndexType, SquareGrid};
 
@@ -36,7 +36,7 @@ pub struct RenderOptions<'path, 'dist> {
     start: Option<Cartesian2DCoordinate>,
     end: Option<Cartesian2DCoordinate>,
     show_path: bool,
-    distances: Option<&'dist pathing::DijkstraDistances<Cartesian2DCoordinate, u32>>,
+    distances: Option<&'dist pathing::DijkstraDistances<SquareCell, u32>>,
     output_file: Option<&'path Path>,
     path: Option<Vec<Cartesian2DCoordinate>>,
     cell_side_pixels_length: u8,
@@ -93,7 +93,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self
     }
     pub fn distances(mut self,
-                     distances: Option<&'dist pathing::DijkstraDistances<Cartesian2DCoordinate, u32>>)
+                     distances: Option<&'dist pathing::DijkstraDistances<SquareCell, u32>>)
                      -> RenderOptionsBuilder<'path, 'dist> {
         self.options.distances = distances;
         self
@@ -446,8 +446,8 @@ fn maze_image_dimensions<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, 
           CellT: Cell
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels as u32 * grid.dimension();
-    let img_height = cell_size_pixels as u32 * grid.dimension();
+    let img_width = cell_size_pixels as u32 * grid.dimension() as u32;
+    let img_height = cell_size_pixels as u32 * grid.dimension() as u32;
 
     (img_width + 1, img_height + 1)
 }
