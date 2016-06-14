@@ -12,10 +12,6 @@ use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, C
 
 // refactors
 //
-// GridCoordinate -> Rename CartesianCoordinate
-// + PolarCoordinate
-// trait Coordinate
-//    type Small???
 // Coordinate + Directions == Grid Specific Coordinate?? No more like Grid Specific Cell - HexCell
 // e.g hex coord is still a cartesian2d coord but it has 6 sides - north, south, north-east, north-west, south-east, south-west.
 // but for Triangle Nodes we need to know if upright or not, unless the coord was not in the centre of the triangle, e.g. bottom left, but
@@ -26,26 +22,6 @@ use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, C
 //
 // Can we have varying sorts of grids? - mixed hex, triangle, square, etc?
 // uniform tilings, or Wythoff’s construction, or even Voronoi diagrams
-//
-// pub trait Cell => type Coordinate, type Directions, fn neighbours_not_bounds_checked
-//
-// so HexGrid is grid with HexCell and rows * cols
-//
-// neighbours_at_directions
-//   direction - does that make sense for each coordinate system?
-//   only a part of the Grid impl to bounds check the offset neighbours
-//
-// is_neighbour_linked
-//   same reliance on direction concept
-//
-// grid_coordinate_to_index
-//   important for node indices, need per coordinate type mapping?
-//
-// is_valid_coordinate
-//   grid instance specific, needs generic info from the coordinate
-//
-// index to grid coordinate
-//   coordinate type specific tranformation given a dimension
 //
 // CellIter
 //
