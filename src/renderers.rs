@@ -210,9 +210,10 @@ fn draw_maze<GridIndexType, CellT>(r: &mut Renderer,
     let e_white_surface = font.render("E").blended(WHITE).unwrap();
     let e_black_surface = font.render("E").blended(BLACK).unwrap();
 
-    let calc_cell_screen_coordinates = |cell: Cartesian2DCoordinate| -> (i32, i32, i32, i32) {
-        let column = cell.x as usize;
-        let row = cell.y as usize;
+    let calc_cell_screen_coordinates = |cell_coord: CellT::Coord| -> (i32, i32, i32, i32) {
+        let canonical_2d_coord = cell_coord.as_cartesian_2d();
+        let column = canonical_2d_coord.x as usize;
+        let row = canonical_2d_coord.y as usize;
         let x1 = (column * cell_size_pixels) as i32;
         let y1 = (row * cell_size_pixels) as i32;
         let x2 = ((column + 1) * cell_size_pixels) as i32;

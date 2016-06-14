@@ -8,7 +8,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cell, Coordinate, DimensionSize, SquareCell, Cartesian2DCoordinate};
+use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -215,7 +215,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
 
         let all_dirs: CellT::DirectionFixedSizeVec = CellT::offset_directions(&Some(coord));
         all_dirs.into_iter()
-                .map(|dir: CellT::Direction| Cell::offset_coordinate(coord, dir))
+                .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
                 .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| {
                     if let Some(adjacent_coord) = adjacent_coord_opt {
                         if self.is_valid_coordinate(adjacent_coord.as_cartesian_2d()) {
@@ -240,7 +240,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
                                                   coord: CellT::Coord,
                                                   direction: CellT::Direction)
                                                   -> Option<CellT::Coord> {
-        let neighbour_coord_opt = Cell::offset_coordinate(coord, direction);
+        let neighbour_coord_opt = CellT::offset_coordinate(coord, direction);
 
         neighbour_coord_opt.and_then(|neighbour_coord: CellT::Coord| {
             if self.is_valid_coordinate(neighbour_coord.as_cartesian_2d()) {
@@ -327,7 +327,8 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     }
 }
 
-impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridIndexType, CellT> {
+// Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, HexCell>
+impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, SquareCell> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         const WALL_L: &'static str = "╴";
@@ -357,7 +358,7 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridInde
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
             output.push_str(WALL_LR_3);
-            let is_east_open = self.is_neighbour_linked(*coord, GridDirection::East);
+            let is_east_open = self.is_neighbour_linked(*coord, CompassPrimary::East);
             if is_east_open {
                 output.push_str(WALL_LR);
             } else {
@@ -394,13 +395,13 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridInde
                 };
                 let is_first_column = index_column == 0;
                 let is_last_column = index_column == (columns_count - 1) as usize;
-                let east_open = self.is_neighbour_linked(cell_coord, GridDirection::East);
-                let south_open = self.is_neighbour_linked(cell_coord, GridDirection::South);
+                let east_open = self.is_neighbour_linked(cell_coord, CompassPrimary::East);
+                let south_open = self.is_neighbour_linked(cell_coord, CompassPrimary::South);
 
                 // Each cell will simply use the southern wall of the cell above
                 // it as its own northern wall, so we only need to worry about the cell’s body (room space),
                 // its eastern boundary ('|'), and its southern boundary ('---+') minus the south west corner.
-                let east_boundary = render_cell_side(GridDirection::East, " ", WALL_UD);
+                let east_boundary = render_cell_side(CompassPrimary::East, " ", WALL_UD);
 
                 // Cell Body
                 if let Some(ref displayer) = self.grid_display {
@@ -422,7 +423,7 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridInde
                     };
 
                 }
-                let south_boundary = render_cell_side(GridDirection::South, "   ", WALL_LR_3);
+                let south_boundary = render_cell_side(CompassPrimary::South, "   ", WALL_LR_3);
                 row_bottom_section_render.push_str(south_boundary);
 
                 let corner = match (is_last_row, is_last_column) {
@@ -443,13 +444,13 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Display for SquareGrid<GridInde
                     }
                     (false, false) => {
                         let access_se_from_east =
-                            self.neighbour_at_direction(cell_coord, GridDirection::East)
+                            self.neighbour_at_direction(cell_coord, CompassPrimary::East)
                                 .map_or(false,
-                                        |c| self.is_neighbour_linked(c, GridDirection::South));
+                                        |c| self.is_neighbour_linked(c, CompassPrimary::South));
                         let access_se_from_south =
-                            self.neighbour_at_direction(cell_coord, GridDirection::South)
+                            self.neighbour_at_direction(cell_coord, CompassPrimary::South)
                                 .map_or(false,
-                                        |c| self.is_neighbour_linked(c, GridDirection::East));
+                                        |c| self.is_neighbour_linked(c, CompassPrimary::East));
                         let show_right_section = !access_se_from_east;
                         let show_down_section = !access_se_from_south;
                         let show_up_section = !east_open;
@@ -627,7 +628,7 @@ mod tests {
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
         let check_neighbours =
-            |coord, dirs: &[GridDirection], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
+            |coord, dirs: &[CompassPrimary], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
 
                 let neighbour_options: CoordinateOptionSmallVec =
                     g.neighbours_at_directions(coord, dirs);

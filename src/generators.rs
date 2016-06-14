@@ -3,9 +3,9 @@ use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cartesian2DCoordinate, Cell, Coordinate, DimensionSize};
+use coordinates::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
 use masks::BinaryMask2D;
-use grids::{GridDirection, IndexType, SquareGrid};
+use grids::{IndexType, SquareGrid};
 use grids;
 use utils;
 use utils::FnvHashSet;
@@ -24,11 +24,11 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
     let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng),
                                CellT::rand_roughly_horizontal_direction(&mut rng)];
 
-    for cell_coord in grid.iter::<CellT>() {
+    for cell_coord in grid.iter() {
 
         // Get the neighbours perpendicular to this cell
         let coord_opts: CellT::CoordinateOptionFixedSizeVec =
-            grid.neighbours_at_directions::<CellT>(cell_coord, &neighbours_to_check);
+            grid.neighbours_at_directions(cell_coord, &neighbours_to_check);
         let neighbours = coord_opts
             .iter()
             .filter_map(|coord_maybe: &Option<CellT::Coord>| *coord_maybe)
@@ -43,7 +43,7 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
                 _ => neighbours[rng.gen::<usize>() % neighbours_count],
             };
 
-            grid.link::<CellT>(cell_coord, link_coord).expect("Failed to link a cell to its neighbour");
+            grid.link(cell_coord, link_coord).expect("Failed to link a cell to its neighbour");
         }
     }
 }
@@ -64,17 +64,17 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
 /// if run direction does not match the order the direction/order we visit the cells in.
 /// So, if we visit the cells west to east, then the wall carving run direction needs to be east.
 /// The run closing out passage carving direction does not matter.
-pub fn sidewinder<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>)
-    where GridIndexType: IndexType,
-          CellT: Cell
+pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType, SquareCell>) // todo extend to other grid cell types?
+    where GridIndexType: IndexType
+          // CellT: Cell
 {
     let mut rng = rand::weak_rng();
 
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
-        (GridDirection::East, CellT::rand_roughly_vertical_direction(&mut rng), grid.iter_row())
+        (CompassPrimary::East, SquareCell::rand_roughly_vertical_direction(&mut rng), grid.iter_row())
     } else {
-        (GridDirection::South, CellT::rand_roughly_horizontal_direction(&mut rng), grid.iter_column())
+        (CompassPrimary::South, SquareCell::rand_roughly_horizontal_direction(&mut rng), grid.iter_column())
     };
 
     for coordinates_line in batch_iter {
@@ -486,14 +486,6 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridInd
     }
 }
 
-fn rand_direction<R: Rng>(rng: &mut R) -> GridDirection {
-    const DIRS_COUNT: usize = 4;
-    const DIRS: [GridDirection; DIRS_COUNT] =
-        [GridDirection::North, GridDirection::South, GridDirection::East, GridDirection::West];
-    let dir_index = rng.gen::<usize>() % DIRS_COUNT;
-    DIRS[dir_index]
-}
-
 fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
                                       grid: &SquareGrid<GridIndexType, CellT>,
                                       mut rng: &mut R)
@@ -502,7 +494,7 @@ fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
           CellT: Cell,
           R: Rng
 {
-    grid.neighbour_at_direction(cell, rand_direction(&mut rng))
+    grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng))
 }
 
 fn random_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,

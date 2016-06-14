@@ -41,6 +41,7 @@ pub trait Cell {
     /// Returns None if the Coordinate is not representable.
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
 
+    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction;
     fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction;
     fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction;
 }
@@ -104,6 +105,14 @@ impl Cell for SquareCell {
                 }
             }
         }
+    }
+
+    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+        const DIRS_COUNT: usize = 4;
+        const DIRS: [CompassPrimary; DIRS_COUNT] =
+            [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
+        let dir_index = rng.gen::<usize>() % DIRS_COUNT;
+        DIRS[dir_index]
     }
 
     fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction {
