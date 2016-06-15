@@ -26,7 +26,7 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
     for cell_coord in grid.iter() {
 
         // Get the neighbours perpendicular to this cell
-        let coord_opts: CellT::CoordinateOptionFixedSizeVec =
+        let coord_opts: CellT::CoordinateOptionSmallVec =
             grid.neighbours_at_directions(cell_coord, &neighbours_to_check);
         let neighbours = coord_opts
             .iter()

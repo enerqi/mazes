@@ -167,7 +167,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
 
-        let all_dirs: CellT::DirectionFixedSizeVec = CellT::offset_directions(&Some(coord));
+        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(&Some(coord));
         (&all_dirs).iter()
                  .cloned()
                  .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
@@ -185,7 +185,7 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
                  .collect::<CellT::CoordinateSmallVec>()
     }
 
-    pub fn neighbours_at_directions(&self, coord: CellT::Coord, dirs: &[CellT::Direction]) -> CellT::CoordinateOptionFixedSizeVec {
+    pub fn neighbours_at_directions(&self, coord: CellT::Coord, dirs: &[CellT::Direction]) -> CellT::CoordinateOptionSmallVec {
         dirs.iter()
             .map(|direction| self.neighbour_at_direction(coord, *direction))
             .collect()

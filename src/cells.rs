@@ -23,17 +23,17 @@ pub trait Cell {
     type Coord: Coordinate;
     type Direction: Eq + PartialEq + Copy + Clone + Debug;
                           // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
-                          // we get type errors saying a general CoordinateOptionFixedSizeVec IntoIterator::Item cannot `unwrap`.
+                          // we get type errors saying a general CoordinateOptionSmallVec IntoIterator::Item cannot `unwrap`.
                           // associated type specification, not trait type parameter, but almost same syntax...
                           // e.g. FromIterator<T> is a type parameter to the trait
                           //      IntoIterator<Item=T> is an associated type specialisation
                           // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
     type CoordinateSmallVec: FromIterator<Self::Coord> + Deref<Target=[Self::Coord]>;
-    type CoordinateOptionFixedSizeVec: FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
-    type DirectionFixedSizeVec: FromIterator<Self::Direction> + Deref<Target=[Self::Direction]>;
+    type CoordinateOptionSmallVec: FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
+    type DirectionSmallVec: FromIterator<Self::Direction> + Deref<Target=[Self::Direction]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec;
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec;
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
@@ -70,16 +70,16 @@ impl Cell for SquareCell {
     // prefer the const 4, but they do not exist in the language yet
     // could just dynamically query the size of CoordinateSmallVec? No then the option variant is not a compile time decision
     // argh
-    type CoordinateOptionFixedSizeVec = SmallVec<[Option<Self::Coord>; 4]>;
+    type CoordinateOptionSmallVec = SmallVec<[Option<Self::Coord>; 4]>;
 
-    type DirectionFixedSizeVec = SmallVec<[CompassPrimary; 4]>;
+    type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
+    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionSmallVec {
         [CompassPrimary::North,
          CompassPrimary::South,
          CompassPrimary::East,
          CompassPrimary::West]
-        .into_iter().cloned().collect::<Self::DirectionFixedSizeVec>()
+        .into_iter().cloned().collect::<Self::DirectionSmallVec>()
     }
 
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
@@ -176,16 +176,16 @@ impl Cell for PolarCell {
     type Coord = Cartesian2DCoordinate;
     type Direction = ClockDirection;
     type CoordinateSmallVec = SmallVec<[Self::Coord; 8]>;
-    type CoordinateOptionFixedSizeVec = SmallVec<[Option<Self::Coord>; 8]>;
-    type DirectionFixedSizeVec = SmallVec<[Self::Direction; 8]>;
+    type CoordinateOptionSmallVec = SmallVec<[Option<Self::Coord>; 8]>;
+    type DirectionSmallVec = SmallVec<[Self::Direction; 8]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec {
         [ClockDirection::Clockwise,
          ClockDirection::CounterClockwise,
          ClockDirection::Inward,
          ClockDirection::Outward]
-        .into_iter().cloned().collect::<Self::DirectionFixedSizeVec>()
+        .into_iter().cloned().collect::<Self::DirectionSmallVec>()
 
         // and extend from the outward direction instance? [ClockDirection::Outward, ClockDirection::Outward, ClockDirection::Outward]?
     }
