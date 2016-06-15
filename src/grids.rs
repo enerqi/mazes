@@ -63,17 +63,16 @@ pub struct Grid<GridIndexType: IndexType, CellT: Cell> {
                                               // Note we do not need the Cell trait for this function
 impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for Grid<GridIndexType, CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Grid {:?} {:?}", self.graph, self.dimension_size)
+        write!(f, "Grid :: graph: {:?}, rows: {:?}, columns: {:?}", self.graph, self.rows, self.columns)
     }
 }
 
 impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     pub fn new(dimension_size: usize) -> Grid<GridIndexType, CellT> {
 
-        let dim_size = dimension_size;
-        let cells_count = dim_size * dim_size;
+        let cells_count = dimension_size * dimension_size;
         let nodes_count_hint = cells_count;
-        let edges_count_hint = 4 * cells_count - 4 * dim_size; // Probably overkill, but don't want any capacity panics
+        let edges_count_hint = 4 * cells_count - 4 * dimension_size; // Probably overkill, but don't want any capacity panics
 
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
@@ -95,7 +94,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     }
 
     pub fn size(&self) -> usize {
-        self.dimension_size * self.dimension_size
+        self.rows * self.columns
     }
 
     #[inline]
@@ -233,7 +232,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
         let grid_2d_coord = coord.as_cartesian_2d();
         if self.is_valid_coordinate(grid_2d_coord) {
-            Some((grid_2d_coord.y as usize * self.dimension_size) + grid_2d_coord.x as usize)
+            Some((grid_2d_coord.y as usize * self.columns) + grid_2d_coord.x as usize)
         } else {
             None
         }
@@ -268,7 +267,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
-        (coord.x as usize) < self.dimension_size && (coord.y as usize) < self.dimension_size
+        (coord.x as usize) < self.columns && (coord.y as usize) < self.rows
     }
 
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
@@ -308,8 +307,8 @@ impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, SquareCell> 
         const WALL_LUD: &'static str = "┤";
         let default_cell_body = String::from("   ");
 
-        let columns_count = self.dimension_size;
-        let rows_count = columns_count;
+        let columns_count = self.columns;
+        let rows_count = self.rows;
 
         // Start by special case rendering the text for the north most boundary
         let first_grid_row: &Vec<Cartesian2DCoordinate> =
