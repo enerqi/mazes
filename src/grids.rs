@@ -37,18 +37,6 @@ use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, C
 // number of cells increases at each outer layer of the circle
 // directions -> inward, outward (multiple! not static) is a list, clockwise, counter-clockwise
 
-
-// pub type CoordinateSmallVec = SmallVec<[Cartesian2DCoordinate; 4]>;
-// pub type CoordinateOptionSmallVec = SmallVec<[Option<Cartesian2DCoordinate>; 4]>;
-
-// #[derive(Eq, PartialEq, Copy, Clone, Debug)]
-// pub enum GridDirection {
-//     North,
-//     South,
-//     East,
-//     West,
-// }
-
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum CellLinkError {
     InvalidGridCoordinate,
