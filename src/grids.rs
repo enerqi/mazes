@@ -8,7 +8,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 //use smallvec::SmallVec;
 
-use coordinates::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesian2DCoordinate};
+use cells::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -533,7 +533,7 @@ impl<CellT: Cell> Iterator for BatchIter<CellT> {
 mod tests {
 
     use super::*;
-    use coordinates::Cartesian2DCoordinate;
+    use cells::Cartesian2DCoordinate;
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;

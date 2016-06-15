@@ -32,7 +32,7 @@ extern crate smallvec;
 #[cfg(test)]
 extern crate quickcheck;
 
-pub mod coordinates;
+pub mod cells;
 pub mod generators;
 pub mod grids;
 pub mod masks;

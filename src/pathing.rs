@@ -36,7 +36,7 @@ use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 
-use coordinates::{Cell, Coordinate};
+use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
 use grids::{GridDisplay, IndexType, SquareGrid};
 use utils;
@@ -336,7 +336,7 @@ mod tests {
     use quickcheck::quickcheck;
 
     use super::*;
-    use coordinates::Cartesian2DCoordinate;
+    use cells::Cartesian2DCoordinate;
     use squaregrid::SquareGrid;
 
     type SmallGrid = SquareGrid<u8>;

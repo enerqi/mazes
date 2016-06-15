@@ -1,7 +1,7 @@
 use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
-use coordinates::{Cartesian2DCoordinate, Coordinate};
+use cells::{Cartesian2DCoordinate, Coordinate};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {

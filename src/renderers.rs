@@ -13,7 +13,7 @@ use sdl2_ttf;
 
 use sdl;
 use sdl::SdlSetup;
-use coordinates::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
+use cells::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
 use pathing;
 use grids::{IndexType, SquareGrid};
 

@@ -3,7 +3,7 @@ use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use coordinates::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
 use masks::BinaryMask2D;
 use grids::{IndexType, SquareGrid};
 use utils;

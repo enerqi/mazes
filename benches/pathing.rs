@@ -3,7 +3,7 @@
 extern crate mazes;
 extern crate test;
 
-use mazes::coordinates::Cartesian2DCoordinate;
+use mazes::cells::Cartesian2DCoordinate;
 use mazes::squaregrid::SquareGrid;
 use mazes::generators;
 use mazes::pathing;
