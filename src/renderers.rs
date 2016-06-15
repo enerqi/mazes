@@ -15,7 +15,7 @@ use sdl;
 use sdl::SdlSetup;
 use cells::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
 use pathing;
-use grids::{IndexType, SquareGrid};
+use grids::{IndexType, Grid};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
@@ -120,7 +120,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
 }
 
 
-pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType, SquareCell>, options: &RenderOptions)
+pub fn render_square_grid<GridIndexType>(grid: &Grid<GridIndexType, SquareCell>, options: &RenderOptions)
     where GridIndexType: IndexType
           // CellT: Cell
 {
@@ -181,7 +181,7 @@ pub fn render_square_grid<GridIndexType>(grid: &SquareGrid<GridIndexType, Square
 }
 
 fn draw_maze<GridIndexType>(r: &mut Renderer,
-                                   grid: &SquareGrid<GridIndexType, SquareCell>,
+                                   grid: &Grid<GridIndexType, SquareCell>,
                                    options: &RenderOptions,
                                    sdl_setup: &SdlSetup)
     where GridIndexType: IndexType
@@ -439,7 +439,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     }
 }
 
-fn maze_image_dimensions<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
+fn maze_image_dimensions<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>,
                                         options: &RenderOptions)
                                         -> (u32, u32)
     where GridIndexType: IndexType,
@@ -454,7 +454,7 @@ fn maze_image_dimensions<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, 
 
 // fn draw_maze_to_texture<GridIndexType, CellT>(r: &mut Renderer,
 //                                        t: Texture,
-//                                        grid: &SquareGrid<GridIndexType, CellT>,
+//                                        grid: &Grid<GridIndexType, CellT>,
 //                                        options: &RenderOptions,
 //                                        sdl_setup: &SdlSetup)
 //                                        -> Texture

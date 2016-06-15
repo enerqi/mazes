@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
 use masks::BinaryMask2D;
-use grids::{IndexType, SquareGrid};
+use grids::{IndexType, Grid};
 use utils;
 use utils::FnvHashSet;
 
@@ -15,7 +15,7 @@ use utils::FnvHashSet;
 /// Once picked, the two perpendicular directions are constant for the entire maze generation process,
 /// otherwise we'd have a good way for generating many areas with no way in or out. We would not be
 /// generating a perfect maze.
-pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>)
+pub fn binary_tree<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>)
     where GridIndexType: IndexType,
           CellT: Cell
 {
@@ -63,7 +63,7 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, Ce
 /// if run direction does not match the order the direction/order we visit the cells in.
 /// So, if we visit the cells west to east, then the wall carving run direction needs to be east.
 /// The run closing out passage carving direction does not matter.
-pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType, SquareCell>) // todo extend to other grid cell types?
+pub fn sidewinder<GridIndexType>(grid: &mut Grid<GridIndexType, SquareCell>) // todo extend to other grid cell types?
     where GridIndexType: IndexType
           // CellT: Cell
 {
@@ -117,7 +117,7 @@ pub fn sidewinder<GridIndexType>(grid: &mut SquareGrid<GridIndexType, SquareCell
 ///
 /// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
 ///       and causing the algorithm to run forever.
-pub fn aldous_broder<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>,
+pub fn aldous_broder<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
                                                 mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
           CellT: Cell
@@ -174,7 +174,7 @@ pub fn aldous_broder<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
 
 /// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
 ///       and causing the algorithm to run forever.
-pub fn wilson<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>, mask: Option<&BinaryMask2D>)
+pub fn wilson<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
           CellT: Cell
 {
@@ -284,7 +284,7 @@ pub fn wilson<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>,
 /// Memory efficient - little beyond the grid to maintain.
 /// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
 /// Executing the hunt phase many times can visit a cell many times.
-pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>,
+pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
                                     mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
           CellT: Cell
@@ -307,7 +307,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
     let mut visited_count = 0;
 
     let is_any_neighbour_visited =
-        |cell, visited_set: &BitSet, grid: &SquareGrid<GridIndexType, CellT>| -> bool {
+        |cell, visited_set: &BitSet, grid: &Grid<GridIndexType, CellT>| -> bool {
             grid.neighbours(cell)
                 .iter()
                 .any(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
@@ -315,7 +315,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
 
     let visited_neighbours = |cell: CellT::Coord,
                               visited_set: &BitSet,
-                              grid: &SquareGrid<GridIndexType, CellT>|
+                              grid: &Grid<GridIndexType, CellT>|
                               -> Option<CellT::CoordinateSmallVec> {
         let vn: CellT::CoordinateSmallVec = grid.neighbours(cell)
             .iter()
@@ -331,7 +331,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
 
     let are_all_neighbours_visited_or_masked = |cell,
                                                 visited_set: &BitSet,
-                                                grid: &SquareGrid<GridIndexType, CellT>,
+                                                grid: &Grid<GridIndexType, CellT>,
                                                 mask: Option<&BinaryMask2D>|
                                                 -> bool {
         if let Some(m) = mask {
@@ -412,7 +412,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, 
 /// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
 /// Compute efficient - visits each cell exactly twice
 /// Memory challenged - the search stack can get very deep, up to grid size deep.
-pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridIndexType, CellT>,
+pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
                                             mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
           CellT: Cell
@@ -433,7 +433,7 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridInd
 
     let unvisited_neighbours = |cell: CellT::Coord,
                                 visited_set: &BitSet,
-                                grid: &SquareGrid<GridIndexType, CellT>|
+                                grid: &Grid<GridIndexType, CellT>|
                                 -> Option<CellT::CoordinateSmallVec> {
 
         let vn: CellT::CoordinateSmallVec = if let Some(m) = mask {
@@ -486,7 +486,7 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut SquareGrid<GridInd
 }
 
 fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
-                                      grid: &SquareGrid<GridIndexType, CellT>,
+                                      grid: &Grid<GridIndexType, CellT>,
                                       mut rng: &mut R)
                                       -> Option<CellT::Coord>
     where GridIndexType: IndexType,
@@ -496,7 +496,7 @@ fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
     grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng))
 }
 
-fn random_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
+fn random_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
                                         mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
                                         mut rng: &mut R)
                                         -> Option<CellT::Coord>
@@ -511,7 +511,7 @@ fn random_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
     }
 }
 
-fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &SquareGrid<GridIndexType, CellT>) -> usize
+fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &Grid<GridIndexType, CellT>) -> usize
     where GridIndexType: IndexType,
           CellT: Cell
 {
@@ -521,7 +521,7 @@ fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &SquareGrid<GridInd
 
 fn is_cell_in_visited_set<GridIndexType, CellT>(cell: CellT::Coord,
                                          visited_set: &BitSet,
-                                         grid: &SquareGrid<GridIndexType, CellT>)
+                                         grid: &Grid<GridIndexType, CellT>)
                                          -> bool
     where GridIndexType: IndexType,
           CellT: Cell
@@ -532,7 +532,7 @@ fn is_cell_in_visited_set<GridIndexType, CellT>(cell: CellT::Coord,
 fn visit_cell<GridIndexType, CellT>(cell: CellT::Coord,
                              visited_set: &mut BitSet,
                              visited_count: Option<&mut usize>,
-                             grid: &SquareGrid<GridIndexType, CellT>)
+                             grid: &Grid<GridIndexType, CellT>)
                              -> bool
     where GridIndexType: IndexType,
           CellT: Cell
@@ -554,7 +554,7 @@ fn visit_cell<GridIndexType, CellT>(cell: CellT::Coord,
 fn undo_cell_visit<GridIndexType, CellT>(cell: CellT::Coord,
                                   visited_set: &mut BitSet,
                                   visited_count: Option<&mut usize>,
-                                  grid: &SquareGrid<GridIndexType, CellT>)
+                                  grid: &Grid<GridIndexType, CellT>)
                                   -> bool
     where GridIndexType: IndexType,
           CellT: Cell
@@ -572,7 +572,7 @@ fn undo_cell_visit<GridIndexType, CellT>(cell: CellT::Coord,
     was_present
 }
 
-fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
+fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
                                                    visited_set_with_count: (&BitSet, usize),
                                                    mut rng: &mut R)
                                                    -> Option<CellT::Coord>
@@ -599,7 +599,7 @@ fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexTyp
     }
 }
 
-fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
+fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
                                           mask_with_unmasked_count: (&BinaryMask2D, usize),
                                           mut rng: &mut R)
                                           -> Option<CellT::Coord>
@@ -627,7 +627,7 @@ fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType
     }
 }
 
-fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<GridIndexType, CellT>,
+fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
                                                     visited_set_with_count: Option<(&BitSet,
                                                                                     usize)>,
                                                     mask_with_unmasked_count: Option<(&BinaryMask2D,
@@ -674,7 +674,7 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &SquareGrid<Gri
 }
 
 fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
-                                                      grid: &SquareGrid<GridIndexType, CellT>,
+                                                      grid: &Grid<GridIndexType, CellT>,
                                                       mask: &BinaryMask2D,
                                                       mut rng: &mut R)
                                                        -> Option<CellT::Coord>
@@ -700,7 +700,7 @@ fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
     }
 }
 
-fn unmasked_cells_count<GridIndexType, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
+fn unmasked_cells_count<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>,
                                               mask: Option<&BinaryMask2D>)
                                        -> usize
     where GridIndexType: IndexType,

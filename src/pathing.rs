@@ -38,7 +38,7 @@ use smallvec::SmallVec;
 
 use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
-use grids::{GridDisplay, IndexType, SquareGrid};
+use grids::{GridDisplay, IndexType, Grid};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
 
@@ -65,7 +65,7 @@ impl<CellT, MaxDistanceT> DijkstraDistances<CellT, MaxDistanceT>
     where CellT: Cell,
           MaxDistanceT: MaxDistance
 {
-    pub fn new<GridIndexType: IndexType>(grid: &SquareGrid<GridIndexType, CellT>,
+    pub fn new<GridIndexType: IndexType>(grid: &Grid<GridIndexType, CellT>,
                                          start_coordinate: CellT::Coord)
                                          -> Option<DijkstraDistances<CellT, MaxDistanceT>> {
 
@@ -159,14 +159,14 @@ impl<CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<CellT, MaxDis
         // Keeping a reference to the grid that was processed is possible, but the circular nature of distances to Grid
         // and Grid to (distances as GridDisplay) means we need Rc and Weak pointers, in particular Rc<RefCell<_>> for the
         // maze so that we could mutate it to inject the (distance as GridDisplay) and the (distance as GridDisplay) could be
-        // given an Rc<_> downgraded to Weak<_> to refer to the Grid...or maybe GridDisplay holds a &SquareGrid but that won't
-        // work as the lifetime of any Rc is unknown and &SquareGrid would need a 'static lifetime.
-        // As the ref from the (distance as GridDisplay) to SquareGrid is not &T and the Rc<RefCell> avoids static borrow check
-        // rules there are no guarantees that the graph on the SquareGrid cannot change after distances has been created.
+        // given an Rc<_> downgraded to Weak<_> to refer to the Grid...or maybe GridDisplay holds a &Grid but that won't
+        // work as the lifetime of any Rc is unknown and &Grid would need a 'static lifetime.
+        // As the ref from the (distance as GridDisplay) to Grid is not &T and the Rc<RefCell> avoids static borrow check
+        // rules there are no guarantees that the graph on the Grid cannot change after distances has been created.
         //
-        // *Iff* a DijkstraDistances were always to be created with every SquareGrid, such that the lifetimes are the same
-        // the SquareGrid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &SquareGrid which would
-        // freeze as immutable the graph of the SquareGrid.
+        // *Iff* a DijkstraDistances were always to be created with every Grid, such that the lifetimes are the same
+        // the Grid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &Grid which would
+        // freeze as immutable the graph of the Grid.
 
         if let Some(d) = self.distances.get(&coord) {
             // centre align, padding 3, lowercase hexadecimal
@@ -230,7 +230,7 @@ impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
     }
 }
 
-pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
+pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<GridIndexType, CellT>,
                                                          distances_from_start: &DijkstraDistances<CellT, MaxDistanceT>,
                                                          end_point: CellT::Coord) -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType, MaxDistanceT: MaxDistance, CellT: Cell
@@ -296,7 +296,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridI
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
 /// If the mask creates disconnected subgraphs it may not be the longest path.
-pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT>(grid: &SquareGrid<GridIndexType, CellT>,
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<GridIndexType, CellT>,
                                                           mask: Option<&BinaryMask2D>)
                                                           -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType,
@@ -337,9 +337,9 @@ mod tests {
 
     use super::*;
     use cells::Cartesian2DCoordinate;
-    use squaregrid::SquareGrid;
+    use squaregrid::Grid;
 
-    type SmallGrid = SquareGrid<u8>;
+    type SmallGrid = Grid<u8>;
     type SmallDistances = DijkstraDistances<u8>;
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {

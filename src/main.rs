@@ -16,7 +16,7 @@ use std::rc::Rc;
 use docopt::Docopt;
 
 use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
-use mazes::grids::{GridDisplay, SquareGrid};
+use mazes::grids::{GridDisplay, Grid};
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;
@@ -90,7 +90,7 @@ fn main() {
     let do_text_render = args.cmd_render &&
                          (args.cmd_text || (!any_render_option && grid_size < 25));
 
-    let mut maze_grid = SquareGrid::<u32, SquareCell>::new(grid_size);
+    let mut maze_grid = Grid::<u32, SquareCell>::new(grid_size);
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
@@ -154,7 +154,7 @@ fn main() {
     }
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32, SquareCell>,
+fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell>,
                          maze_args: &MazeArgs,
                          mask: Option<&BinaryMask2D>) {
 
@@ -185,7 +185,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut SquareGrid<u32, SquareCell>,
 /// Default to finding the start and end point of the longest path in the maze if required to show a path
 /// or asked to find the point furthest away from a start point
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
-fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32, SquareCell>,
+fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell>,
                         maze_args: &MazeArgs,
                         longest_path: &[Cartesian2DCoordinate]) {
 
@@ -246,7 +246,7 @@ fn set_maze_griddisplay(maze_grid: &mut SquareGrid<u32, SquareCell>,
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &SquareGrid<u32, SquareCell>,
+                                     maze_grid: &Grid<u32, SquareCell>,
                                      mask: Option<&BinaryMask2D>)
                                      -> Vec<Cartesian2DCoordinate> {
 

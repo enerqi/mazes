@@ -51,31 +51,35 @@ pub trait GridDisplay<CellT: Cell> {
     }
 }
 
-pub struct SquareGrid<GridIndexType: IndexType, CellT: Cell> {
+pub struct Grid<GridIndexType: IndexType, CellT: Cell> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: usize,
+    rows: usize,
+    columns: usize,
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>
 }
 
                                               // Note we do not need the Cell trait for this function
-impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for SquareGrid<GridIndexType, CellT> {
+impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for Grid<GridIndexType, CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SquareGrid {:?} {:?}", self.graph, self.dimension_size)
+        write!(f, "Grid {:?} {:?}", self.graph, self.dimension_size)
     }
 }
 
-impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
-    pub fn new(dimension_size: usize) -> SquareGrid<GridIndexType, CellT> {
+impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
+    pub fn new(dimension_size: usize) -> Grid<GridIndexType, CellT> {
 
         let dim_size = dimension_size;
         let cells_count = dim_size * dim_size;
         let nodes_count_hint = cells_count;
         let edges_count_hint = 4 * cells_count - 4 * dim_size; // Probably overkill, but don't want any capacity panics
 
-        let mut grid = SquareGrid {
+        let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
             dimension_size: dimension_size,
+            rows: dimension_size,
+            columns: dimension_size,
             grid_display: None,
             cell_type: PhantomData
         };
@@ -282,8 +286,8 @@ impl<GridIndexType: IndexType, CellT: Cell> SquareGrid<GridIndexType, CellT> {
     }
 }
 
-// Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, HexCell>
-impl<GridIndexType: IndexType> fmt::Display for SquareGrid<GridIndexType, SquareCell> {
+// Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, HexCell>
+impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, SquareCell> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 
         const WALL_L: &'static str = "╴";
@@ -475,10 +479,10 @@ impl<CellT: Cell> Iterator for CellIter<CellT> {
 }
 
 // Converting the Grid into an iterator (CellIter - the default most sensible)
-// This form is useful if you have the SquareGrid by value and take a reference to it
+// This form is useful if you have the Grid by value and take a reference to it
 // but seems unhelpful when you already have a reference then we need to do &*grid which
 // it just plain uglier than `grid.iter()`
-// impl<'a, GridIndexType: IndexType, CellType: Cell> IntoIterator for &'a SquareGrid<GridIndexType, CellType> {
+// impl<'a, GridIndexType: IndexType, CellType: Cell> IntoIterator for &'a Grid<GridIndexType, CellType> {
 //     type Item = CellType::Coord;
 //     type IntoIter = CellIter;
 
@@ -539,7 +543,7 @@ mod tests {
     use smallvec::SmallVec;
     use std::u32;
 
-    type SmallGrid<'a> = SquareGrid<u8>;
+    type SmallGrid<'a> = Grid<u8>;
 
     // Compare a smallvec to e.g. a vec! or &[T].
     // SmallVec really ruins the syntax ergonomics, hence this macro
