@@ -159,3 +159,83 @@ impl From<(u32, u32)> for Cartesian2DCoordinate {
         Cartesian2DCoordinate::new(x_y_pair.0, x_y_pair.1)
     }
 }
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct PolarCell;
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum ClockDirection {
+    Clockwise,
+    CounterClockwise,
+    Inward,
+    Outward
+}
+
+impl Cell for PolarCell {
+
+    type Coord = Cartesian2DCoordinate;
+    type Direction = ClockDirection;
+    type CoordinateSmallVec = SmallVec<[Self::Coord; 8]>;
+    type CoordinateOptionFixedSizeVec = SmallVec<[Option<Self::Coord>; 8]>;
+    type DirectionFixedSizeVec = SmallVec<[Self::Direction; 8]>;
+
+    /// Creates a small vec of the possible directions away from this Cell.
+    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionFixedSizeVec {
+        [ClockDirection::Clockwise,
+         ClockDirection::CounterClockwise,
+         ClockDirection::Inward,
+         ClockDirection::Outward]
+        .into_iter().cloned().collect::<Self::DirectionFixedSizeVec>()
+
+        // and extend from the outward direction instance? [ClockDirection::Outward, ClockDirection::Outward, ClockDirection::Outward]?
+    }
+
+    /// Creates a new `Coord` offset 1 cell away in the given direction.
+    /// Returns None if the Coordinate is not representable.
+    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
+
+        let (x, y) = (coord.x, coord.y);
+        match dir {
+            ClockDirection::Clockwise => {
+
+            }
+            ClockDirection::CounterClockwise => {},
+            ClockDirection::Inward => {},
+            ClockDirection::Outward => {
+
+            }
+        };
+
+        None
+    }
+
+    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction { // what about multiple outward options? outward is not a single direction
+        const DIRS_COUNT: usize = 4;
+        const DIRS: [ClockDirection; DIRS_COUNT] =
+            [ClockDirection::Clockwise, ClockDirection::CounterClockwise, ClockDirection::Inward, ClockDirection::Outward];
+        let dir_index = rng.gen::<usize>() % DIRS_COUNT;
+        DIRS[dir_index]
+    }
+
+    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+        if rng.gen() {
+            ClockDirection::Clockwise
+        } else {
+            ClockDirection::CounterClockwise
+        }
+    }
+
+    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+        if rng.gen() {
+            ClockDirection::Inward
+        } else {
+            ClockDirection::Outward
+        }
+    }
+
+}
+
+// Polar grid constructor
+// number of rows, assume "columns" is 1, which will be adaptively subdivided.
+// so need a RectGrid where can specify the rows and columns
+
