@@ -27,12 +27,14 @@ const USAGE: &'static str = "Mazes
 
 Usage:
     mazes_driver -h | --help
-    mazes_driver [--grid-size=<n>]
-    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end ] [--grid-size=<n>] [--mask-file=<path>]
+    mazes_driver [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])]
+    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end ] [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])] [--mask-file=<path>]
 
 Options:
     -h --help              Show this screen.
-    --grid-size=<n>        The grid size is n * n [default: 20].
+    --grid-size=<n>        The grid size is n * n.
+    --grid-width=<w>       The grid width in a w*h grid [default: 20].
+    --grid-height=<h>      The grid height in a w*h grid [default: 20].
     --text-out=<path>      Output file path for a textual rendering of a maze.
     --show-distances       Show the distance from the start point to all other points on the grid. The start point is the longest path start if not specified.
     --show-path            Show the path from the start to end point. Choose the start/end point automatically from the longest path if not specified.
@@ -50,7 +52,9 @@ Options:
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
-    flag_grid_size: usize,
+    flag_grid_size: Option<usize>,
+    flag_grid_width: usize,
+    flag_grid_height: usize,
     cmd_render: bool,
     cmd_binary: bool,
     cmd_sidewinder: bool,
@@ -82,16 +86,22 @@ fn main() {
         .and_then(|d| d.decode())
         .unwrap_or_else(|e| e.exit());
 
-    let grid_size = args.flag_grid_size;
+    let large_grid_cell_count = 25 * 25;
+    let (width, height) = if let Some(square_grid_size) = args.flag_grid_size {
+            (square_grid_size, square_grid_size)
+        } else {
+            (args.flag_grid_width, args.flag_grid_height)
+        };
+    let grid_size = width * height;
     let any_render_option = args.cmd_text || args.cmd_image;
 
     // Do whatever defaults we want if not given a specific 'render' command
     let do_image_render = !args.cmd_render || args.cmd_image ||
-                          (!any_render_option && grid_size >= 25);
+                          (!any_render_option && grid_size >= large_grid_cell_count);
     let do_text_render = args.cmd_render &&
-                         (args.cmd_text || (!any_render_option && grid_size < 25));
+                         (args.cmd_text || (!any_render_option && grid_size < large_grid_cell_count));
 
-    let mut maze_grid = Grid::<u32, SquareCell>::new(units::RowLength(grid_size), units::ColumnLength(grid_size));
+    let mut maze_grid = Grid::<u32, SquareCell>::new(units::RowLength(width), units::ColumnLength(height));
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
