@@ -36,7 +36,7 @@ use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 
-use cells::{Cell, Coordinate};
+use cells::{Cell, Coordinate, ColumnIndex, RowIndex};
 use masks::BinaryMask2D;
 use grids::{GridDisplay, IndexType, Grid};
 use utils;
@@ -307,7 +307,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<Gri
     let arbitrary_start_point = if let Some(m) = mask {
         m.first_unmasked_coordinate()
     } else {
-        Some(CellT::Coord::from_row_column_indices(0, 0))
+        Some(CellT::Coord::from_row_column_indices(ColumnIndex(0), RowIndex(0)))
     };
 
     if arbitrary_start_point.is_none() {

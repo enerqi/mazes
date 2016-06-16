@@ -1,7 +1,7 @@
 use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
-use cells::{Cartesian2DCoordinate, Coordinate};
+use cells::{Cartesian2DCoordinate, Coordinate, RowIndex, ColumnIndex};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {
@@ -84,7 +84,7 @@ impl BinaryMask2D {
         if let Some(i) = index {
             let x = i % self.width as usize;
             let y = i / self.height as usize;
-            Some(CoordT::from_row_column_indices(x, y))
+            Some(CoordT::from_row_column_indices(ColumnIndex(x), RowIndex(y)))
         } else {
             None
         }

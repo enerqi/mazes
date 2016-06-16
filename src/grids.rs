@@ -8,7 +8,7 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 //use smallvec::SmallVec;
 
-use cells::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesian2DCoordinate};
+use cells::{Cell, Coordinate, CompassPrimary, RowLength, RowsCount, RowIndex, ColumnLength, ColumnsCount, ColumnIndex, SquareCell, Cartesian2DCoordinate};
 
 // refactors
 //
@@ -37,12 +37,6 @@ use cells::{Cell, Coordinate, CompassPrimary, DimensionSize, SquareCell, Cartesi
 // number of cells increases at each outer layer of the circle
 // directions -> inward, outward (multiple! not static) is a list, clockwise, counter-clockwise
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
-pub enum CellLinkError {
-    InvalidGridCoordinate,
-    SelfLink,
-}
-
 pub trait GridDisplay<CellT: Cell> {
     /// Render the contents of a grid cell as text.
     /// The String should be 3 glyphs long, padded if required.
@@ -54,10 +48,16 @@ pub trait GridDisplay<CellT: Cell> {
 pub struct Grid<GridIndexType: IndexType, CellT: Cell> {
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimension_size: usize,
-    rows: usize,
-    columns: usize,
+    rows: RowsCount,
+    columns: ColumnsCount,
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum CellLinkError {
+    InvalidGridCoordinate,
+    SelfLink,
 }
 
                                               // Note we do not need the Cell trait for this function
@@ -77,8 +77,8 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
             dimension_size: dimension_size,
-            rows: dimension_size,
-            columns: dimension_size,
+            rows: RowsCount(dimension_size),
+            columns: ColumnsCount(dimension_size),
             grid_display: None,
             cell_type: PhantomData
         };
@@ -94,7 +94,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     }
 
     pub fn size(&self) -> usize {
-        self.rows * self.columns
+        self.rows.0 * self.columns.0
     }
 
     #[inline]
@@ -102,9 +102,29 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
         self.dimension_size
     }
 
+    #[inline]
+    pub fn rows(&self) -> RowsCount {
+        self.rows
+    }
+
+    #[inline]
+    pub fn row_length(&self) -> RowLength {
+        RowLength(self.columns.0)
+    }
+
+    #[inline]
+    pub fn columns(&self) -> ColumnsCount {
+        self.columns
+    }
+
+    #[inline]
+    pub fn column_length(&self) -> ColumnLength {
+        ColumnLength(self.rows.0)
+    }
+
     pub fn random_cell<R: Rng>(&self, rng: &mut R) -> CellT::Coord {
         let index = rng.gen::<usize>() % self.size();
-        CellT::Coord::from_row_major_index(index, DimensionSize(self.dimension_size))
+        CellT::Coord::from_row_major_index(index, self.row_length(), self.column_length())
     }
 
     /// Link two cells
@@ -157,7 +177,8 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
                 .map(|index_edge_data_pair| {
                     let grid_node_index = index_edge_data_pair.0;
                     CellT::Coord::from_row_major_index(grid_node_index.index(),
-                                                          DimensionSize(self.dimension_size))
+                                                       self.row_length(),
+                                                       self.column_length())
                 })
                 .collect();
             Some(linked_cells)
@@ -232,7 +253,8 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
         let grid_2d_coord = coord.as_cartesian_2d();
         if self.is_valid_coordinate(grid_2d_coord) {
-            Some((grid_2d_coord.y as usize * self.columns) + grid_2d_coord.x as usize)
+            let RowLength(row_size) = self.row_length();
+            Some((grid_2d_coord.y as usize * row_size) + grid_2d_coord.x as usize)
         } else {
             None
         }
@@ -241,7 +263,8 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     pub fn iter(&self) -> CellIter<CellT> {
         CellIter {
             current_cell_number: 0,
-            dimension_size: self.dimension_size,
+            row_length: self.row_length(),
+            col_length: self.column_length(),
             cells_count: self.size(),
             cell_type: PhantomData,
         }
@@ -250,8 +273,12 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     pub fn iter_row(&self) -> BatchIter<CellT> {
         BatchIter {
             iter_type: BatchIterType::Row,
+            iter_initial_length: self.rows.0,
             current_index: 0,
-            dimension_size: self.dimension_size,
+            row_length: self.row_length(),
+            rows_size: self.rows,
+            col_length: self.column_length(),
+            cols_size: self.columns,
             cell_type: PhantomData,
         }
     }
@@ -259,15 +286,21 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     pub fn iter_column(&self) -> BatchIter<CellT> {
         BatchIter {
             iter_type: BatchIterType::Column,
+            iter_initial_length: self.columns.0,
             current_index: 0,
-            dimension_size: self.dimension_size,
+            row_length: self.row_length(),
+            rows_size: self.rows,
+            col_length: self.column_length(),
+            cols_size: self.columns,
             cell_type: PhantomData,
         }
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
-        (coord.x as usize) < self.columns && (coord.y as usize) < self.rows
+        let RowLength(width) = self.row_length();
+        let ColumnLength(height) = self.column_length();
+        (coord.x as usize) < width && (coord.y as usize) < height
     }
 
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
@@ -307,8 +340,8 @@ impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, SquareCell> 
         const WALL_LUD: &'static str = "┤";
         let default_cell_body = String::from("   ");
 
-        let columns_count = self.columns;
-        let rows_count = self.rows;
+        let ColumnsCount(columns_count) = self.columns;
+        let RowsCount(rows_count) = self.rows;
 
         // Start by special case rendering the text for the north most boundary
         let first_grid_row: &Vec<Cartesian2DCoordinate> =
@@ -454,7 +487,8 @@ impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, SquareCell> 
 #[derive(Debug, Copy, Clone)]
 pub struct CellIter<CellT> {
     current_cell_number: usize,
-    dimension_size: usize,
+    row_length: RowLength,
+    col_length: ColumnLength,
     cells_count: usize,
     cell_type: PhantomData<CellT>
 }
@@ -462,7 +496,8 @@ impl<CellT: Cell> Iterator for CellIter<CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
-            let coord = Self::Item::from_row_major_index(self.current_cell_number, DimensionSize(self.dimension_size));
+            let coord = Self::Item::from_row_major_index(self.current_cell_number,
+                                                         self.row_length, self.col_length);
             self.current_cell_number += 1;
             Some(coord)
         } else {
@@ -477,18 +512,15 @@ impl<CellT: Cell> Iterator for CellIter<CellT> {
     }
 }
 
-// Converting the Grid into an iterator (CellIter - the default most sensible)
-// This form is useful if you have the Grid by value and take a reference to it
-// but seems unhelpful when you already have a reference then we need to do &*grid which
-// it just plain uglier than `grid.iter()`
-// impl<'a, GridIndexType: IndexType, CellType: Cell> IntoIterator for &'a Grid<GridIndexType, CellType> {
-//     type Item = CellType::Coord;
-//     type IntoIter = CellIter;
+// Converting a &Grid into an iterator (CellIter - the default most sensible)
+impl<'a, GridIndexType: IndexType, CellT: Cell> IntoIterator for &'a Grid<GridIndexType, CellT> {
+    type Item = CellT::Coord;
+    type IntoIter = CellIter<CellT>;
 
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.iter()
-//     }
-// }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
 
 #[derive(Debug, Copy, Clone)]
 enum BatchIterType {
@@ -498,33 +530,57 @@ enum BatchIterType {
 #[derive(Debug, Copy, Clone)]
 pub struct BatchIter<CellT> {
     iter_type: BatchIterType,
+    iter_initial_length: usize,
     current_index: usize,
-    dimension_size: usize,
+    row_length: RowLength,
+    rows_size: RowsCount,
+    col_length: ColumnLength,
+    cols_size: ColumnsCount,
     cell_type: PhantomData<CellT>,
 }
 impl<CellT: Cell> Iterator for BatchIter<CellT> {
     type Item = Vec<CellT::Coord>;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_index < self.dimension_size {
-            let coords = (0..self.dimension_size)
-                .into_iter()
-                .map(|i: usize| {
-                    if let BatchIterType::Row = self.iter_type {
-                        CellT::Coord::from_row_column_indices(i, self.current_index)
-                    } else {
-                        CellT::Coord::from_row_column_indices(self.current_index, i)
-                    }
-                })
-                .collect();
-            self.current_index += 1;
-            Some(coords)
+
+        if let BatchIterType::Row = self.iter_type {
+
+            let RowsCount(count) = self.rows_size;
+            if self.current_index < count {
+                let RowLength(length) = self.row_length;
+                let coords = (0..length)
+                    .into_iter()
+                    .map(|i: usize| {
+                        CellT::Coord::from_row_column_indices(ColumnIndex(i), RowIndex(self.current_index))
+                    })
+                    .collect();
+                self.current_index += 1;
+                Some(coords)
+            } else {
+                None
+            }
+
         } else {
-            None
+
+            let ColumnsCount(count) = self.cols_size;
+            if self.current_index < count {
+                let ColumnLength(length) = self.col_length;
+                let coords = (0..length)
+                    .into_iter()
+                    .map(|i: usize| {
+                        CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index), RowIndex(i))
+                    })
+                    .collect();
+                self.current_index += 1;
+                Some(coords)
+            } else {
+                None
+            }
+
         }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let lower_bound = self.dimension_size - self.current_index;
+        let lower_bound = self.iter_initial_length - self.current_index;
         let upper_bound = lower_bound;
         (lower_bound, Some(upper_bound))
     }
@@ -547,6 +603,7 @@ mod tests {
     // Compare a smallvec to e.g. a vec! or &[T].
     // SmallVec really ruins the syntax ergonomics, hence this macro
     // The compiler often succeeds in automatically adding the correct & and derefs (*) but not here
+    // - SmallVec does not implement IntoIterator, but you can deref it to [T] and take a slice
     macro_rules! assert_smallvec_eq {
         ($x:expr, $y:expr) => (assert_eq!(&*$x, &*$y))
     }

@@ -9,12 +9,22 @@ use rand::Rng;
 use smallvec::SmallVec;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
-pub struct DimensionSize(pub usize);
+pub struct RowsCount(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct ColumnsCount(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct RowLength(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct ColumnLength(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct RowIndex(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct ColumnIndex(pub usize);
 
 pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
 
-    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Self;
-    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self;
+    fn from_row_major_index(index: usize, row_size: RowLength, column_size: ColumnLength) -> Self;
+    fn from_row_column_indices(col_index: ColumnIndex, row_index: RowIndex) -> Self;
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
 
@@ -137,16 +147,17 @@ impl Cartesian2DCoordinate {
 }
 impl Coordinate for Cartesian2DCoordinate {
 
-    fn from_row_major_index(index: usize, row_size: DimensionSize) -> Cartesian2DCoordinate {
-        let DimensionSize(size) = row_size;
-        let x = index % size;
-        let y = index / size;
+    fn from_row_major_index(index: usize, row_size: RowLength, _: ColumnLength) -> Cartesian2DCoordinate {
+        let RowLength(width) = row_size;
+        let x = index % width;
+        let y = index / width;
 
         Cartesian2DCoordinate::new(x as u32, y as u32)
     }
 
-    fn from_row_column_indices(col_index: usize, row_index: usize) -> Self {
-        Cartesian2DCoordinate::new(col_index as u32, row_index as u32)
+    fn from_row_column_indices(col_index: ColumnIndex, row_index: RowIndex) -> Self {
+        let (ColumnIndex(col), RowIndex(row)) = (col_index, row_index);
+        Cartesian2DCoordinate::new(col as u32, row as u32)
     }
 
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {

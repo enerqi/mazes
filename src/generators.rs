@@ -3,7 +3,7 @@ use rand;
 use rand::Rng;
 use smallvec::SmallVec;
 
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, DimensionSize, SquareCell};
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, ColumnLength, RowLength, SquareCell};
 use masks::BinaryMask2D;
 use grids::{IndexType, Grid};
 use utils;
@@ -592,7 +592,7 @@ fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, Cel
             .nth(n)
             .unwrap();
 
-        Some(CellT::Coord::from_row_major_index(cell_index, DimensionSize(grid.dimension())))
+        Some(CellT::Coord::from_row_major_index(cell_index, grid.row_length(), grid.column_length()))
 
     } else {
         None
@@ -614,13 +614,15 @@ fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, Cell
         let cells_count = grid.size();
         let cell_index = (0..cells_count)
             .filter(|i| {
-                let coord = CellT::Coord::from_row_major_index(*i, DimensionSize(grid.dimension()));
+                let coord = CellT::Coord::from_row_major_index(*i, grid.row_length(), grid.column_length());
                 !mask.is_masked(coord)
             })
             .nth(n)
             .unwrap();
 
-        Some(CellT::Coord::from_row_major_index(cell_index, DimensionSize(grid.dimension())))
+        Some(CellT::Coord::from_row_major_index(cell_index,
+                                                grid.row_length(),
+                                                grid.column_length()))
 
     } else {
         None
@@ -655,16 +657,17 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndex
             if remaining_cells != 0 {
 
                 let n = rng.gen::<usize>() % remaining_cells;
-                let grid_dim = grid.dimension();
+                let rows = grid.row_length();
+                let columns = grid.column_length();
                 let cell_index = (0..cells_count)
                     .filter(|i| {
-                        let coord = CellT::Coord::from_row_major_index(*i, DimensionSize(grid_dim));
+                        let coord = CellT::Coord::from_row_major_index(*i, rows, columns);
                         !visited.contains(bit_index(coord, &grid)) && !mask.is_masked(coord)
                     })
                     .nth(n)
                     .unwrap();
 
-                Some(CellT::Coord::from_row_major_index(cell_index, DimensionSize(grid_dim)))
+                Some(CellT::Coord::from_row_major_index(cell_index, rows, columns))
 
             } else {
                 None
