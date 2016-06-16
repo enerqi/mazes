@@ -21,6 +21,7 @@ use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;
 use mazes::pathing;
+use mazes::units;
 
 const USAGE: &'static str = "Mazes
 
@@ -90,7 +91,7 @@ fn main() {
     let do_text_render = args.cmd_render &&
                          (args.cmd_text || (!any_render_option && grid_size < 25));
 
-    let mut maze_grid = Grid::<u32, SquareCell>::new(grid_size);
+    let mut maze_grid = Grid::<u32, SquareCell>::new(units::RowLength(grid_size), units::ColumnLength(grid_size));
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 

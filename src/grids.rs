@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -68,16 +69,16 @@ impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for Grid<GridIndexType, C
 }
 
 impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
-    pub fn new(dimension_size: usize) -> Grid<GridIndexType, CellT> {
+    pub fn new(row_length: RowLength, column_length: ColumnLength) -> Grid<GridIndexType, CellT> {
 
-        let cells_count = dimension_size * dimension_size;
+        let cells_count = row_length.0 * column_length.0;
         let nodes_count_hint = cells_count;
-        let edges_count_hint = 4 * cells_count - 4 * dimension_size; // Probably overkill, but don't want any capacity panics
+        let edges_count_hint = 4 * cells_count - 4 * cmp::max(row_length.0, column_length.0); // Probably overkill, but don't want any capacity panics
 
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
-            rows: RowsCount(dimension_size),
-            columns: ColumnsCount(dimension_size),
+            rows: RowsCount(column_length.0),
+            columns: ColumnsCount(row_length.0),
             grid_display: None,
             cell_type: PhantomData
         };
