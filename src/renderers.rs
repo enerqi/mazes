@@ -446,8 +446,8 @@ fn maze_image_dimensions<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>
           CellT: Cell
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels as u32 * grid.dimension() as u32;
-    let img_height = cell_size_pixels as u32 * grid.dimension() as u32;
+    let img_width = cell_size_pixels as u32 * grid.row_length().0 as u32;
+    let img_height = cell_size_pixels as u32 * grid.column_length().0 as u32;
 
     (img_width + 1, img_height + 1)
 }

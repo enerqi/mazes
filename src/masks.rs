@@ -1,7 +1,8 @@
 use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
-use cells::{Cartesian2DCoordinate, Coordinate, RowIndex, ColumnIndex};
+use cells::{Cartesian2DCoordinate, Coordinate};
+use units::{Width, Height, ColumnIndex, RowIndex};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {
@@ -56,11 +57,11 @@ impl BinaryMask2D {
     /// Calculates the number of unmasked cells within a 2d space specified by `width` and `height`.
     ///
     /// All cells in the 2d space outside of the masks' own width and height are counted as unmasked.
-    pub fn count_unmasked_within_dimensions(&self, width: usize, height: usize) -> usize {
+    pub fn count_unmasked_within_dimensions(&self, width: Width, height: Height) -> usize {
 
         let mut count = 0;
-        for x in 0..width {
-            for y in 0..height {
+        for x in 0..(width.0) {
+            for y in 0..(height.0) {
                 let masked = self.is_masked(Cartesian2DCoordinate::new(x as u32, y as u32)); // CellT::Coord from usize?
                 if !masked {
                     count += 1;

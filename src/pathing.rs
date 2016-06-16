@@ -36,9 +36,10 @@ use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 
-use cells::{Cell, Coordinate, ColumnIndex, RowIndex};
+use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
 use grids::{GridDisplay, IndexType, Grid};
+use units::{RowIndex, ColumnIndex};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
 

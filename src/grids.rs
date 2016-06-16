@@ -8,7 +8,8 @@ pub use petgraph::graph::IndexType;
 use rand::Rng;
 //use smallvec::SmallVec;
 
-use cells::{Cell, Coordinate, CompassPrimary, RowLength, RowsCount, RowIndex, ColumnLength, ColumnsCount, ColumnIndex, SquareCell, Cartesian2DCoordinate};
+use cells::{Cell, Coordinate, CompassPrimary, SquareCell, Cartesian2DCoordinate};
+use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength, ColumnIndex};
 
 // refactors
 //
@@ -47,7 +48,6 @@ pub trait GridDisplay<CellT: Cell> {
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell> {
     graph: Graph<(), (), Undirected, GridIndexType>,
-    dimension_size: usize,
     rows: RowsCount,
     columns: ColumnsCount,
     grid_display: Option<Rc<GridDisplay<CellT>>>,
@@ -76,7 +76,6 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
-            dimension_size: dimension_size,
             rows: RowsCount(dimension_size),
             columns: ColumnsCount(dimension_size),
             grid_display: None,
@@ -95,11 +94,6 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
     pub fn size(&self) -> usize {
         self.rows.0 * self.columns.0
-    }
-
-    #[inline]
-    pub fn dimension(&self) -> usize {
-        self.dimension_size
     }
 
     #[inline]
@@ -512,7 +506,7 @@ impl<CellT: Cell> Iterator for CellIter<CellT> {
     }
 }
 
-// Converting a &Grid into an iterator (CellIter - the default most sensible)
+// Converting a &Grid into an iterator CellIter - the default most sensible)
 impl<'a, GridIndexType: IndexType, CellT: Cell> IntoIterator for &'a Grid<GridIndexType, CellT> {
     type Item = CellT::Coord;
     type IntoIter = CellIter<CellT>;

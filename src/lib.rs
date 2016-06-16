@@ -38,5 +38,6 @@ pub mod grids;
 pub mod masks;
 pub mod pathing;
 pub mod renderers;
+pub mod units;
 mod sdl;
 mod utils;
