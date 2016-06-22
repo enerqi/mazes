@@ -326,6 +326,7 @@ pub struct CellIter<CellT> {
     cells_count: usize,
     cell_type: PhantomData<CellT>
 }
+impl<CellT: Cell> ExactSizeIterator for CellIter<CellT> { } // default impl using size_hint()
 impl<CellT: Cell> Iterator for CellIter<CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
@@ -346,7 +347,7 @@ impl<CellT: Cell> Iterator for CellIter<CellT> {
     }
 }
 
-// Converting a &Grid into an iterator CellIter - the default most sensible)
+// Converting a &Grid into an iterator CellIter - the default most sensible
 impl<'a, GridIndexType: IndexType, CellT: Cell> IntoIterator for &'a Grid<GridIndexType, CellT> {
     type Item = CellT::Coord;
     type IntoIter = CellIter<CellT>;
@@ -372,6 +373,7 @@ pub struct BatchIter<CellT> {
     cols_size: ColumnsCount,
     cell_type: PhantomData<CellT>,
 }
+impl<CellT: Cell> ExactSizeIterator for BatchIter<CellT> { } // default impl using size_hint()
 impl<CellT: Cell> Iterator for BatchIter<CellT> {
     type Item = Vec<CellT::Coord>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -419,8 +421,6 @@ impl<CellT: Cell> Iterator for BatchIter<CellT> {
         (lower_bound, Some(upper_bound))
     }
 }
-
-// ExactSizeIterator?
 
 #[cfg(test)]
 mod tests {
