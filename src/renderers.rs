@@ -36,7 +36,7 @@ pub struct RenderOptions<'path, 'dist> {
     start: Option<Cartesian2DCoordinate>,
     end: Option<Cartesian2DCoordinate>,
     show_path: bool,
-    distances: Option<&'dist pathing::DijkstraDistances<SquareCell, u32>>,
+    distances: Option<&'dist pathing::Distances<SquareCell, u32>>,
     output_file: Option<&'path Path>,
     path: Option<Vec<Cartesian2DCoordinate>>,
     cell_side_pixels_length: u8,
@@ -93,7 +93,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self
     }
     pub fn distances(mut self,
-                     distances: Option<&'dist pathing::DijkstraDistances<SquareCell, u32>>)
+                     distances: Option<&'dist pathing::Distances<SquareCell, u32>>)
                      -> RenderOptionsBuilder<'path, 'dist> {
         self.options.distances = distances;
         self

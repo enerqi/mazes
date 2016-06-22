@@ -55,20 +55,20 @@ impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display +
 
 
 #[derive(Debug, Clone)]
-pub struct DijkstraDistances<CellT: Cell, MaxDistanceT = u32> {
+pub struct Distances<CellT: Cell, MaxDistanceT = u32> {
     start_coordinate: CellT::Coord,
     distances: FnvHashMap<CellT::Coord, MaxDistanceT>,
     max_distance: MaxDistanceT,
     cell_type: PhantomData<CellT>
 }
 
-impl<CellT, MaxDistanceT> DijkstraDistances<CellT, MaxDistanceT>
+impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
     where CellT: Cell,
           MaxDistanceT: MaxDistance
 {
     pub fn new<GridIndexType: IndexType>(grid: &Grid<GridIndexType, CellT>,
                                          start_coordinate: CellT::Coord)
-                                         -> Option<DijkstraDistances<CellT, MaxDistanceT>> {
+                                         -> Option<Distances<CellT, MaxDistanceT>> {
 
         if !grid.is_valid_coordinate(start_coordinate.as_cartesian_2d()) {
             return None;
@@ -116,7 +116,7 @@ impl<CellT, MaxDistanceT> DijkstraDistances<CellT, MaxDistanceT>
             frontier = new_frontier;
         }
 
-        Some(DijkstraDistances {
+        Some(Distances {
             start_coordinate: start_coordinate,
             distances: distances,
             max_distance: max,
@@ -149,13 +149,13 @@ impl<CellT, MaxDistanceT> DijkstraDistances<CellT, MaxDistanceT>
     }
 }
 
-impl<CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<CellT, MaxDistanceT>
+impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
     where CellT: Cell,
           MaxDistanceT: MaxDistance
 {
     fn render_cell_body(&self, coord: CellT::Coord) -> String {
 
-        // In case DijkstraDistances is used with a different grid check for Vec access being in bounds.
+        // In case Distances is used with a different grid check for Vec access being in bounds.
         // N.B.
         // Keeping a reference to the grid that was processed is possible, but the circular nature of distances to Grid
         // and Grid to (distances as GridDisplay) means we need Rc and Weak pointers, in particular Rc<RefCell<_>> for the
@@ -165,7 +165,7 @@ impl<CellT, MaxDistanceT> GridDisplay<CellT> for DijkstraDistances<CellT, MaxDis
         // As the ref from the (distance as GridDisplay) to Grid is not &T and the Rc<RefCell> avoids static borrow check
         // rules there are no guarantees that the graph on the Grid cannot change after distances has been created.
         //
-        // *Iff* a DijkstraDistances were always to be created with every Grid, such that the lifetimes are the same
+        // *Iff* a Distances were always to be created with every Grid, such that the lifetimes are the same
         // the Grid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &Grid which would
         // freeze as immutable the graph of the Grid.
 
@@ -232,7 +232,7 @@ impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
 }
 
 pub fn shortest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<GridIndexType, CellT>,
-                                                         distances_from_start: &DijkstraDistances<CellT, MaxDistanceT>,
+                                                         distances_from_start: &Distances<CellT, MaxDistanceT>,
                                                          end_point: CellT::Coord) -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType, MaxDistanceT: MaxDistance, CellT: Cell
 {
@@ -315,7 +315,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<Gri
         return None;
     }
 
-    let first_distances = DijkstraDistances::<CellT, MaxDistanceT>::new(grid,
+    let first_distances = Distances::<CellT, MaxDistanceT>::new(grid,
                                                                  arbitrary_start_point.unwrap())
         .expect("Invalid start coordinate.");
 
@@ -323,7 +323,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT>(grid: &Grid<Gri
     let long_path_start_coordinate = first_distances.furthest_points_on_grid()[0];
 
     let distances_from_start =
-        DijkstraDistances::<CellT, MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
+        Distances::<CellT, MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
     let end_point = distances_from_start.furthest_points_on_grid()[0];
 
     shortest_path(&grid, &distances_from_start, end_point)
@@ -341,7 +341,7 @@ mod tests {
     use squaregrid::Grid;
 
     type SmallGrid = Grid<u8>;
-    type SmallDistances = DijkstraDistances<u8>;
+    type SmallDistances = Distances<u8>;
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {
         x: u32::MAX,

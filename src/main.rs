@@ -135,7 +135,7 @@ fn main() {
         let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
                            args.flag_show_path {
             let (start_x, start_y) = start_opt.unwrap();
-            Some(pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+            Some(pathing::Distances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                     .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")))
         } else {
             None
@@ -206,7 +206,7 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell>,
     if maze_args.flag_show_distances || maze_args.flag_show_path {
 
         let (start_x, start_y) = start_opt.unwrap();
-        let distances = Rc::new(pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                 .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate from which to show path distances.")));
 
         if maze_args.flag_show_distances {
@@ -272,7 +272,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid,
+        let distances = pathing::Distances::<SquareCell, u32>::new(&maze_grid,
                                                                Cartesian2DCoordinate::new(x, y))
             .unwrap_or_else(|| exit_with_msg("Provided invalid coordinate."));
         let furthest_points = distances.furthest_points_on_grid();
@@ -286,7 +286,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                 maze_args.flag_end_point_x,
                 maze_args.flag_end_point_y) {
 
-            let distances = pathing::DijkstraDistances::<SquareCell, u32>::new(&maze_grid,
+            let distances = pathing::Distances::<SquareCell, u32>::new(&maze_grid,
                                                                    Cartesian2DCoordinate::new(start_x,
                                                                                        start_y))
                 .unwrap_or_else(|| exit_with_msg("Provided invalid start coordinate."));
