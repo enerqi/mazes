@@ -61,7 +61,6 @@ pub enum CellLinkError {
     SelfLink,
 }
 
-                                              // Note we do not need the Cell trait for this function
 impl<GridIndexType: IndexType, CellT: Cell> fmt::Debug for Grid<GridIndexType, CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Grid :: graph: {:?}, rows: {:?}, columns: {:?}", self.graph, self.rows, self.columns)
@@ -97,6 +96,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
         &self.grid_display
     }
 
+    #[inline]
     pub fn size(&self) -> usize {
         self.rows.0 * self.columns.0
     }
