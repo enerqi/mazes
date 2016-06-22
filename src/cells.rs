@@ -180,7 +180,7 @@ impl Cell for PolarCell {
     type DirectionSmallVec = SmallVec<[Self::Direction; 8]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec {
+    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionSmallVec {
         [ClockDirection::Clockwise,
          ClockDirection::CounterClockwise,
          ClockDirection::Inward,
@@ -192,9 +192,9 @@ impl Cell for PolarCell {
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
-    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
+    fn offset_coordinate(_: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
 
-        let (x, y) = (coord.x, coord.y);
+        //let (x, y) = (coord.x, coord.y);
         match dir {
             ClockDirection::Clockwise => {
 
