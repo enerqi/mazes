@@ -168,7 +168,7 @@ pub enum ClockDirection {
     Clockwise,
     CounterClockwise,
     Inward,
-    Outward
+    Outward //(u8) // 0, 1
 }
 
 impl Cell for PolarCell {
@@ -236,6 +236,60 @@ impl Cell for PolarCell {
 }
 
 // Polar grid constructor
-// number of rows, assume "columns" is 1, which will be adaptively subdivided.
-// so need a RectGrid where can specify the rows and columns
+// For any coord[x][y]
+// what are the neighbours? - what coordinates and handle outward[n]
+// what is the corresponding graph index?
+// coord.x
+// coord.y            // grid config data access - number of rings
+// row_height = 1.0 / grid.rows_count     # e.g. row 1. 0.25
+// radius = y * (row_height as float)     # 0.25
+// circumference = 2 * pi * radius        # 1.5707
 
+// previous_rows_count = .. # 1
+// cell_width_if_using_same_cell_count_as_previous_ring = circumference / previous_rows_count  # 1.5707
+// ratio = round to nearest number (cell_width_if_using_same_cell_count_as_previous_ring / row_height)  # 6.28 -> 6.0
+
+// cells = previous_rows_count * ratio # 6
+
+// // now we know the cell count in the ring
+// // varying cell counts per row
+// // coord[x][y]
+// // statically the row length is unknown, but the number of rings is fixed when creating the grid.
+// // ok, so now we know the row length...
+// for any cell on the row, if not row 0 (only 1 cell)
+// cw = coord[x+1][y]
+// ccw = coord[x-1][y] (wrapping around?)
+// // what is previous row length ?
+// ratio = row_length / previous_row_length
+// parent = cell[x/ratio][y-1]
+// parent.outward += this // so to calculate outward of *this*, argh...
+// inward = parent // easy to calc inward
+
+// Data needed:
+// - number of rows (y height) of the grid
+// - row length of previous row [y-1], which varies on each ring - so length of all rows
+//   same as current row or half the length
+// - outward cells??? max 2 parents per cell I think. If 1 parent then cell count is the same as current row.
+//                    if 2 parents then 2 * current rows cells count and outward = [x * 2][y+1] and [(x*2)+1][y+1]
+//
+// *so row lengths and number of rows is most pertinent*
+
+// - `offset_directions` needs this data to know how many outward cells there are
+// - `offset_coordinate` needs to calculate inward, which could be done by knowing how many inward cells there are
+//                       Clockwise/CounterClockwise need to know row length to wrap or not allow wrapping.
+// where to store grid rows count and length of each row?
+
+// How to map coordinate to graph index? Need new coordinate type to have a different mapping function.
+// coord[x][y] == ? Also needs to look up the length of each row. Might be nice to prefix sum the row lengths at each point.
+// The lengths need to be calced once at, presumably at a similar time to when we decide the number of nodes in the graph.
+//
+// refactoring `Grid` (?) for Polar
+// rows: RowsCount,
+// columns: ColumnsCount,
+// still need these but the user should not be providing columns as an argument, or it should be ignored
+// - additional data required for rowLengths
+// - cells count needs deciding before creating the graph and adding nodes.
+// - `size` = (rows * columns) must be customised
+// - `random_cell` assumes a fixed row*col size, but the dimension vary.
+// - `grid_coordinate_to_index` assumes a fixed row*col size
+// - `CellIter` assumes a fixed row*col size
