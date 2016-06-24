@@ -92,31 +92,32 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
         self.grid_display = grid_display;
     }
 
+    #[inline(always)]
     pub fn grid_display(&self) -> &Option<Rc<GridDisplay<CellT>>> {
         &self.grid_display
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn size(&self) -> usize {
         self.rows.0 * self.columns.0
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn rows(&self) -> RowsCount {
         self.rows
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn row_length(&self) -> RowLength {
         RowLength(self.columns.0)
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn columns(&self) -> ColumnsCount {
         self.columns
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn column_length(&self) -> ColumnLength {
         ColumnLength(self.rows.0)
     }
@@ -296,6 +297,7 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
+    #[inline]
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
         let RowLength(width) = self.row_length();
         let ColumnLength(height) = self.column_length();
@@ -309,9 +311,10 @@ impl<GridIndexType: IndexType, CellT: Cell> Grid<GridIndexType, CellT> {
 
     /// Convert a grid coordinate into petgraph nodeindex
     /// Returns None if the grid coordinate is invalid (out of the grid's dimensions).
+    #[inline]
     fn grid_coordinate_graph_index(&self,
-                                                   coord: CellT::Coord)
-                                                   -> Option<graph::NodeIndex<GridIndexType>> {
+                                   coord: CellT::Coord)
+                                   -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
         grid_index_raw_opt.map(graph::NodeIndex::<GridIndexType>::new)
     }

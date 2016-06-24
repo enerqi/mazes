@@ -124,14 +124,17 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         })
     }
 
+    #[inline(always)]
     pub fn start(&self) -> CellT::Coord {
         self.start_coordinate
     }
 
+    #[inline(always)]
     pub fn max(&self) -> MaxDistanceT {
         self.max_distance
     }
 
+    #[inline(always)]
     pub fn distance_from_start_to(&self, coord: CellT::Coord) -> Option<MaxDistanceT> {
         self.distances.get(&coord).cloned()
     }

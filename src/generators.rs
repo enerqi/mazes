@@ -490,6 +490,7 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut Grid<GridIndexType
     }
 }
 
+#[inline]
 fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
                                       grid: &Grid<GridIndexType, CellT>,
                                       mut rng: &mut R)
@@ -516,6 +517,7 @@ fn random_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
     }
 }
 
+#[inline]
 fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &Grid<GridIndexType, CellT>) -> usize
     where GridIndexType: IndexType,
           CellT: Cell
@@ -524,6 +526,7 @@ fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &Grid<GridIndexType
         .expect("bit_index impossible: invalid cell")
 }
 
+#[inline]
 fn is_cell_in_visited_set<GridIndexType, CellT>(cell: CellT::Coord,
                                          visited_set: &BitSet,
                                          grid: &Grid<GridIndexType, CellT>)

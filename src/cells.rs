@@ -136,6 +136,7 @@ impl Cartesian2DCoordinate {
 }
 impl Coordinate for Cartesian2DCoordinate {
 
+    #[inline]
     fn from_row_major_index(index: usize, row_size: RowLength, _: ColumnLength) -> Cartesian2DCoordinate {
         let RowLength(width) = row_size;
         let x = index % width;
@@ -144,11 +145,13 @@ impl Coordinate for Cartesian2DCoordinate {
         Cartesian2DCoordinate::new(x as u32, y as u32)
     }
 
+    #[inline]
     fn from_row_column_indices(col_index: ColumnIndex, row_index: RowIndex) -> Self {
         let (ColumnIndex(col), RowIndex(row)) = (col_index, row_index);
         Cartesian2DCoordinate::new(col as u32, row as u32)
     }
 
+    #[inline(always)]
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {
         *self
     }
@@ -293,3 +296,10 @@ impl Cell for PolarCell {
 // - `random_cell` assumes a fixed row*col size, but the dimension vary.
 // - `grid_coordinate_to_index` assumes a fixed row*col size
 // - `CellIter` assumes a fixed row*col size
+
+// must aggregate, how?
+// static dispatch (generic parameters) vs dynamic &TraitX
+// dynamic: injection of trait objects by reference/box/rc?
+//    dynamic trait indirection via pointer probably not too bad overhead,
+//    at least in terms of data locality as most data is in the graph. Other heap allocated data
+//    would be close together and small.
