@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
 use masks::BinaryMask2D;
-use grids::{IndexType, Grid};
+use grids::{IndexType, Grid, GridData, GridIterators};
 use units::{RowLength, ColumnLength, Width, Height};
 use utils;
 use utils::FnvHashSet;
@@ -18,9 +18,11 @@ use utils::FnvHashSet;
 /// Once picked, the two perpendicular directions are constant for the entire maze generation process,
 /// otherwise we'd have a good way for generating many areas with no way in or out. We would not be
 /// generating a perfect maze.
-pub fn binary_tree<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>)
+pub fn binary_tree<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, CellT, Data, Iters>)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let mut rng = rand::weak_rng();
     let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng),
@@ -66,9 +68,11 @@ pub fn binary_tree<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>)
 /// if run direction does not match the order the direction/order we visit the cells in.
 /// So, if we visit the cells west to east, then the wall carving run direction needs to be east.
 /// The run closing out passage carving direction does not matter.
-pub fn sidewinder<GridIndexType>(grid: &mut Grid<GridIndexType, SquareCell>) // todo extend to other grid cell types?
-    where GridIndexType: IndexType
-          // CellT: Cell
+pub fn sidewinder<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, SquareCell, Data, Iters>) // todo extend to other grid cell types?
+    where GridIndexType: IndexType,
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let mut rng = rand::weak_rng();
 
@@ -120,10 +124,12 @@ pub fn sidewinder<GridIndexType>(grid: &mut Grid<GridIndexType, SquareCell>) // 
 ///
 /// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
 ///       and causing the algorithm to run forever.
-pub fn aldous_broder<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
+pub fn aldous_broder<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, CellT, Data, Iters>,
                                                 mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(&grid, mask);
@@ -177,9 +183,11 @@ pub fn aldous_broder<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>
 
 /// Todo: handle masks that have walled off unreachable areas, making some unmasked cells unvisitable
 ///       and causing the algorithm to run forever.
-pub fn wilson<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>, mask: Option<&BinaryMask2D>)
+pub fn wilson<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, CellT, Data, Iters>, mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let unmasked_count = unmasked_cells_count(&grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
@@ -289,10 +297,12 @@ pub fn wilson<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>, mask:
 /// Memory efficient - little beyond the grid to maintain.
 /// Compute challenged - visits every cells 2+ times, once in the walk and again in hunt phase.
 /// Executing the hunt phase many times can visit a cell many times.
-pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
+pub fn hunt_and_kill<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, CellT, Data, Iters>,
                                     mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let unmasked_count = unmasked_cells_count(&grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
@@ -312,7 +322,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>
     let mut visited_count = 0;
 
     let is_any_neighbour_visited =
-        |cell, visited_set: &BitSet, grid: &Grid<GridIndexType, CellT>| -> bool {
+        |cell, visited_set: &BitSet, grid: &Grid<GridIndexType, CellT, Data, Iters>| -> bool {
             grid.neighbours(cell)
                 .iter()
                 .any(|c| is_cell_in_visited_set(*c, &visited_set, &grid))
@@ -320,7 +330,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>
 
     let visited_neighbours = |cell: CellT::Coord,
                               visited_set: &BitSet,
-                              grid: &Grid<GridIndexType, CellT>|
+                              grid: &Grid<GridIndexType, CellT, Data, Iters>|
                               -> Option<CellT::CoordinateSmallVec> {
         let vn: CellT::CoordinateSmallVec = grid.neighbours(cell)
             .iter()
@@ -336,7 +346,7 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>
 
     let are_all_neighbours_visited_or_masked = |cell,
                                                 visited_set: &BitSet,
-                                                grid: &Grid<GridIndexType, CellT>,
+                                                grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                                 mask: Option<&BinaryMask2D>|
                                                 -> bool {
         if let Some(m) = mask {
@@ -417,10 +427,12 @@ pub fn hunt_and_kill<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>
 /// Generates a maze with lots of "river"/meandering - that is long runs before you encounter a dead end.
 /// Compute efficient - visits each cell exactly twice
 /// Memory challenged - the search stack can get very deep, up to grid size deep.
-pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut Grid<GridIndexType, CellT>,
+pub fn recursive_backtracker<GridIndexType, CellT, Data, Iters>(grid: &mut Grid<GridIndexType, CellT, Data, Iters>,
                                             mask: Option<&BinaryMask2D>)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let mut rng = rand::weak_rng();
     let cells_count = grid.size();
@@ -438,7 +450,7 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut Grid<GridIndexType
 
     let unvisited_neighbours = |cell: CellT::Coord,
                                 visited_set: &BitSet,
-                                grid: &Grid<GridIndexType, CellT>|
+                                grid: &Grid<GridIndexType, CellT, Data, Iters>|
                                 -> Option<CellT::CoordinateSmallVec> {
 
         let vn: CellT::CoordinateSmallVec = if let Some(m) = mask {
@@ -491,23 +503,27 @@ pub fn recursive_backtracker<GridIndexType, CellT>(grid: &mut Grid<GridIndexType
 }
 
 #[inline]
-fn random_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
-                                      grid: &Grid<GridIndexType, CellT>,
+fn random_neighbour<GridIndexType, CellT, Data, Iters, R>(cell: CellT::Coord,
+                                      grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                       mut rng: &mut R)
                                       -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
     grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng))
 }
 
-fn random_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
+fn random_cell<GridIndexType, CellT, Data, Iters, R>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                         mask_with_unmasked_count: Option<(&BinaryMask2D, usize)>,
                                         mut rng: &mut R)
                                         -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
     if let Some(mask_and_count) = mask_with_unmasked_count {
@@ -518,32 +534,38 @@ fn random_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
 }
 
 #[inline]
-fn bit_index<GridIndexType, CellT>(cell: CellT::Coord, grid: &Grid<GridIndexType, CellT>) -> usize
+fn bit_index<GridIndexType, CellT, Data, Iters>(cell: CellT::Coord, grid: &Grid<GridIndexType, CellT, Data, Iters>) -> usize
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     grid.grid_coordinate_to_index(cell)
         .expect("bit_index impossible: invalid cell")
 }
 
 #[inline]
-fn is_cell_in_visited_set<GridIndexType, CellT>(cell: CellT::Coord,
+fn is_cell_in_visited_set<GridIndexType, CellT, Data, Iters>(cell: CellT::Coord,
                                          visited_set: &BitSet,
-                                         grid: &Grid<GridIndexType, CellT>)
+                                         grid: &Grid<GridIndexType, CellT, Data, Iters>)
                                          -> bool
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     visited_set.contains(bit_index(cell, &grid))
 }
 
-fn visit_cell<GridIndexType, CellT>(cell: CellT::Coord,
+fn visit_cell<GridIndexType, CellT, Data, Iters>(cell: CellT::Coord,
                              visited_set: &mut BitSet,
                              visited_count: Option<&mut usize>,
-                             grid: &Grid<GridIndexType, CellT>)
+                             grid: &Grid<GridIndexType, CellT, Data, Iters>)
                              -> bool
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let is_previously_unvisited = visited_set.insert(bit_index(cell, &grid));
     if let Some(count) = visited_count {
@@ -559,13 +581,15 @@ fn visit_cell<GridIndexType, CellT>(cell: CellT::Coord,
     }
 }
 
-fn undo_cell_visit<GridIndexType, CellT>(cell: CellT::Coord,
+fn undo_cell_visit<GridIndexType, CellT, Data, Iters>(cell: CellT::Coord,
                                   visited_set: &mut BitSet,
                                   visited_count: Option<&mut usize>,
-                                  grid: &Grid<GridIndexType, CellT>)
+                                  grid: &Grid<GridIndexType, CellT, Data, Iters>)
                                   -> bool
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     let index = bit_index(cell, &grid);
     let was_present = visited_set.remove(index);
@@ -580,12 +604,14 @@ fn undo_cell_visit<GridIndexType, CellT>(cell: CellT::Coord,
     was_present
 }
 
-fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
+fn random_unvisited_cell<GridIndexType, CellT, Data, Iters, R>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                                    visited_set_with_count: (&BitSet, usize),
                                                    mut rng: &mut R)
                                                    -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
     let cells_count = grid.size();
@@ -607,12 +633,14 @@ fn random_unvisited_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, Cel
     }
 }
 
-fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
+fn random_unmasked_cell<GridIndexType, CellT, Data, Iters, R>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                           mask_with_unmasked_count: (&BinaryMask2D, usize),
                                           mut rng: &mut R)
                                           -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
     let (mask, unmasked_cells) = mask_with_unmasked_count;
@@ -637,7 +665,7 @@ fn random_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, Cell
     }
 }
 
-fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndexType, CellT>,
+fn random_unvisited_unmasked_cell<GridIndexType, CellT, Data, Iters, R>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                                     visited_set_with_count: Option<(&BitSet,
                                                                                     usize)>,
                                                     mask_with_unmasked_count: Option<(&BinaryMask2D,
@@ -646,6 +674,8 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndex
                                                     -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
     match (visited_set_with_count, mask_with_unmasked_count) {
@@ -684,13 +714,15 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, R>(grid: &Grid<GridIndex
     }
 }
 
-fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
-                                                      grid: &Grid<GridIndexType, CellT>,
+fn random_unmasked_neighbour<GridIndexType, CellT, Data, Iters, R>(cell: CellT::Coord,
+                                                      grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                                       mask: &BinaryMask2D,
                                                       mut rng: &mut R)
                                                        -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>,
           R: Rng
 {
 
@@ -711,11 +743,13 @@ fn random_unmasked_neighbour<GridIndexType, CellT, R>(cell: CellT::Coord,
     }
 }
 
-fn unmasked_cells_count<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>,
+fn unmasked_cells_count<GridIndexType, CellT, Data, Iters>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
                                               mask: Option<&BinaryMask2D>)
                                        -> usize
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Data: GridData<CellT>,
+          Iters: GridIterators<CellT, Data>
 {
     if let Some(m) = mask {
         m.count_unmasked_within_dimensions(Width(grid.row_length().0), Height(grid.column_length().0))

@@ -293,7 +293,7 @@ impl Cell for PolarCell {
 // - additional data required for rowLengths
 // - cells count needs deciding before creating the graph and adding nodes.
 // - `size` = (rows * columns) must be customised
-// - `random_cell` assumes a fixed row*col size, but the dimension vary.
+// - `random_cell` assumes a fixed row*col size, but the dimensions vary.
 // - `grid_coordinate_to_index` assumes a fixed row*col size
 // - `CellIter` assumes a fixed row*col size
 
@@ -303,3 +303,55 @@ impl Cell for PolarCell {
 //    dynamic trait indirection via pointer probably not too bad overhead,
 //    at least in terms of data locality as most data is in the graph. Other heap allocated data
 //    would be close together and small.
+
+// trait GridData<CellT: Cell>  {
+//     /// The length of a particular row
+//     fn rowLength(RowIndex rowIndex) -> Option<RowLength>;
+//     fn size() -> usize;
+//     fn rows(&self) -> RowsCount;
+//     fn row_length(&self) -> RowLength;
+//     fn columns(&self) -> ColumnsCount;
+//     fn column_length(&self) -> ColumnLength;
+
+//     fn grid_coordinate_to_index(coord: CellT::Coord) -> Option<usize>; /// ???
+//     fn random_cell<R: Rng>(&self, rng: &mut R) -> CellT::Coord;
+
+//     fn graphSize(&self) -> (usize, usize); // (node hint, edges hint)
+
+//     //     let cells_count = self.size();
+//     //     let nodes_hint = _;
+//     //     let edges_hint = _;
+//     // }
+
+//     // We need a GridData instance before we can create the Grid instance
+//     //
+// }
+
+// struct Grid {
+
+//     // Cell trait needs to take an Option<&GridData>
+//     // offset_coordinate
+//     // offset_directions
+
+//     fn new(gd: GridData) {
+//         ...
+//     }
+// }
+
+// trait GridIterators<CellT: Cell, GridDimensions: GridData> {
+
+//     type CellIter: Iterator<Item=CellT::Coord>;
+//     type BatchIter: Iterator<Item=Vec<CellT::Coord>>;
+//     fn iter(&GridDimensions) -> CellIter;
+//     fn iter_row(&GridDimensions) -> BatchIter;
+//     fn iter_column(&GridDimensions) -> BatchIter;
+// }
+
+
+// - traits need not contain data, but may have to be PhantomData if that is the case.
+// Grid
+//     GridIterators
+//     GridData
+
+// https://www.youtube.com/watch?v=jGNNazG8yyk
+

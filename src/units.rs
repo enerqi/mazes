@@ -17,3 +17,8 @@ pub struct ColumnIndex(pub usize);
 pub struct Width(pub usize);
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Height(pub usize);
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct NodesCount(pub usize);
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct EdgesCount(pub usize);
