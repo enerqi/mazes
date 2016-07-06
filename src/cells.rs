@@ -5,14 +5,15 @@ use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
 
-use rand::Rng;
+use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
+use gridTraits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
 use units::{RowLength, RowIndex, ColumnLength, ColumnIndex};
 
 pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
 
-    fn from_row_major_index(index: usize, row_size: RowLength, column_size: ColumnLength) -> Self;
+    fn from_row_major_index(index: usize, data: &GridDimensions) -> Self;
     fn from_row_column_indices(col_index: ColumnIndex, row_index: RowIndex) -> Self;
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
@@ -38,9 +39,9 @@ pub trait Cell {
     /// Returns None if the Coordinate is not representable.
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
 
-    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction;
-    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction;
-    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction;
+    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction;
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction;
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction;
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
@@ -104,7 +105,7 @@ impl Cell for SquareCell {
         }
     }
 
-    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction {
         const DIRS_COUNT: usize = 4;
         const DIRS: [CompassPrimary; DIRS_COUNT] =
             [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
@@ -112,14 +113,14 @@ impl Cell for SquareCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction {
         if rng.gen() {
             CompassPrimary::North
         } else {
             CompassPrimary::South
         }
     }
-    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction {
         if rng.gen() {
             CompassPrimary::East
         } else {
@@ -137,8 +138,8 @@ impl Cartesian2DCoordinate {
 impl Coordinate for Cartesian2DCoordinate {
 
     #[inline]
-    fn from_row_major_index(index: usize, row_size: RowLength, _: ColumnLength) -> Cartesian2DCoordinate {
-        let RowLength(width) = row_size;
+    fn from_row_major_index(index: usize, data: &GridDimensions) -> Cartesian2DCoordinate {
+        let RowLength(width) = data.row_length(None).expect("invalid row index"); // todo fix up for Polar mazes
         let x = index % width;
         let y = index / width;
 
@@ -212,7 +213,7 @@ impl Cell for PolarCell {
         None
     }
 
-    fn rand_direction<R: Rng>(rng: &mut R) -> Self::Direction { // what about multiple outward options? outward is not a single direction
+    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction { // what about multiple outward options? outward is not a single direction
         const DIRS_COUNT: usize = 4;
         const DIRS: [ClockDirection; DIRS_COUNT] =
             [ClockDirection::Clockwise, ClockDirection::CounterClockwise, ClockDirection::Inward, ClockDirection::Outward];
@@ -220,7 +221,7 @@ impl Cell for PolarCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Clockwise
         } else {
@@ -228,7 +229,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_roughly_horizontal_direction<R: Rng>(rng: &mut R) -> Self::Direction {
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Inward
         } else {
@@ -314,7 +315,7 @@ impl Cell for PolarCell {
 //     fn column_length(&self) -> ColumnLength;
 
 //     fn grid_coordinate_to_index(coord: CellT::Coord) -> Option<usize>; /// ???
-//     fn random_cell<R: Rng>(&self, rng: &mut R) -> CellT::Coord;
+//     fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord;
 
 //     fn graphSize(&self) -> (usize, usize); // (node hint, edges hint)
 

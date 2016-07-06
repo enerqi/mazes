@@ -38,7 +38,8 @@ use smallvec::SmallVec;
 
 use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
-use grids::{GridDisplay, GridData, GridIterators, Grid, IndexType};
+use grids::{Grid, IndexType};
+use gridTraits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
 use units::{RowIndex, ColumnIndex};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};
@@ -67,9 +68,8 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
           MaxDistanceT: MaxDistance
 {
     pub fn new<GridIndexType: IndexType,
-               CellT: Cell,
-               Data: GridData<CellT>,
-               Iters: GridIterators<CellT, Data>>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
+               Dimensions: GridDimensions, Positions: GridPositions<CellT>,
+               Iters: GridIterators<CellT, Dimensions>>(grid: &Grid<GridIndexType, CellT, Dimensions, Positions, Iters>,
                                                   start_coordinate: CellT::Coord)
                                          -> Option<Distances<CellT, MaxDistanceT>> {
 
@@ -237,11 +237,11 @@ impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
     }
 }
 
-pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Data, Iters>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
+pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Dimensions, Positions, Iters>(grid: &Grid<GridIndexType, CellT, Dimensions, Positions, Iters>,
                                                          distances_from_start: &Distances<CellT, MaxDistanceT>,
                                                          end_point: CellT::Coord) -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType, MaxDistanceT: MaxDistance,
-          CellT: Cell, Data: GridData<CellT>, Iters: GridIterators<CellT, Data>
+          CellT: Cell, Dimensions: GridDimensions, Positions: GridPositions<CellT>, Iters: GridIterators<CellT, Dimensions>
 {
 
     if let None = distances_from_start.distance_from_start_to(end_point) {
@@ -304,14 +304,15 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Data, Iters>(grid: &Gri
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
 /// If the mask creates disconnected subgraphs it may not be the longest path.
-pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Data, Iters>(grid: &Grid<GridIndexType, CellT, Data, Iters>,
+pub fn dijkstra_longest_path
+    <GridIndexType, MaxDistanceT, CellT, Dimensions, Positions, Iters>(grid: &Grid<GridIndexType, CellT, Dimensions, Positions, Iters>,
                                                           mask: Option<&BinaryMask2D>)
                                                           -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType,
           MaxDistanceT: MaxDistance,
           CellT: Cell,
-          Data: GridData<CellT>,
-          Iters: GridIterators<CellT, Data>
+          Dimensions: GridDimensions, Positions: GridPositions<CellT>,
+          Iters: GridIterators<CellT, Dimensions>
 {
     // Distances to everywhere from an arbitrary start coordinate
     let arbitrary_start_point = if let Some(m) = mask {
