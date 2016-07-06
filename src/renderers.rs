@@ -124,11 +124,9 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
 }
 
 
-pub fn render_square_grid<GridIndexType, Dimensions, Positions, Iters>(grid: &Grid<GridIndexType, SquareCell, Dimensions, Positions, Iters>,
+pub fn render_square_grid<GridIndexType>(grid: &Grid<GridIndexType, SquareCell>,
                                                       options: &RenderOptions)
-    where GridIndexType: IndexType,
-          Dimensions: GridDimensions, Positions: GridPositions<SquareCell>,
-          Iters: GridIterators<SquareCell, Dimensions>
+    where GridIndexType: IndexType
 {
     let sdl_setup = sdl::init();
 
@@ -186,13 +184,11 @@ pub fn render_square_grid<GridIndexType, Dimensions, Positions, Iters>(grid: &Gr
     }
 }
 
-fn draw_maze<GridIndexType, Dimensions, Positions, Iters>(r: &mut Renderer,
-                                   grid: &Grid<GridIndexType, SquareCell, Dimensions, Positions, Iters>,
+fn draw_maze<GridIndexType>(r: &mut Renderer,
+                                   grid: &Grid<GridIndexType, SquareCell>,
                                    options: &RenderOptions,
                                    sdl_setup: &SdlSetup)
-    where GridIndexType: IndexType,
-          Dimensions: GridDimensions, Positions: GridPositions<SquareCell>,
-          Iters: GridIterators<SquareCell, Dimensions>
+    where GridIndexType: IndexType
 {
     // clear the texture background to white
     r.set_draw_color(WHITE);
@@ -446,13 +442,11 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     }
 }
 
-fn maze_image_dimensions<GridIndexType, CellT, Dimensions, Positions, Iters>(grid: &Grid<GridIndexType, CellT, Dimensions, Positions, Iters>,
+fn maze_image_dimensions<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>,
                                         options: &RenderOptions)
                                         -> (u32, u32)
     where GridIndexType: IndexType,
-          CellT: Cell,
-          Dimensions: GridDimensions, Positions: GridPositions<CellT>,
-          Iters: GridIterators<CellT, Dimensions>
+          CellT: Cell
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels as u32 * grid.row_length().0 as u32;
@@ -564,10 +558,8 @@ fn centre_rectangle(rect_width: u32,
 }
 
 // Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, HexCell>
-impl<GridIndexType, Dimensions, Positions, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Dimensions, Positions, Iters>
-    where GridIndexType: IndexType,
-          Dimensions: GridDimensions, Positions: GridPositions<SquareCell>,
-          Iters: GridIterators<SquareCell, Dimensions>
+impl<GridIndexType> fmt::Display for Grid<GridIndexType, SquareCell>
+    where GridIndexType: IndexType
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         const WALL_L: &'static str = "╴";

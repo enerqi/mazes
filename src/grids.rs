@@ -14,19 +14,16 @@ use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
             ColumnIndex, NodesCount, EdgesCount};
 
 
-pub struct Grid<GridIndexType: IndexType,
-                CellT: Cell,
-                Dimensions: GridDimensions,
-                Positions: GridPositions<CellT>,
-                Iters: GridIterators<CellT, Dimensions>> {
-    dimensions: Dimensions,
-    positions: Positions,
+pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
+
     graph: Graph<(), (), Undirected, GridIndexType>,
-    // rows: RowsCount,
-    // columns: ColumnsCount,
-    iterators: Iters,
+    dimensions: Box<GridDimensions>,
+    positions: Box<GridPositions<CellT>>,
+    iterators: Iters, // cannot be trait without boxing the CellIter/BatchIter types - type CellIter: Box<Iterator...>
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>,
+    // rows: RowsCount,
+    // columns: ColumnsCount,
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -35,22 +32,16 @@ pub enum CellLinkError {
     SelfLink,
 }
 
-impl<GridIndexType: IndexType,
-     CellT: Cell,
-     Dimensions: GridDimensions,
-     Positions: GridPositions<CellT>,
-     Iters: GridIterators<CellT, Dimensions>> fmt::Debug for Grid<GridIndexType, CellT, Dimensions, Positions, Iters> {
+impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::Debug for Grid<GridIndexType, CellT, Iters> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Grid :: graph: {:?}, rows: {:?}, columns: {:?}",
                self.graph, self.data.rows(), self.data.columns())
     }
 }
 
-impl<GridIndexType: IndexType,
-     CellT: Cell,
-     Dimensions: GridDimensions, Positions: GridPositions<CellT>,
-     Iters: GridIterators<CellT, Dimensions>> Grid<GridIndexType, CellT, Dimensions, Positions, Iters> {
-    pub fn new(row_length: RowLength, column_length: ColumnLength) -> Grid<GridIndexType, CellT, Dimensions, Positions, Iters> {
+impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters: GridIterators<CellT>> {
+
+    pub fn new(row_length: RowLength, column_length: ColumnLength) -> Grid<GridIndexType, CellT, Iters> {
 
         let cells_count = row_length.0 * column_length.0;
         let nodes_count_hint = cells_count;
@@ -85,12 +76,12 @@ impl<GridIndexType: IndexType,
 
     #[inline(always)]
     pub fn dimensions(&self) -> &GridDimensions {
-        &self.dimensions
+        self.dimensions
     }
 
     #[inline(always)]
     pub fn positions(&self) -> &GridPositions<CellT> {
-        &self.positions
+        self.positions
     }
 
     #[inline(always)]
@@ -260,7 +251,7 @@ impl<GridIndexType: IndexType,
         // }
     }
 
-    pub fn iter(&self) -> Iters::CellIter {
+    pub fn iter(&self) -> GridIterators::CellIter {
         self.iterators.iter(self.data)
         // CellIter {
         //     current_cell_number: 0,
@@ -271,7 +262,7 @@ impl<GridIndexType: IndexType,
         // }
     }
 
-    pub fn iter_row(&self) -> Iters::BatchIter {
+    pub fn iter_row(&self) -> GridIterators::BatchIter {
         self.iterators.iter_row(self.data)
         // BatchIter {
         //     iter_type: BatchIterType::Row,
@@ -285,7 +276,7 @@ impl<GridIndexType: IndexType,
         // }
     }
 
-    pub fn iter_column(&self) -> Iters::BatchIter {
+    pub fn iter_column(&self) -> GridIterators::BatchIter {
         self.iterators.iter_column(self.data)
         // BatchIter {
         //     iter_type: BatchIterType::Column,

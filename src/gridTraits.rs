@@ -15,15 +15,15 @@ pub trait GridDimensions {
 
 pub trait GridPositions<CellT: Cell> {
     fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize>;
-    fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord; // consider &Rng simple trait object. Note <R : Rng> meant GridPositions could not be made a trait object   
+    fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord; // consider &Rng simple trait object. Note <R : Rng> meant GridPositions could not be made a trait object
 }
 
-pub trait GridIterators<CellT: Cell, Dimensions: GridDimensions> {
+pub trait GridIterators<CellT: Cell> {
     type CellIter: Iterator<Item=CellT::Coord>;
     type BatchIter: Iterator<Item=Vec<CellT::Coord>>; // consider &[CellT::Coord] instead
-    fn iter(&self, data: &Dimensions) -> Self::CellIter;
-    fn iter_row(&self, data: &Dimensions) -> Self::BatchIter;
-    fn iter_column(&self, data: &Dimensions) -> Self::BatchIter;
+    fn iter(&self, data: &GridDimensions) -> Self::CellIter;
+    fn iter_row(&self, data: &GridDimensions) -> Self::BatchIter;
+    fn iter_column(&self, data: &GridDimensions) -> Self::BatchIter;
 }
 
 pub trait GridDisplay<CellT: Cell> {
