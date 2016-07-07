@@ -39,7 +39,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
     }
 }
 
-impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters: GridIterators<CellT>> {
+impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
 
     pub fn new(row_length: RowLength, column_length: ColumnLength) -> Grid<GridIndexType, CellT, Iters> {
 

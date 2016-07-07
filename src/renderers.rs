@@ -124,9 +124,10 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
 }
 
 
-pub fn render_square_grid<GridIndexType>(grid: &Grid<GridIndexType, SquareCell>,
-                                                      options: &RenderOptions)
-    where GridIndexType: IndexType
+pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, SquareCell, Iters>,
+                                                options: &RenderOptions)
+    where GridIndexType: IndexType,
+          Iters: GridIterators<SquareCell>
 {
     let sdl_setup = sdl::init();
 
@@ -184,11 +185,12 @@ pub fn render_square_grid<GridIndexType>(grid: &Grid<GridIndexType, SquareCell>,
     }
 }
 
-fn draw_maze<GridIndexType>(r: &mut Renderer,
-                                   grid: &Grid<GridIndexType, SquareCell>,
+fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
+                                   grid: &Grid<GridIndexType, SquareCell, Iters>,
                                    options: &RenderOptions,
                                    sdl_setup: &SdlSetup)
-    where GridIndexType: IndexType
+    where GridIndexType: IndexType,
+          Iters: GridIterators<SquareCell>
 {
     // clear the texture background to white
     r.set_draw_color(WHITE);
@@ -442,11 +444,12 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
     }
 }
 
-fn maze_image_dimensions<GridIndexType, CellT>(grid: &Grid<GridIndexType, CellT>,
+fn maze_image_dimensions<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                         options: &RenderOptions)
                                         -> (u32, u32)
     where GridIndexType: IndexType,
-          CellT: Cell
+          CellT: Cell,
+          Iters: GridIterators<CellT>
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
     let img_width = cell_size_pixels as u32 * grid.row_length().0 as u32;
@@ -558,8 +561,9 @@ fn centre_rectangle(rect_width: u32,
 }
 
 // Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, HexCell>
-impl<GridIndexType> fmt::Display for Grid<GridIndexType, SquareCell>
-    where GridIndexType: IndexType
+impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iters>
+    where GridIndexType: IndexType,
+          Iters: GridIterators<SquareCell>
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         const WALL_L: &'static str = "╴";
