@@ -35,7 +35,7 @@ pub enum CellLinkError {
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::Debug for Grid<GridIndexType, CellT, Iters> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Grid :: graph: {:?}, rows: {:?}, columns: {:?}",
-               self.graph, self.data.rows(), self.data.columns())
+               self.graph, self.row_length(), self.column_length())
     }
 }
 
@@ -76,12 +76,12 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     #[inline(always)]
     pub fn dimensions(&self) -> &GridDimensions {
-        self.dimensions
+        self.dimensions.as_ref()
     }
 
     #[inline(always)]
     pub fn positions(&self) -> &GridPositions<CellT> {
-        self.positions
+        self.positions.as_ref()
     }
 
     #[inline(always)]
@@ -167,7 +167,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                 .map(|index_edge_data_pair| {
                     let grid_node_index = index_edge_data_pair.0;
                     CellT::Coord::from_row_major_index(grid_node_index.index(),
-                                                       self.data())
+                                                       self.dimensions())
                 })
                 .collect();
             Some(linked_cells)
@@ -251,8 +251,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         // }
     }
 
-    pub fn iter(&self) -> GridIterators::CellIter {
-        self.iterators.iter(self.data)
+    pub fn iter(&self) -> Iters::CellIter {
+        self.iterators.iter(self.dimensions.as_ref())
         // CellIter {
         //     current_cell_number: 0,
         //     row_length: self.row_length(),
@@ -262,8 +262,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         // }
     }
 
-    pub fn iter_row(&self) -> GridIterators::BatchIter {
-        self.iterators.iter_row(self.data)
+    pub fn iter_row(&self) -> Iters::BatchIter {
+        self.iterators.iter_row(self.dimensions.as_ref())
         // BatchIter {
         //     iter_type: BatchIterType::Row,
         //     iter_initial_length: self.rows.0,
@@ -276,8 +276,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         // }
     }
 
-    pub fn iter_column(&self) -> GridIterators::BatchIter {
-        self.iterators.iter_column(self.data)
+    pub fn iter_column(&self) -> Iters::BatchIter {
+        self.iterators.iter_column(self.dimensions.as_ref())
         // BatchIter {
         //     iter_type: BatchIterType::Column,
         //     iter_initial_length: self.columns.0,
@@ -294,7 +294,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     #[inline]
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
         let row_index = coord.y as usize;
-        let RowLength(width) = self.row_length(Some(RowIndex(row_index))).expect("RowIndex invalid");
+        let RowLength(width) = self.row_length() //.row_length(Some(RowIndex(row_index)))
+                                   .expect("RowIndex invalid");
         let ColumnLength(height) = self.column_length();
         (coord.x as usize) < width && (coord.y as usize) < height
     }
@@ -316,7 +317,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 }
 
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct CellIter<'d, CellT: Cell> {
     current_cell_number: usize,
     dimensions: &'d GridDimensions,
@@ -331,7 +332,7 @@ impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
             let coord = Self::Item::from_row_major_index(self.current_cell_number,
-                                                         self.data);
+                                                         self.dimensions);
             self.current_cell_number += 1;
             Some(coord)
         } else {

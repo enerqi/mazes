@@ -207,7 +207,7 @@ pub fn wilson<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType, CellT,
 
     // Need to keep the current walk's path, preferably with a quick way to check if a new cell forms a loop with the path.
     // The path is a sequence, i.e. Vec/Stack, but we want a quick way to look up if any particular coordinate is in that path.
-    let RowLength(row_len) = grid.row_length();
+    let RowLength(row_len) = grid.row_length().expect("invalid row length");
     let ColumnLength(col_len) = grid.column_length();
     let mut cells_on_random_walk: FnvHashSet<CellT::Coord> =
         utils::fnv_hashset(cmp::max(row_len, col_len) * 4);
@@ -723,7 +723,8 @@ fn unmasked_cells_count<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, 
           Iters: GridIterators<CellT>
 {
     if let Some(m) = mask {
-        m.count_unmasked_within_dimensions(Width(grid.row_length().0), Height(grid.column_length().0))
+        m.count_unmasked_within_dimensions(Width(grid.row_length().expect("invalid rowlength").0),
+                                           Height(grid.column_length().0))
     } else {
         grid.size()
     }
