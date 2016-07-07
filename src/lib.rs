@@ -35,7 +35,7 @@ extern crate quickcheck;
 pub mod cells;
 pub mod generators;
 pub mod grids;
-pub mod gridTraits;
+pub mod grid_traits;
 pub mod masks;
 pub mod pathing;
 pub mod renderers;

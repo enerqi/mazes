@@ -9,9 +9,9 @@ pub use petgraph::graph::IndexType;
 use rand::{Rng, XorShiftRng};
 
 use cells::{Cell, Coordinate, Cartesian2DCoordinate};
-use gridTraits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
+use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex, NodesCount, EdgesCount};
+            ColumnIndex};
 
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {

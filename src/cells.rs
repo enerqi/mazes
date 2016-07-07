@@ -8,8 +8,8 @@ use std::ops::Deref;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
-use gridTraits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
-use units::{RowLength, RowIndex, ColumnLength, ColumnIndex};
+use grid_traits::GridDimensions;
+use units::{RowLength, RowIndex, ColumnIndex};
 
 pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
 
