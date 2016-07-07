@@ -6,7 +6,7 @@ use std::rc::Rc;
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
 pub use petgraph::graph::IndexType;
-use rand::{Rng, XorShiftRng};
+use rand::XorShiftRng;
 
 use cells::{Cell, Coordinate, Cartesian2DCoordinate};
 use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridPositions};

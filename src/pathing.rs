@@ -38,7 +38,7 @@ use smallvec::SmallVec;
 
 use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
-use grids::{Grid, IndexType};
+use grid::{Grid, IndexType};
 use grid_traits::{GridIterators, GridDisplay, GridDimensions};
 use units::{RowIndex, ColumnIndex};
 use utils;

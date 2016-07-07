@@ -7,7 +7,7 @@ use smallvec::SmallVec;
 
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
 use masks::BinaryMask2D;
-use grids::{IndexType, Grid};
+use grid::{IndexType, Grid};
 use grid_traits::{GridIterators, GridDimensions, GridPositions};
 use units::{RowLength, ColumnLength, Width, Height};
 use utils;
