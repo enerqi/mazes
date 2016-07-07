@@ -17,7 +17,7 @@ use sdl::SdlSetup;
 
 use cells::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
 use grids::{Grid, IndexType};
-use gridTraits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
+use gridTraits::{GridIterators, GridDisplay, GridDimensions};
 use pathing;
 use units::{RowsCount, ColumnsCount};
 

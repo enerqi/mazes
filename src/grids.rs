@@ -22,8 +22,6 @@ pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<Cell
     iterators: Iters, // cannot be trait without boxing the CellIter/BatchIter types - type CellIter: Box<Iterator...>
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>,
-    // rows: RowsCount,
-    // columns: ColumnsCount,
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -41,18 +39,21 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
 
-    pub fn new(row_length: RowLength, column_length: ColumnLength) -> Grid<GridIndexType, CellT, Iters> {
+    pub fn new(dimensions: Box<GridDimensions>,
+               positions: Box<GridPositions<CellT>>,
+               iterators: Iters) -> Grid<GridIndexType, CellT, Iters> {
 
-        let cells_count = row_length.0 * column_length.0;
+        let row_len = dimensions.row_length(None).unwrap();
+        let column_len = dimensions.column_length(None);
+        let cells_count = row_len.0 * column_len.0;
         let nodes_count_hint = cells_count;
-        let edges_count_hint = 4 * cells_count - 4 * cmp::max(row_length.0, column_length.0); // Probably overkill, but don't want any capacity panics
+        let edges_count_hint = 4 * cells_count - 4 * cmp::max(row_len.0, column_len.0); // Probably overkill, but don't want any capacity panics
 
         let mut grid = Grid {
-            //data:
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
-            //iterators:
-            // rows: RowsCount(column_length.0),
-            // columns: ColumnsCount(row_length.0),
+            dimensions: dimensions,
+            positions: positions,
+            iterators: iterators,
             grid_display: None,
             cell_type: PhantomData
         };
@@ -111,7 +112,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         //ColumnLength(self.rows.0)
     }
 
-    pub fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord {
+    pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
         self.positions.random_cell(&mut rng)
         // let index = rng.gen::<usize>() % self.size();
         // CellT::Coord::from_row_major_index(index, self.row_length(), self.column_length())
@@ -251,49 +252,25 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         // }
     }
 
+    #[inline(always)]
     pub fn iter(&self) -> Iters::CellIter {
         self.iterators.iter(self.dimensions.as_ref())
-        // CellIter {
-        //     current_cell_number: 0,
-        //     row_length: self.row_length(),
-        //     col_length: self.column_length(),
-        //     cells_count: self.size(),
-        //     cell_type: PhantomData,
-        // }
     }
 
+    #[inline(always)]
     pub fn iter_row(&self) -> Iters::BatchIter {
         self.iterators.iter_row(self.dimensions.as_ref())
-        // BatchIter {
-        //     iter_type: BatchIterType::Row,
-        //     iter_initial_length: self.rows.0,
-        //     current_index: 0,
-        //     row_length: self.row_length(),
-        //     rows_size: self.rows,
-        //     col_length: self.column_length(),
-        //     cols_size: self.columns,
-        //     cell_type: PhantomData,
-        // }
     }
 
+    #[inline(always)]
     pub fn iter_column(&self) -> Iters::BatchIter {
         self.iterators.iter_column(self.dimensions.as_ref())
-        // BatchIter {
-        //     iter_type: BatchIterType::Column,
-        //     iter_initial_length: self.columns.0,
-        //     current_index: 0,
-        //     row_length: self.row_length(),
-        //     rows_size: self.rows,
-        //     col_length: self.column_length(),
-        //     cols_size: self.columns,
-        //     cell_type: PhantomData,
-        // }
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     #[inline]
     pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
-        let row_index = coord.y as usize;
+        //let row_index = coord.y as usize;
         let RowLength(width) = self.row_length() //.row_length(Some(RowIndex(row_index)))
                                    .expect("RowIndex invalid");
         let ColumnLength(height) = self.column_length();
@@ -326,6 +303,13 @@ pub struct CellIter<'d, CellT: Cell> {
     cells_count: usize,
     cell_type: PhantomData<CellT>
 }
+impl<'d, CellT: Cell> fmt::Debug for CellIter<'d, CellT> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "CellIter :: current_cell_number: {:?}, cells_count: {:?}",
+               self.current_cell_number, self.cells_count)
+    }
+}
+
 impl<'d, CellT: Cell> ExactSizeIterator for CellIter<'d, CellT> { } // default impl using size_hint()
 impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
     type Item = CellT::Coord;

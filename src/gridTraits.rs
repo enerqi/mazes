@@ -1,6 +1,6 @@
 use rand::XorShiftRng;
 
-use cells::{Cell, Coordinate, Cartesian2DCoordinate};
+use cells::Cell;
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
             ColumnIndex, NodesCount, EdgesCount};
 
