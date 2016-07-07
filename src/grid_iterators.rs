@@ -5,13 +5,15 @@ use cells::Cell;
 use grid_traits::{GridDimensions, GridIterators};
 
 
-pub struct RectGridIterators;
-impl<'a, CellT: Cell> GridIterators<CellT> for RectGridIterators {
+pub struct RectGridIterators<'a> {
+    cell_iter_dimension: PhantomData<&'a GridDimensions>
+}
+impl<'a, CellT: Cell> GridIterators<CellT> for RectGridIterators<'a> {
     type CellIter = RectGridCellIter<'a, CellT>;
     type BatchIter = RectBatchIter;
 
-    fn iter(&self, dimensions: &GridDimensions) -> Self::CellIter {
-        RectGridCellIter {
+    fn iter(&self, dimensions: &'a GridDimensions) -> Self::CellIter {
+        RectGridCellIter::<CellT> {
             dimensions: dimensions,
             current_cell_number: 0,
             cells_count: dimensions.size().0,
