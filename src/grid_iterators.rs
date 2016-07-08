@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::fmt;
 
-use cells::Cell;
+use cells::{Cell, Coordinate};
 use grid_traits::{GridDimensions, GridIterators};
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
             ColumnIndex, NodesCount, EdgesCount};
@@ -13,7 +13,7 @@ impl<'a, CellT: Cell> GridIterators<CellT> for RectGridIterators<'a> {
     type CellIter = RectGridCellIter<'a, CellT>;
     type BatchIter = RectBatchIter<CellT>;
 
-    fn iter(&self, dimensions: &'a GridDimensions) -> Self::CellIter {
+    fn iter<'b:'a>(&self, dimensions: &'b GridDimensions) -> Self::CellIter {
         RectGridCellIter::<CellT> {
             dimensions: dimensions,
             current_cell_number: 0,
@@ -46,7 +46,7 @@ impl<'a, CellT: Cell> fmt::Debug for RectGridCellIter<'a, CellT> {
     }
 }
 
-impl<'a, CellT: Cell> ExactSizeIterator for RectGridCellIter<'a, CellT> { } // default impl using size_hint()
+//impl<'a, CellT: Cell> ExactSizeIterator for RectGridCellIter<'a, CellT> { } // default impl using size_hint()
 impl<'a, CellT: Cell> Iterator for RectGridCellIter<'a, CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
@@ -90,12 +90,13 @@ impl<CellT> RectBatchIter<CellT> {
         let cols_size = dimensions.columns();
         RectBatchIter {
             iter_type: BatchIterType::Row,
-            iter_initial_length: rows_size * cols_size,
+            iter_initial_length: rows_size.0 * cols_size.0,
             current_index: 0,
             row_length: dimensions.row_length(None).unwrap(),
             rows_size: rows_size,
             col_length: dimensions.column_length(None),
             cols_size: cols_size,
+            cell_type: PhantomData
         }
     }
 }
