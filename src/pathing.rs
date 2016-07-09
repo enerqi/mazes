@@ -39,7 +39,7 @@ use smallvec::SmallVec;
 use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
 use grid::{Grid, IndexType};
-use grid_traits::{GridIterators, GridDisplay, GridDimensions};
+use grid_traits::{GridIterators, GridDisplay};
 use units::{RowIndex, ColumnIndex};
 use utils;
 use utils::{FnvHashMap, FnvHashSet};

@@ -17,7 +17,7 @@ use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
 
     graph: Graph<(), (), Undirected, GridIndexType>,
-    dimensions: Box<GridDimensions>,
+    dimensions: Rc<GridDimensions>,
     positions: Box<GridPositions<CellT>>,
     iterators: Iters, // cannot be trait without boxing the CellIter/BatchIter types - type CellIter: Box<Iterator...>
     grid_display: Option<Rc<GridDisplay<CellT>>>,
@@ -39,7 +39,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
 
-    pub fn new(dimensions: Box<GridDimensions>,
+    pub fn new(dimensions: Rc<GridDimensions>,
                positions: Box<GridPositions<CellT>>,
                iterators: Iters) -> Grid<GridIndexType, CellT, Iters> {
 
@@ -51,7 +51,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
-            dimensions: dimensions,
+            dimensions: dimensions.clone(),
             positions: positions,
             iterators: iterators,
             grid_display: None,
@@ -254,17 +254,17 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     #[inline(always)]
     pub fn iter(&self) -> Iters::CellIter {
-        self.iterators.iter(self.dimensions.as_ref())
+        self.iterators.iter(self.dimensions.clone())
     }
 
     #[inline(always)]
     pub fn iter_row(&self) -> Iters::BatchIter {
-        self.iterators.iter_row(self.dimensions.as_ref())
+        self.iterators.iter_row(self.dimensions.clone())
     }
 
     #[inline(always)]
     pub fn iter_column(&self) -> Iters::BatchIter {
-        self.iterators.iter_column(self.dimensions.as_ref())
+        self.iterators.iter_column(self.dimensions.clone())
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions

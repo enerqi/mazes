@@ -1,8 +1,11 @@
+use std::rc::Rc;
+
 use rand::XorShiftRng;
 
 use cells::Cell;
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
             ColumnIndex, NodesCount, EdgesCount};
+
 
 pub trait GridDimensions {
     fn size(&self) -> NodesCount;
@@ -21,9 +24,9 @@ pub trait GridPositions<CellT: Cell> {
 pub trait GridIterators<CellT: Cell> {
     type CellIter: Iterator<Item=CellT::Coord>;
     type BatchIter: Iterator<Item=Vec<CellT::Coord>>; // consider &[CellT::Coord] instead
-    fn iter<'a>(&self, data: &'a GridDimensions) -> Self::CellIter;
-    fn iter_row(&self, data: &GridDimensions) -> Self::BatchIter;
-    fn iter_column(&self, data: &GridDimensions) -> Self::BatchIter;
+    fn iter(&self, data: Rc<GridDimensions>) -> Self::CellIter;
+    fn iter_row(&self, data: Rc<GridDimensions>) -> Self::BatchIter;
+    fn iter_column(&self, data: Rc<GridDimensions>) -> Self::BatchIter;
 }
 
 pub trait GridDisplay<CellT: Cell> {

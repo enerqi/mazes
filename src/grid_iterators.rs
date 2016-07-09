@@ -1,58 +1,59 @@
 use std::marker::PhantomData;
 use std::fmt;
+use std::rc::Rc;
 
 use cells::{Cell, Coordinate};
 use grid_traits::{GridDimensions, GridIterators};
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex, NodesCount, EdgesCount};
+            ColumnIndex};
 
-pub struct RectGridIterators<'a> {
-    cell_iter_dimension: PhantomData<&'a GridDimensions>
-}
-impl<'a, CellT: Cell> GridIterators<CellT> for RectGridIterators<'a> {
-    type CellIter = RectGridCellIter<'a, CellT>;
+#[derive(Debug, Copy, Clone)]
+pub struct RectGridIterators;
+
+impl<CellT: Cell> GridIterators<CellT> for RectGridIterators {
+    type CellIter = RectGridCellIter<CellT>;
     type BatchIter = RectBatchIter<CellT>;
 
-    fn iter<'b:'a>(&self, dimensions: &'b GridDimensions) -> Self::CellIter {
+    fn iter(&self, dimensions: Rc<GridDimensions>) -> Self::CellIter {
         RectGridCellIter::<CellT> {
-            dimensions: dimensions,
+            dimensions: dimensions.clone(),
             current_cell_number: 0,
             cells_count: dimensions.size().0,
             cell_type: PhantomData
         }
     }
 
-    fn iter_row(&self, dimensions: &GridDimensions) -> Self::BatchIter {
+    fn iter_row(&self, dimensions: Rc<GridDimensions>) -> Self::BatchIter {
         RectBatchIter::<CellT>::new(BatchIterType::Row, dimensions)
     }
 
-    fn iter_column(&self, dimensions: &GridDimensions) -> Self::BatchIter {
+    fn iter_column(&self, dimensions: Rc<GridDimensions>) -> Self::BatchIter {
         RectBatchIter::<CellT>::new(BatchIterType::Column, dimensions)
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct RectGridCellIter<'a, CellT: Cell> {
-    dimensions: &'a GridDimensions,
+#[derive(Clone)]
+pub struct RectGridCellIter<CellT: Cell> {
+    dimensions: Rc<GridDimensions>,
     current_cell_number: usize,
     cells_count: usize,
     cell_type: PhantomData<CellT>
 }
 
-impl<'a, CellT: Cell> fmt::Debug for RectGridCellIter<'a, CellT> {
+impl<CellT: Cell> fmt::Debug for RectGridCellIter<CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "CellIter :: current_cell_number: {:?}, cells_count: {:?}",
                self.current_cell_number, self.cells_count)
     }
 }
 
-//impl<'a, CellT: Cell> ExactSizeIterator for RectGridCellIter<'a, CellT> { } // default impl using size_hint()
-impl<'a, CellT: Cell> Iterator for RectGridCellIter<'a, CellT> {
+impl<CellT: Cell> ExactSizeIterator for RectGridCellIter<CellT> { } // default impl using size_hint()
+impl<CellT: Cell> Iterator for RectGridCellIter<CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
             let coord = Self::Item::from_row_major_index(self.current_cell_number,
-                                                         self.dimensions);
+                                                         self.dimensions.as_ref());
             self.current_cell_number += 1;
             Some(coord)
         } else {
@@ -73,6 +74,7 @@ enum BatchIterType {
     Column,
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct RectBatchIter<CellT> {
     iter_type: BatchIterType,
     iter_initial_length: usize,
@@ -85,11 +87,11 @@ pub struct RectBatchIter<CellT> {
 }
 
 impl<CellT> RectBatchIter<CellT> {
-    fn new(iter_type: BatchIterType, dimensions: &GridDimensions) -> RectBatchIter<CellT> {
+    fn new(iter_type: BatchIterType, dimensions: Rc<GridDimensions>) -> RectBatchIter<CellT> {
         let rows_size = dimensions.rows();
         let cols_size = dimensions.columns();
         RectBatchIter {
-            iter_type: BatchIterType::Row,
+            iter_type: iter_type,
             iter_initial_length: rows_size.0 * cols_size.0,
             current_index: 0,
             row_length: dimensions.row_length(None).unwrap(),
