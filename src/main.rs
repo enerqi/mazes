@@ -18,6 +18,7 @@ use docopt::Docopt;
 use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
 use mazes::grid::Grid;
 use mazes::grid_traits::{GridIterators, GridDisplay, GridDimensions};
+use mazes::grid_iterators::RectGridIterators;
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
 use mazes::renderers;
@@ -102,7 +103,9 @@ fn main() {
     let do_text_render = args.cmd_render &&
                          (args.cmd_text || (!any_render_option && grid_size < large_grid_cell_count));
 
-    let mut maze_grid = Grid::<u32, SquareCell>::new(units::RowLength(width), units::ColumnLength(height));
+                         //units::RowLength(width), units::ColumnLength(height)
+    let mut maze_grid = Grid::<u32, SquareCell, RectGridIterators>::new(
+        Rc::new());
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
@@ -166,7 +169,7 @@ fn main() {
     }
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell>,
+fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
                          maze_args: &MazeArgs,
                          mask: Option<&BinaryMask2D>) {
 
@@ -197,7 +200,7 @@ fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell>,
 /// Default to finding the start and end point of the longest path in the maze if required to show a path
 /// or asked to find the point furthest away from a start point
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
-fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell>,
+fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
                         maze_args: &MazeArgs,
                         longest_path: &[Cartesian2DCoordinate]) {
 
@@ -258,7 +261,7 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell>,
 
 #[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &Grid<u32, SquareCell>,
+                                     maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
                                      mask: Option<&BinaryMask2D>)
                                      -> Vec<Cartesian2DCoordinate> {
 
@@ -295,7 +298,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
             pathing::shortest_path(&maze_grid, &distances, end_coord).unwrap_or_else(Vec::new)
         } else {
             // No points given, just find the actual longest path
-            pathing::dijkstra_longest_path::<u32, u32, SquareCell>(&maze_grid, mask).unwrap_or_else(Vec::new)
+            pathing::dijkstra_longest_path::<u32, u32, SquareCell, RectGridIterators>(&maze_grid, mask).unwrap_or_else(Vec::new)
         }
     }
 }

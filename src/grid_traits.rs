@@ -24,9 +24,9 @@ pub trait GridPositions<CellT: Cell> {
 pub trait GridIterators<CellT: Cell> {
     type CellIter: Iterator<Item=CellT::Coord>;
     type BatchIter: Iterator<Item=Vec<CellT::Coord>>; // consider &[CellT::Coord] instead
-    fn iter(&self, data: Rc<GridDimensions>) -> Self::CellIter;
-    fn iter_row(&self, data: Rc<GridDimensions>) -> Self::BatchIter;
-    fn iter_column(&self, data: Rc<GridDimensions>) -> Self::BatchIter;
+    fn iter(&self, dimensions: Rc<GridDimensions>) -> Self::CellIter;
+    fn iter_row(&self, dimensions: Rc<GridDimensions>) -> Self::BatchIter;
+    fn iter_column(&self, dimensions: Rc<GridDimensions>) -> Self::BatchIter;
 }
 
 pub trait GridDisplay<CellT: Cell> {

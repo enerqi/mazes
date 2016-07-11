@@ -239,17 +239,9 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
+    #[inline(always)]
     pub fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize> {
-
         self.positions.grid_coordinate_to_index(coord)
-
-        // let grid_2d_coord = coord.as_cartesian_2d();
-        // if self.is_valid_coordinate(grid_2d_coord) {
-        //     let RowLength(row_size) = self.row_length();
-        //     Some((grid_2d_coord.y as usize * row_size) + grid_2d_coord.x as usize)
-        // } else {
-        //     None
-        // }
     }
 
     #[inline(always)]

@@ -309,8 +309,8 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
 /// If the mask creates disconnected subgraphs it may not be the longest path.
 pub fn dijkstra_longest_path
     <GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
-                                                          mask: Option<&BinaryMask2D>)
-                                                          -> Option<Vec<CellT::Coord>>
+                                                mask: Option<&BinaryMask2D>)
+                                                -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType,
           MaxDistanceT: MaxDistance,
           CellT: Cell,
