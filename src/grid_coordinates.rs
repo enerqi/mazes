@@ -9,11 +9,6 @@ use units::RowLength;
 
 #[derive(Debug, Copy, Clone)]
 pub struct RectGridCoordinates;
-impl RectGridCoordinates {
-    pub fn new() -> RectGridCoordinates {
-        RectGridCoordinates {}
-    }
-}
 
 impl<CellT: Cell> GridCoordinates<CellT> for RectGridCoordinates {
 

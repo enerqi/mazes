@@ -9,15 +9,15 @@ use rand::XorShiftRng;
 
 use cells::{Cell, Coordinate};
 use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridCoordinates};
-use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex, NodesCount, EdgesCount};
+use units::{RowsCount, RowLength, ColumnsCount, ColumnLength,
+            NodesCount, EdgesCount};
 
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
 
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimensions: Rc<GridDimensions>,
-    positions: Box<GridCoordinates<CellT>>,
+    coordinates: Box<GridCoordinates<CellT>>,
     iterators: Iters, // cannot be trait without boxing the CellIter/BatchIter types - type CellIter: Box<Iterator...>
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>,
@@ -39,7 +39,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
 
     pub fn new(dimensions: Rc<GridDimensions>,
-               positions: Box<GridCoordinates<CellT>>,
+               coordinates: Box<GridCoordinates<CellT>>,
                iterators: Iters) -> Grid<GridIndexType, CellT, Iters> {
 
         let (NodesCount(nodes), EdgesCount(edges)) = dimensions.graph_size();
@@ -47,7 +47,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes, edges),
             dimensions: dimensions.clone(),
-            positions: positions,
+            coordinates: coordinates,
             iterators: iterators,
             grid_display: None,
             cell_type: PhantomData
@@ -76,8 +76,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     #[inline(always)]
-    pub fn positions(&self) -> &GridCoordinates<CellT> {
-        self.positions.as_ref()
+    pub fn coordinates(&self) -> &GridCoordinates<CellT> {
+        self.coordinates.as_ref()
     }
 
     #[inline(always)]
@@ -108,7 +108,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
-        self.positions.random_cell(&mut rng, &self.dimensions)
+        self.coordinates.random_cell(&mut rng, &self.dimensions)
     }
 
     /// Link two cells
@@ -234,7 +234,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// Returns None if the grid coordinate is invalid.
     #[inline(always)]
     pub fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize> {
-        self.positions.grid_coordinate_to_index(coord, &self.dimensions)
+        self.coordinates.grid_coordinate_to_index(coord, &self.dimensions)
     }
 
     #[inline(always)]
@@ -255,7 +255,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     #[inline(always)]
     pub fn is_valid_coordinate(&self, coord: CellT::Coord) -> bool {
-        self.positions.is_valid_coordinate(coord, &self.dimensions)
+        self.coordinates.is_valid_coordinate(coord, &self.dimensions)
     }
 
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
@@ -327,70 +327,7 @@ impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
 //     }
 // }
 
-#[derive(Debug, Copy, Clone)]
-enum BatchIterType {
-    Row,
-    Column,
-}
-#[derive(Debug, Copy, Clone)]
-pub struct BatchIter<CellT> {
-    iter_type: BatchIterType,
-    iter_initial_length: usize,
-    current_index: usize,
-    row_length: RowLength,
-    rows_size: RowsCount,
-    col_length: ColumnLength,
-    cols_size: ColumnsCount,
-    cell_type: PhantomData<CellT>,
-}
-impl<CellT: Cell> ExactSizeIterator for BatchIter<CellT> { } // default impl using size_hint()
-impl<CellT: Cell> Iterator for BatchIter<CellT> {
-    type Item = Vec<CellT::Coord>;
-    fn next(&mut self) -> Option<Self::Item> {
 
-        if let BatchIterType::Row = self.iter_type {
-
-            let RowsCount(count) = self.rows_size;
-            if self.current_index < count {
-                let RowLength(length) = self.row_length;
-                let coords = (0..length)
-                    .into_iter()
-                    .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(i), RowIndex(self.current_index))
-                    })
-                    .collect();
-                self.current_index += 1;
-                Some(coords)
-            } else {
-                None
-            }
-
-        } else {
-
-            let ColumnsCount(count) = self.cols_size;
-            if self.current_index < count {
-                let ColumnLength(length) = self.col_length;
-                let coords = (0..length)
-                    .into_iter()
-                    .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index), RowIndex(i))
-                    })
-                    .collect();
-                self.current_index += 1;
-                Some(coords)
-            } else {
-                None
-            }
-
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let lower_bound = self.iter_initial_length - self.current_index;
-        let upper_bound = lower_bound;
-        (lower_bound, Some(upper_bound))
-    }
-}
 
 #[cfg(test)]
 mod tests {

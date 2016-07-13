@@ -108,7 +108,7 @@ fn main() {
 
     let mut maze_grid = Grid::<u32, SquareCell, RectGridIterators>::new(
         Rc::new(RectGridDimensions::new(units::RowLength(width), units::ColumnLength(height))),
-        Box::new(RectGridCoordinates::new()),
+        Box::new(RectGridCoordinates),
         RectGridIterators);
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
