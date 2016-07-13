@@ -3,7 +3,6 @@
 // TODO infrastructure:
 // - public docs
 // - deny dead_code, missing_docs
-// - Variable GridCoordinate size (+ grid dimension size)
 
 #![allow(dead_code, missing_docs)]
 #![warn(variant_size_differences)]
@@ -35,10 +34,10 @@ extern crate quickcheck;
 pub mod cells;
 pub mod generators;
 pub mod grid;
+pub mod grid_coordinates;
 pub mod grid_dimensions;
 pub mod grid_displays;
 pub mod grid_iterators;
-pub mod grid_positions;
 pub mod grid_traits;
 pub mod masks;
 pub mod pathing;

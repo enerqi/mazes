@@ -39,10 +39,10 @@ use smallvec::SmallVec;
 use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
 use grid::{Grid, IndexType};
-use grid_traits::{GridIterators, GridDisplay};
+use grid_traits::GridIterators;
 use units::{RowIndex, ColumnIndex};
 use utils;
-use utils::{FnvHashMap, FnvHashSet};
+use utils::FnvHashMap;
 
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
@@ -153,88 +153,6 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
             }
         }
         furthest
-    }
-}
-
-impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
-    where CellT: Cell,
-          MaxDistanceT: MaxDistance
-{
-    fn render_cell_body(&self, coord: CellT::Coord) -> String {
-
-        // In case Distances is used with a different grid check for Vec access being in bounds.
-        // N.B.
-        // Keeping a reference to the grid that was processed is possible, but the circular nature of distances to Grid
-        // and Grid to (distances as GridDisplay) means we need Rc and Weak pointers, in particular Rc<RefCell<_>> for the
-        // maze so that we could mutate it to inject the (distance as GridDisplay) and the (distance as GridDisplay) could be
-        // given an Rc<_> downgraded to Weak<_> to refer to the Grid...or maybe GridDisplay holds a &Grid but that won't
-        // work as the lifetime of any Rc is unknown and &Grid would need a 'static lifetime.
-        // As the ref from the (distance as GridDisplay) to Grid is not &T and the Rc<RefCell> avoids static borrow check
-        // rules there are no guarantees that the graph on the Grid cannot change after distances has been created.
-        //
-        // *Iff* a Distances were always to be created with every Grid, such that the lifetimes are the same
-        // the Grid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &Grid which would
-        // freeze as immutable the graph of the Grid.
-
-        if let Some(d) = self.distances.get(&coord) {
-            // centre align, padding 3, lowercase hexadecimal
-            format!("{:^3x}", d)
-        } else {
-            String::from("   ")
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct StartEndPointsDisplay<CellT: Cell> {
-    start_coordinates: CellT::CoordinateSmallVec,
-    end_coordinates: CellT::CoordinateSmallVec,
-    cell_type: PhantomData<CellT>
-}
-impl<CellT: Cell> StartEndPointsDisplay<CellT> {
-    pub fn new(starts: CellT::CoordinateSmallVec, ends: CellT::CoordinateSmallVec) -> StartEndPointsDisplay<CellT> {
-        StartEndPointsDisplay {
-            start_coordinates: starts,
-            end_coordinates: ends,
-            cell_type: PhantomData
-        }
-    }
-}
-impl<CellT: Cell> GridDisplay<CellT> for StartEndPointsDisplay<CellT> {
-    fn render_cell_body(&self, coord: CellT::Coord) -> String {
-
-        let contains_coordinate =
-            |coordinates: &CellT::CoordinateSmallVec| coordinates.iter().any(|&c| c == coord);
-
-        if contains_coordinate(&self.start_coordinates) {
-            String::from(" S ")
-
-        } else if contains_coordinate(&self.end_coordinates) {
-
-            String::from(" E ")
-
-        } else {
-            String::from("   ")
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct PathDisplay<CellT: Cell> {
-    on_path_coordinates: FnvHashSet<CellT::Coord>,
-}
-impl<CellT: Cell> PathDisplay<CellT> {
-    pub fn new(path: &[CellT::Coord]) -> Self {
-        PathDisplay { on_path_coordinates: path.iter().cloned().collect() }
-    }
-}
-impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
-    fn render_cell_body(&self, coord: CellT::Coord) -> String {
-        if self.on_path_coordinates.contains(&coord) {
-            String::from(" . ")
-        } else {
-            String::from("   ")
-        }
     }
 }
 

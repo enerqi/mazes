@@ -114,8 +114,6 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
         self.positions.random_cell(&mut rng, &self.dimensions)
-        // let index = rng.gen::<usize>() % self.size();
-        // CellT::Coord::from_row_major_index(index, self.row_length(), self.column_length())
     }
 
     /// Link two cells
