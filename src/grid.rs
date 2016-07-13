@@ -11,7 +11,7 @@ use rand::XorShiftRng;
 use cells::{Cell, Coordinate};
 use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridCoordinates};
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex};
+            ColumnIndex, NodesCount, EdgesCount};
 
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
@@ -43,21 +43,17 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                positions: Box<GridCoordinates<CellT>>,
                iterators: Iters) -> Grid<GridIndexType, CellT, Iters> {
 
-        let row_len = dimensions.row_length(None).unwrap();
-        let column_len = dimensions.column_length(None);
-        let cells_count = row_len.0 * column_len.0;
-        let nodes_count_hint = cells_count;
-        let edges_count_hint = 4 * cells_count - 4 * cmp::max(row_len.0, column_len.0); // Probably overkill, but don't want any capacity panics
+        let (NodesCount(nodes), EdgesCount(edges)) = dimensions.graph_size();
 
         let mut grid = Grid {
-            graph: Graph::with_capacity(nodes_count_hint, edges_count_hint),
+            graph: Graph::with_capacity(nodes, edges),
             dimensions: dimensions.clone(),
             positions: positions,
             iterators: iterators,
             grid_display: None,
             cell_type: PhantomData
         };
-        for _ in 0..cells_count {
+        for _ in 0..nodes {
             let _ = grid.graph.add_node(());
         }
 

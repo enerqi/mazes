@@ -18,7 +18,6 @@ use cells::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::GridIterators;
 use pathing;
-use units::{RowsCount, ColumnsCount};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;

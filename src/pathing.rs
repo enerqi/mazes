@@ -139,6 +139,11 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
     }
 
     #[inline(always)]
+    pub fn distances(&self) -> &FnvHashMap<CellT::Coord, MaxDistanceT> {
+        &self.distances
+    }
+
+    #[inline(always)]
     pub fn distance_from_start_to(&self, coord: CellT::Coord) -> Option<MaxDistanceT> {
         self.distances.get(&coord).cloned()
     }

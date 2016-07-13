@@ -1,7 +1,7 @@
 use std::fmt;
 use std::marker::PhantomData;
 
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::{GridDisplay, GridIterators};
 use pathing::{Distances, MaxDistance};
@@ -29,7 +29,7 @@ impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
         // the Grid could have a RefCell<Option<&GridDisplay>> and the GridDisplay could have &Grid which would
         // freeze as immutable the graph of the Grid.
 
-        if let Some(d) = self.distances.get(&coord) {
+        if let Some(d) = self.distances().get(&coord) {
             // centre align, padding 3, lowercase hexadecimal
             format!("{:^3x}", d)
         } else {
