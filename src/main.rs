@@ -17,7 +17,10 @@ use docopt::Docopt;
 
 use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
 use mazes::grid::Grid;
-use mazes::grid_traits::{GridIterators, GridDisplay, GridDimensions};
+use mazes::grid_coordinates::RectGridCoordinates;
+use mazes::grid_dimensions::RectGridDimensions;
+use mazes::grid_displays::{PathDisplay, StartEndPointsDisplay};
+use mazes::grid_traits::GridDisplay;
 use mazes::grid_iterators::RectGridIterators;
 use mazes::generators;
 use mazes::masks::BinaryMask2D;
@@ -103,9 +106,10 @@ fn main() {
     let do_text_render = args.cmd_render &&
                          (args.cmd_text || (!any_render_option && grid_size < large_grid_cell_count));
 
-                         //units::RowLength(width), units::ColumnLength(height)
     let mut maze_grid = Grid::<u32, SquareCell, RectGridIterators>::new(
-        Rc::new());
+        Rc::new(RectGridDimensions::new(units::RowLength(width), units::ColumnLength(height))),
+        Box::new(RectGridCoordinates::new()),
+        RectGridIterators);
 
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
@@ -229,14 +233,14 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
                 pathing::shortest_path(&maze_grid, &distances, Cartesian2DCoordinate::new(end_x, end_y));
 
             if let Some(path) = path_opt {
-                let display_path = Rc::new(pathing::PathDisplay::new(&path));
+                let display_path = Rc::new(PathDisplay::new(&path));
                 maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay<SquareCell>>));
             } else {
                 // Somehow there is no route, maze generation failed to make a perfect maze
                 let start_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y));
                 let end_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y));
                 let display_start_end_points =
-                    Rc::new(pathing::StartEndPointsDisplay::new(start_points, end_points));
+                    Rc::new(StartEndPointsDisplay::new(start_points, end_points));
                 maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
             }
         }
@@ -253,7 +257,7 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
         } else {
             <SquareCell as Cell>::CoordinateSmallVec::new()
         };
-        let display_start_end_points = Rc::new(pathing::StartEndPointsDisplay::new(start_points,
+        let display_start_end_points = Rc::new(StartEndPointsDisplay::new(start_points,
                                                                                    end_points));
         maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
     }

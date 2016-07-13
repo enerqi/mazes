@@ -1,4 +1,3 @@
-use std::cmp;
 use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;

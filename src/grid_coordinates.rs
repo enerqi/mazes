@@ -8,9 +8,14 @@ use units::RowLength;
 
 
 #[derive(Debug, Copy, Clone)]
-pub struct RectGridPositions;
+pub struct RectGridCoordinates;
+impl RectGridCoordinates {
+    pub fn new() -> RectGridCoordinates {
+        RectGridCoordinates {}
+    }
+}
 
-impl<CellT: Cell> GridCoordinates<CellT> for RectGridPositions {
+impl<CellT: Cell> GridCoordinates<CellT> for RectGridCoordinates {
 
     fn grid_coordinate_to_index(&self, coord: CellT::Coord, dimensions: &Rc<GridDimensions>) -> Option<usize> {
 
