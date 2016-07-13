@@ -2,7 +2,7 @@ use bit_set::BitSet;
 use image::{DynamicImage, GenericImage, Luma};
 
 use cells::{Cartesian2DCoordinate, Coordinate};
-use units::{Width, Height, ColumnIndex, RowIndex};
+use units::{ColumnIndex, Height, RowIndex, Width};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {

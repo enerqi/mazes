@@ -1,7 +1,8 @@
 use std::cmp;
 
 use grid_traits::GridDimensions;
-use units::{ColumnsCount, ColumnIndex, ColumnLength, EdgesCount, NodesCount, RowsCount, RowIndex, RowLength};
+use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
+            RowsCount};
 
 
 #[derive(Debug, Copy, Clone)]
@@ -20,7 +21,6 @@ impl RectGridDimensions {
 }
 
 impl GridDimensions for RectGridDimensions {
-
     fn size(&self) -> NodesCount {
         NodesCount(self.row_width.0 * self.column_height.0)
     }
@@ -43,8 +43,8 @@ impl GridDimensions for RectGridDimensions {
 
     fn graph_size(&self) -> (NodesCount, EdgesCount) {
         let cells_count = self.size();
-        let edges_count_hint = 4 * cells_count.0 - 4 * cmp::max(self.row_width.0, self.column_height.0);
+        let edges_count_hint = 4 * cells_count.0 -
+                               4 * cmp::max(self.row_width.0, self.column_height.0);
         (cells_count, EdgesCount(edges_count_hint))
     }
-
 }

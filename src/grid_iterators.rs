@@ -4,8 +4,7 @@ use std::rc::Rc;
 
 use cells::{Cell, Coordinate};
 use grid_traits::{GridDimensions, GridIterators};
-use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex};
+use units::{ColumnIndex, ColumnLength, ColumnsCount, RowIndex, RowLength, RowsCount};
 
 #[derive(Debug, Copy, Clone)]
 pub struct RectGridIterators;
@@ -19,7 +18,7 @@ impl<CellT: Cell> GridIterators<CellT> for RectGridIterators {
             dimensions: dimensions.clone(),
             current_cell_number: 0,
             cells_count: dimensions.size().0,
-            cell_type: PhantomData
+            cell_type: PhantomData,
         }
     }
 
@@ -37,17 +36,19 @@ pub struct RectGridCellIter<CellT: Cell> {
     dimensions: Rc<GridDimensions>,
     current_cell_number: usize,
     cells_count: usize,
-    cell_type: PhantomData<CellT>
+    cell_type: PhantomData<CellT>,
 }
 
 impl<CellT: Cell> fmt::Debug for RectGridCellIter<CellT> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "CellIter :: current_cell_number: {:?}, cells_count: {:?}",
-               self.current_cell_number, self.cells_count)
+        write!(f,
+               "CellIter :: current_cell_number: {:?}, cells_count: {:?}",
+               self.current_cell_number,
+               self.cells_count)
     }
 }
 
-impl<CellT: Cell> ExactSizeIterator for RectGridCellIter<CellT> { } // default impl using size_hint()
+impl<CellT: Cell> ExactSizeIterator for RectGridCellIter<CellT> {} // default impl using size_hint()
 impl<CellT: Cell> Iterator for RectGridCellIter<CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
@@ -98,12 +99,12 @@ impl<CellT> RectBatchIter<CellT> {
             rows_size: rows_size,
             col_length: dimensions.column_length(None),
             cols_size: cols_size,
-            cell_type: PhantomData
+            cell_type: PhantomData,
         }
     }
 }
 
-impl<CellT: Cell> ExactSizeIterator for RectBatchIter<CellT> { } // default impl using size_hint()
+impl<CellT: Cell> ExactSizeIterator for RectBatchIter<CellT> {} // default impl using size_hint()
 impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
     type Item = Vec<CellT::Coord>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -116,7 +117,8 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
                 let coords = (0..length)
                     .into_iter()
                     .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(i), RowIndex(self.current_index))
+                        CellT::Coord::from_row_column_indices(ColumnIndex(i),
+                                                              RowIndex(self.current_index))
                     })
                     .collect();
                 self.current_index += 1;
@@ -133,7 +135,8 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
                 let coords = (0..length)
                     .into_iter()
                     .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index), RowIndex(i))
+                        CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index),
+                                                              RowIndex(i))
                     })
                     .collect();
                 self.current_index += 1;

@@ -40,7 +40,7 @@ use cells::{Cell, Coordinate};
 use masks::BinaryMask2D;
 use grid::{Grid, IndexType};
 use grid_traits::GridIterators;
-use units::{RowIndex, ColumnIndex};
+use units::{ColumnIndex, RowIndex};
 use utils;
 use utils::FnvHashMap;
 
@@ -60,7 +60,7 @@ pub struct Distances<CellT: Cell, MaxDistanceT = u32> {
     start_coordinate: CellT::Coord,
     distances: FnvHashMap<CellT::Coord, MaxDistanceT>,
     max_distance: MaxDistanceT,
-    cell_type: PhantomData<CellT>
+    cell_type: PhantomData<CellT>,
 }
 
 impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
@@ -69,7 +69,7 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
 {
     pub fn new<GridIndexType, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                      start_coordinate: CellT::Coord)
-                                         -> Option<Distances<CellT, MaxDistanceT>>
+                                     -> Option<Distances<CellT, MaxDistanceT>>
         where GridIndexType: IndexType,
               Iters: GridIterators<CellT>
     {
@@ -124,7 +124,7 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
             start_coordinate: start_coordinate,
             distances: distances,
             max_distance: max,
-            cell_type: PhantomData
+            cell_type: PhantomData,
         })
     }
 
@@ -230,10 +230,10 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
 /// If the mask creates disconnected subgraphs it may not be the longest path.
-pub fn dijkstra_longest_path
-    <GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
-                                                mask: Option<&BinaryMask2D>)
-                                                -> Option<Vec<CellT::Coord>>
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
+    (grid: &Grid<GridIndexType, CellT, Iters>,
+     mask: Option<&BinaryMask2D>)
+     -> Option<Vec<CellT::Coord>>
     where GridIndexType: IndexType,
           MaxDistanceT: MaxDistance,
           CellT: Cell,
@@ -251,7 +251,7 @@ pub fn dijkstra_longest_path
     }
 
     let first_distances = Distances::<CellT, MaxDistanceT>::new(grid,
-                                                                 arbitrary_start_point.unwrap())
+                                                                arbitrary_start_point.unwrap())
         .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point

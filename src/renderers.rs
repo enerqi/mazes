@@ -14,7 +14,7 @@ use sdl2_ttf;
 use sdl;
 use sdl::SdlSetup;
 
-use cells::{Cell, CompassPrimary, Cartesian2DCoordinate, SquareCell};
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::GridIterators;
 use pathing;
@@ -82,7 +82,9 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.mark_start_end = on;
         self
     }
-    pub fn start(mut self, start: Option<Cartesian2DCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn start(mut self,
+                 start: Option<Cartesian2DCoordinate>)
+                 -> RenderOptionsBuilder<'path, 'dist> {
         self.options.start = start;
         self
     }
@@ -106,7 +108,9 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.output_file = output_file;
         self
     }
-    pub fn path(mut self, path: Option<Vec<Cartesian2DCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn path(mut self,
+                path: Option<Vec<Cartesian2DCoordinate>>)
+                -> RenderOptionsBuilder<'path, 'dist> {
         self.options.path = path;
         self
     }
@@ -260,7 +264,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
         let must_draw_east_wall = !grid.is_neighbour_linked(cell, CompassPrimary::East) &&
                                   !are_links_count_of_valid_cells_zero(cell, CompassPrimary::East);
         let must_draw_south_wall = !grid.is_neighbour_linked(cell, CompassPrimary::South) &&
-                                   !are_links_count_of_valid_cells_zero(cell, CompassPrimary::South);
+                                   !are_links_count_of_valid_cells_zero(cell,
+                                                                        CompassPrimary::South);
 
         if must_draw_east_wall {
             r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
@@ -381,7 +386,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
                 r.draw_line(Point::from(path_line_point_1),
-                            Point::from(path_line_point_2))
+                               Point::from(path_line_point_2))
                     .unwrap();
 
                 last_cell_draw_pos = path_line_point_2;
@@ -443,14 +448,15 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
 }
 
 fn maze_image_dimensions<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
-                                        options: &RenderOptions)
-                                        -> (u32, u32)
+                                                      options: &RenderOptions)
+                                                      -> (u32, u32)
     where GridIndexType: IndexType,
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width = cell_size_pixels as u32 * grid.row_length().expect("row length invalid").0 as u32;
+    let img_width = cell_size_pixels as u32 *
+                    grid.row_length().expect("row length invalid").0 as u32;
     let img_height = cell_size_pixels as u32 * grid.column_length().0 as u32;
 
     (img_width + 1, img_height + 1)

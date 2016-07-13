@@ -9,28 +9,27 @@ use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 
 use grid_traits::GridDimensions;
-use units::{RowLength, RowIndex, ColumnIndex};
+use units::{ColumnIndex, RowIndex, RowLength};
 
-pub trait Coordinate: PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
-
+pub trait Coordinate
+    : PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
     fn from_row_major_index(index: usize, data: &GridDimensions) -> Self;
     fn from_row_column_indices(col_index: ColumnIndex, row_index: RowIndex) -> Self;
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate;
 }
 
 pub trait Cell {
-
     type Coord: Coordinate;
     type Direction: Eq + PartialEq + Copy + Clone + Debug;
-                          // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
-                          // we get type errors saying a general CoordinateOptionSmallVec IntoIterator::Item cannot `unwrap`.
-                          // associated type specification, not trait type parameter, but almost same syntax...
-                          // e.g. FromIterator<T> is a type parameter to the trait
-                          //      IntoIterator<Item=T> is an associated type specialisation
-                          // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
-    type CoordinateSmallVec: FromIterator<Self::Coord> + Deref<Target=[Self::Coord]>;
-    type CoordinateOptionSmallVec: FromIterator<Option<Self::Coord>> + Deref<Target=[Option<Self::Coord>]>;
-    type DirectionSmallVec: FromIterator<Self::Direction> + Deref<Target=[Self::Direction]>;
+    // Require that the Option fixed size Vec specifically wraps Coord with an Option otherwise
+    // we get type errors saying a general CoordinateOptionSmallVec IntoIterator::Item cannot `unwrap`.
+    // associated type specification, not trait type parameter, but almost same syntax...
+    // e.g. FromIterator<T> is a type parameter to the trait
+    //      IntoIterator<Item=T> is an associated type specialisation
+    // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
+    type CoordinateSmallVec: FromIterator<Self::Coord> + Deref<Target = [Self::Coord]>;
+    type CoordinateOptionSmallVec: FromIterator<Option<Self::Coord>> + Deref<Target = [Option<Self::Coord>]>;
+    type DirectionSmallVec: FromIterator<Self::Direction> + Deref<Target = [Self::Direction]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
     fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec;
@@ -75,11 +74,10 @@ impl Cell for SquareCell {
     type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
     fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionSmallVec {
-        [CompassPrimary::North,
-         CompassPrimary::South,
-         CompassPrimary::East,
-         CompassPrimary::West]
-        .into_iter().cloned().collect::<Self::DirectionSmallVec>()
+        [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West]
+            .into_iter()
+            .cloned()
+            .collect::<Self::DirectionSmallVec>()
     }
 
     fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
@@ -107,8 +105,10 @@ impl Cell for SquareCell {
 
     fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction {
         const DIRS_COUNT: usize = 4;
-        const DIRS: [CompassPrimary; DIRS_COUNT] =
-            [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
+        const DIRS: [CompassPrimary; DIRS_COUNT] = [CompassPrimary::North,
+                                                    CompassPrimary::South,
+                                                    CompassPrimary::East,
+                                                    CompassPrimary::West];
         let dir_index = rng.gen::<usize>() % DIRS_COUNT;
         DIRS[dir_index]
     }
@@ -136,7 +136,6 @@ impl Cartesian2DCoordinate {
     }
 }
 impl Coordinate for Cartesian2DCoordinate {
-
     #[inline]
     fn from_row_major_index(index: usize, data: &GridDimensions) -> Cartesian2DCoordinate {
         let RowLength(width) = data.row_length(None).expect("invalid row index"); // todo fix up for Polar mazes
@@ -172,11 +171,10 @@ pub enum ClockDirection {
     Clockwise,
     CounterClockwise,
     Inward,
-    Outward //(u8) // 0, 1
+    Outward, // (u8) // 0, 1
 }
 
 impl Cell for PolarCell {
-
     type Coord = Cartesian2DCoordinate;
     type Direction = ClockDirection;
     type CoordinateSmallVec = SmallVec<[Self::Coord; 8]>;
@@ -189,7 +187,9 @@ impl Cell for PolarCell {
          ClockDirection::CounterClockwise,
          ClockDirection::Inward,
          ClockDirection::Outward]
-        .into_iter().cloned().collect::<Self::DirectionSmallVec>()
+            .into_iter()
+            .cloned()
+            .collect::<Self::DirectionSmallVec>()
 
         // and extend from the outward direction instance? [ClockDirection::Outward, ClockDirection::Outward, ClockDirection::Outward]?
     }
@@ -198,25 +198,24 @@ impl Cell for PolarCell {
     /// Returns None if the Coordinate is not representable.
     fn offset_coordinate(_: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
 
-        //let (x, y) = (coord.x, coord.y);
+        // let (x, y) = (coord.x, coord.y);
         match dir {
-            ClockDirection::Clockwise => {
-
-            }
-            ClockDirection::CounterClockwise => {},
-            ClockDirection::Inward => {},
-            ClockDirection::Outward => {
-
-            }
+            ClockDirection::Clockwise => {}
+            ClockDirection::CounterClockwise => {}
+            ClockDirection::Inward => {}
+            ClockDirection::Outward => {}
         };
 
         None
     }
 
-    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction { // what about multiple outward options? outward is not a single direction
+    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction {
+        // what about multiple outward options? outward is not a single direction
         const DIRS_COUNT: usize = 4;
-        const DIRS: [ClockDirection; DIRS_COUNT] =
-            [ClockDirection::Clockwise, ClockDirection::CounterClockwise, ClockDirection::Inward, ClockDirection::Outward];
+        const DIRS: [ClockDirection; DIRS_COUNT] = [ClockDirection::Clockwise,
+                                                    ClockDirection::CounterClockwise,
+                                                    ClockDirection::Inward,
+                                                    ClockDirection::Outward];
         let dir_index = rng.gen::<usize>() % DIRS_COUNT;
         DIRS[dir_index]
     }
@@ -236,7 +235,6 @@ impl Cell for PolarCell {
             ClockDirection::Outward
         }
     }
-
 }
 
 // Polar grid constructor
@@ -355,4 +353,3 @@ impl Cell for PolarCell {
 //     GridData
 
 // https://www.youtube.com/watch?v=jGNNazG8yyk
-

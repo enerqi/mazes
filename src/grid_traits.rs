@@ -3,8 +3,8 @@ use std::rc::Rc;
 use rand::XorShiftRng;
 
 use cells::{Cell, Coordinate};
-use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
-            ColumnIndex, NodesCount, EdgesCount};
+use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
+            RowsCount};
 
 
 pub trait GridDimensions {
@@ -17,21 +17,25 @@ pub trait GridDimensions {
 }
 
 pub trait GridCoordinates<CellT: Cell> {
-    fn grid_coordinate_to_index(&self, coord: CellT::Coord, dimensions: &Rc<GridDimensions>) -> Option<usize>;
+    fn grid_coordinate_to_index(&self,
+                                coord: CellT::Coord,
+                                dimensions: &Rc<GridDimensions>)
+                                -> Option<usize>;
     fn is_valid_coordinate(&self, coord: CellT::Coord, dimensions: &Rc<GridDimensions>) -> bool {
 
         let grid_2d_coord = coord.as_cartesian_2d();
         let RowLength(width) = dimensions.row_length(Some(RowIndex(grid_2d_coord.y as usize)))
-                                         .expect("RowIndex invalid");
-        let ColumnLength(height) = dimensions.column_length(Some(ColumnIndex(grid_2d_coord.x as usize)));
+            .expect("RowIndex invalid");
+        let ColumnLength(height) =
+            dimensions.column_length(Some(ColumnIndex(grid_2d_coord.x as usize)));
         (grid_2d_coord.x as usize) < width && (grid_2d_coord.y as usize) < height
     }
     fn random_cell(&self, rng: &mut XorShiftRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord; // consider &Rng simple trait object. Note <R : Rng> meant GridCoordinates could not be made a trait object
 }
 
 pub trait GridIterators<CellT: Cell> {
-    type CellIter: Iterator<Item=CellT::Coord>;
-    type BatchIter: Iterator<Item=Vec<CellT::Coord>>; // consider &[CellT::Coord] instead
+    type CellIter: Iterator<Item = CellT::Coord>;
+    type BatchIter: Iterator<Item = Vec<CellT::Coord>>; // consider &[CellT::Coord] instead
     fn iter(&self, dimensions: &Rc<GridDimensions>) -> Self::CellIter;
     fn iter_row(&self, dimensions: &Rc<GridDimensions>) -> Self::BatchIter;
     fn iter_column(&self, dimensions: &Rc<GridDimensions>) -> Self::BatchIter;

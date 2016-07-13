@@ -63,14 +63,16 @@ impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
 pub struct StartEndPointsDisplay<CellT: Cell> {
     start_coordinates: CellT::CoordinateSmallVec,
     end_coordinates: CellT::CoordinateSmallVec,
-    cell_type: PhantomData<CellT>
+    cell_type: PhantomData<CellT>,
 }
 impl<CellT: Cell> StartEndPointsDisplay<CellT> {
-    pub fn new(starts: CellT::CoordinateSmallVec, ends: CellT::CoordinateSmallVec) -> StartEndPointsDisplay<CellT> {
+    pub fn new(starts: CellT::CoordinateSmallVec,
+               ends: CellT::CoordinateSmallVec)
+               -> StartEndPointsDisplay<CellT> {
         StartEndPointsDisplay {
             start_coordinates: starts,
             end_coordinates: ends,
-            cell_type: PhantomData
+            cell_type: PhantomData,
         }
     }
 }
