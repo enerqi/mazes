@@ -74,7 +74,7 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
               Iters: GridIterators<CellT>
     {
 
-        if !grid.is_valid_coordinate(start_coordinate.as_cartesian_2d()) {
+        if !grid.is_valid_coordinate(start_coordinate) {
             return None;
         }
 

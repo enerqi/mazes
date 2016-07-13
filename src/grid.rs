@@ -8,8 +8,8 @@ use petgraph::graph;
 pub use petgraph::graph::IndexType;
 use rand::XorShiftRng;
 
-use cells::{Cell, Coordinate, Cartesian2DCoordinate};
-use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridPositions};
+use cells::{Cell, Coordinate};
+use grid_traits::{GridIterators, GridDisplay, GridDimensions, GridCoordinates};
 use units::{RowsCount, RowLength, RowIndex, ColumnsCount, ColumnLength,
             ColumnIndex};
 
@@ -18,7 +18,7 @@ pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<Cell
 
     graph: Graph<(), (), Undirected, GridIndexType>,
     dimensions: Rc<GridDimensions>,
-    positions: Box<GridPositions<CellT>>,
+    positions: Box<GridCoordinates<CellT>>,
     iterators: Iters, // cannot be trait without boxing the CellIter/BatchIter types - type CellIter: Box<Iterator...>
     grid_display: Option<Rc<GridDisplay<CellT>>>,
     cell_type: PhantomData<CellT>,
@@ -40,7 +40,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
 
     pub fn new(dimensions: Rc<GridDimensions>,
-               positions: Box<GridPositions<CellT>>,
+               positions: Box<GridCoordinates<CellT>>,
                iterators: Iters) -> Grid<GridIndexType, CellT, Iters> {
 
         let row_len = dimensions.row_length(None).unwrap();
@@ -81,7 +81,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     #[inline(always)]
-    pub fn positions(&self) -> &GridPositions<CellT> {
+    pub fn positions(&self) -> &GridCoordinates<CellT> {
         self.positions.as_ref()
     }
 
@@ -113,7 +113,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
-        self.positions.random_cell(&mut rng)
+        self.positions.random_cell(&mut rng, &self.dimensions)
         // let index = rng.gen::<usize>() % self.size();
         // CellT::Coord::from_row_major_index(index, self.row_length(), self.column_length())
     }
@@ -187,7 +187,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                  .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
                  .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| -> Option<CellT::Coord> {
                     if let Some(adjacent_coord) = adjacent_coord_opt {
-                        if self.is_valid_coordinate(adjacent_coord.as_cartesian_2d()) {
+                        if self.is_valid_coordinate(adjacent_coord) {
                             adjacent_coord_opt
                         } else {
                             None
@@ -212,7 +212,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         let neighbour_coord_opt = CellT::offset_coordinate(coord, direction);
 
         neighbour_coord_opt.and_then(|neighbour_coord: CellT::Coord| {
-            if self.is_valid_coordinate(neighbour_coord.as_cartesian_2d()) {
+            if self.is_valid_coordinate(neighbour_coord) {
                 Some(neighbour_coord)
             } else {
                 None
@@ -241,32 +241,28 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// Returns None if the grid coordinate is invalid.
     #[inline(always)]
     pub fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize> {
-        self.positions.grid_coordinate_to_index(coord)
+        self.positions.grid_coordinate_to_index(coord, &self.dimensions)
     }
 
     #[inline(always)]
     pub fn iter(&self) -> Iters::CellIter {
-        self.iterators.iter(self.dimensions.clone())
+        self.iterators.iter(&self.dimensions)
     }
 
     #[inline(always)]
     pub fn iter_row(&self) -> Iters::BatchIter {
-        self.iterators.iter_row(self.dimensions.clone())
+        self.iterators.iter_row(&self.dimensions)
     }
 
     #[inline(always)]
     pub fn iter_column(&self) -> Iters::BatchIter {
-        self.iterators.iter_column(self.dimensions.clone())
+        self.iterators.iter_column(&self.dimensions)
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
-    #[inline]
-    pub fn is_valid_coordinate(&self, coord: Cartesian2DCoordinate) -> bool {
-        //let row_index = coord.y as usize;
-        let RowLength(width) = self.row_length() //.row_length(Some(RowIndex(row_index)))
-                                   .expect("RowIndex invalid");
-        let ColumnLength(height) = self.column_length();
-        (coord.x as usize) < width && (coord.y as usize) < height
+    #[inline(always)]
+    pub fn is_valid_coordinate(&self, coord: CellT::Coord) -> bool {
+        self.positions.is_valid_coordinate(coord, &self.dimensions)
     }
 
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
@@ -327,7 +323,7 @@ impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
 // impl<'a, 'd,
 //      GridIndexType: IndexType,
 //      CellT: Cell,
-//      Dimensions: GridDimensions, Positions: GridPositions<CellT>,
+//      Dimensions: GridDimensions, Positions: GridCoordinates<CellT>,
 //      Iters: GridIterators<CellT, Dimensions>>
 //     IntoIterator for &'a Grid<GridIndexType, CellT, Data, Iters> {
 //     type Item = CellT::Coord;
