@@ -268,15 +268,31 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
 #[cfg(test)]
 mod tests {
 
+    use std::rc::Rc;
     use std::u32;
+
     use quickcheck::quickcheck;
 
     use super::*;
-    use cells::Cartesian2DCoordinate;
-    use squaregrid::Grid;
+    use cells::{Cartesian2DCoordinate, SquareCell};
+    use grid_dimensions::RectGridDimensions;
+    use grid_coordinates::RectGridCoordinates;
+    use grid_iterators::RectGridIterators;
+    use units;
 
-    type SmallGrid = Grid<u8>;
-    type SmallDistances = Distances<u8>;
+
+    /// A Small Rectangular Grid
+    type SmallGrid = Grid<u8, SquareCell, RectGridIterators>;
+    fn small_grid(width_and_height: usize) -> SmallGrid {
+        SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
+                       Box::new(RectGridCoordinates),
+                       RectGridIterators);
+    }
+    /// Distances between cells in a rectangular grid
+    type SmallDistances = Distances<SquareCell, u8>;
+    fn small_distances(g: &SmallGrid, coord: SquareCell::Coord) -> SmallDistances {
+
+    }
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {
         x: u32::MAX,

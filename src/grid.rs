@@ -59,6 +59,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         grid
     }
 
+    #[inline(always)]
     pub fn set_grid_display(&mut self, grid_display: Option<Rc<GridDisplay<CellT>>>) {
         self.grid_display = grid_display;
     }
@@ -105,6 +106,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         self.dimensions.column_length(None)
     }
 
+    #[inline(always)]
     pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
         self.coordinates.random_cell(&mut rng, &self.dimensions)
     }
@@ -275,45 +277,6 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 }
 
-
-#[derive(Copy, Clone)]
-pub struct CellIter<'d, CellT: Cell> {
-    current_cell_number: usize,
-    dimensions: &'d GridDimensions,
-    row_length: RowLength,
-    col_length: ColumnLength,
-    cells_count: usize,
-    cell_type: PhantomData<CellT>,
-}
-impl<'d, CellT: Cell> fmt::Debug for CellIter<'d, CellT> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "CellIter :: current_cell_number: {:?}, cells_count: {:?}",
-               self.current_cell_number,
-               self.cells_count)
-    }
-}
-
-impl<'d, CellT: Cell> ExactSizeIterator for CellIter<'d, CellT> {} // default impl using size_hint()
-impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
-    type Item = CellT::Coord;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_cell_number < self.cells_count {
-            let coord = Self::Item::from_row_major_index(self.current_cell_number, self.dimensions);
-            self.current_cell_number += 1;
-            Some(coord)
-        } else {
-            None
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let lower_bound = self.cells_count - self.current_cell_number;
-        let upper_bound = lower_bound;
-        (lower_bound, Some(upper_bound))
-    }
-}
-
 // Converting a &Grid into an iterator CellIter - the default most sensible
 // impl<'a, 'd,
 //      GridIndexType: IndexType,
@@ -333,14 +296,28 @@ impl<'d, CellT: Cell> Iterator for CellIter<'d, CellT> {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-    use cells::Cartesian2DCoordinate;
+    use std::rc::Rc;
+    use std::u32;
+
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;
-    use std::u32;
 
-    type SmallGrid<'a> = Grid<u8>;
+    use super::*;
+    use cells::{Cartesian2DCoordinate, CompassPrimary, SquareCell};
+    use grid_dimensions::RectGridDimensions;
+    use grid_coordinates::RectGridCoordinates;
+    use grid_iterators::RectGridIterators;
+    use units;
+
+
+    /// A Small Rectangular Grid
+    type SmallGrid = Grid<u8, SquareCell, RectGridIterators>;
+    fn small_grid(width_and_height: usize) -> SmallGrid {
+        SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
+                       Box::new(RectGridCoordinates),
+                       RectGridIterators);
+    }
 
     // Compare a smallvec to e.g. a vec! or &[T].
     // SmallVec really ruins the syntax ergonomics, hence this macro
@@ -352,7 +329,7 @@ mod tests {
 
     #[test]
     fn neighbour_cells() {
-        let g = SmallGrid::new(10);
+        let g = small_grid(10);
 
         let check_expected_neighbours = |coord, expected_neighbours: &[Cartesian2DCoordinate]| {
             let node_indices: Vec<Cartesian2DCoordinate> =
@@ -382,7 +359,7 @@ mod tests {
 
     #[test]
     fn neighbours_at_dirs() {
-        let g = SmallGrid::new(2);
+        let g = small_grid(2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
         let check_neighbours =
@@ -393,59 +370,59 @@ mod tests {
                 assert_eq!(&*neighbour_options, neighbour_opts);
             };
         check_neighbours(gc(0, 0), &[], &[]);
-        check_neighbours(gc(0, 0), &[GridDirection::North], &[None]);
-        check_neighbours(gc(0, 0), &[GridDirection::West], &[None]);
+        check_neighbours(gc(0, 0), &[CompassPrimary::North], &[None]);
+        check_neighbours(gc(0, 0), &[CompassPrimary::West], &[None]);
         check_neighbours(gc(0, 0),
-                         &[GridDirection::West, GridDirection::North],
+                         &[CompassPrimary::West, CompassPrimary::North],
                          &[None, None]);
         check_neighbours(gc(0, 0),
-                         &[GridDirection::East, GridDirection::South],
+                         &[CompassPrimary::East, CompassPrimary::South],
                          &[Some(gc(1, 0)), Some(gc(0, 1))]);
 
         check_neighbours(gc(1, 1), &[], &[]);
-        check_neighbours(gc(1, 1), &[GridDirection::South], &[None]);
-        check_neighbours(gc(1, 1), &[GridDirection::East], &[None]);
+        check_neighbours(gc(1, 1), &[CompassPrimary::South], &[None]);
+        check_neighbours(gc(1, 1), &[CompassPrimary::East], &[None]);
         check_neighbours(gc(1, 1),
-                         &[GridDirection::South, GridDirection::East],
+                         &[CompassPrimary::South, CompassPrimary::East],
                          &[None, None]);
         check_neighbours(gc(1, 1),
-                         &[GridDirection::West, GridDirection::North],
+                         &[CompassPrimary::West, CompassPrimary::North],
                          &[Some(gc(0, 1)), Some(gc(1, 0))]);
     }
 
     #[test]
     fn neighbour_at_dir() {
-        let g = SmallGrid::new(2);
+        let g = small_grid(2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let check_neighbour = |coord, dir: GridDirection, expected| {
             assert_eq!(g.neighbour_at_direction(coord, dir), expected);
         };
-        check_neighbour(gc(0, 0), GridDirection::North, None);
-        check_neighbour(gc(0, 0), GridDirection::South, Some(gc(0, 1)));
-        check_neighbour(gc(0, 0), GridDirection::East, Some(gc(1, 0)));
-        check_neighbour(gc(0, 0), GridDirection::West, None);
+        check_neighbour(gc(0, 0), CompassPrimary::North, None);
+        check_neighbour(gc(0, 0), CompassPrimary::South, Some(gc(0, 1)));
+        check_neighbour(gc(0, 0), CompassPrimary::East, Some(gc(1, 0)));
+        check_neighbour(gc(0, 0), CompassPrimary::West, None);
 
-        check_neighbour(gc(1, 1), GridDirection::North, Some(gc(1, 0)));
-        check_neighbour(gc(1, 1), GridDirection::South, None);
-        check_neighbour(gc(1, 1), GridDirection::East, None);
-        check_neighbour(gc(1, 1), GridDirection::West, Some(gc(0, 1)));
+        check_neighbour(gc(1, 1), CompassPrimary::North, Some(gc(1, 0)));
+        check_neighbour(gc(1, 1), CompassPrimary::South, None);
+        check_neighbour(gc(1, 1), CompassPrimary::East, None);
+        check_neighbour(gc(1, 1), CompassPrimary::West, Some(gc(0, 1)));
     }
 
     #[test]
     fn grid_size() {
-        let g = SmallGrid::new(10);
+        let g = small_grid(10);
         assert_eq!(g.size(), 100);
     }
 
     #[test]
     fn grid_dimension() {
-        let g = SmallGrid::new(10);
+        let g = small_grid(10);
         assert_eq!(g.dimension(), 10);
     }
 
     #[test]
     fn grid_coordinate_as_index() {
-        let g = SmallGrid::new(3);
+        let g = small_grid(3);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
                        gc(1, 2), gc(2, 2)];
@@ -462,7 +439,7 @@ mod tests {
 
     #[test]
     fn random_cell() {
-        let g = SmallGrid::new(4);
+        let g = small_grid(4);
         let cells_count = 4 * 4;
         let mut rng = rand::weak_rng();
         for _ in 0..1000 {
@@ -474,7 +451,7 @@ mod tests {
 
     #[test]
     fn cell_iter() {
-        let g = SmallGrid::new(2);
+        let g = small_grid(2);
         assert_eq!(g.iter().collect::<Vec<Cartesian2DCoordinate>>(),
                    &[Cartesian2DCoordinate::new(0, 0),
                      Cartesian2DCoordinate::new(1, 0),
@@ -484,7 +461,7 @@ mod tests {
 
     #[test]
     fn row_iter() {
-        let g = SmallGrid::new(2);
+        let g = small_grid(2);
         assert_eq!(g.iter_row().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
                    &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(1, 0)],
                      &[Cartesian2DCoordinate::new(0, 1), Cartesian2DCoordinate::new(1, 1)]]);
@@ -492,7 +469,7 @@ mod tests {
 
     #[test]
     fn column_iter() {
-        let g = SmallGrid::new(2);
+        let g = small_grid(2);
         assert_eq!(g.iter_column().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
                    &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(0, 1)],
                      &[Cartesian2DCoordinate::new(1, 0), Cartesian2DCoordinate::new(1, 1)]]);
@@ -500,7 +477,7 @@ mod tests {
 
     #[test]
     fn linking_cells() {
-        let mut g = SmallGrid::new(4);
+        let mut g = small_grid(4);
         let a = Cartesian2DCoordinate::new(0, 1);
         let b = Cartesian2DCoordinate::new(0, 2);
         let c = Cartesian2DCoordinate::new(0, 3);
@@ -520,7 +497,7 @@ mod tests {
 
         // Testing `is_neighbour_linked` for all directions
         let all_dirs =
-            [GridDirection::North, GridDirection::South, GridDirection::East, GridDirection::West];
+            [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
 
         let directional_links_check = |grid: &SmallGrid,
                                        coord: Cartesian2DCoordinate,
@@ -557,8 +534,8 @@ mod tests {
         assert!(bi_check_linked!(a, b));
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a]);
-        check_directional_links!(a, [GridDirection::South]);
-        check_directional_links!(b, [GridDirection::North]);
+        check_directional_links!(a, [CompassPrimary::South]);
+        check_directional_links!(b, [CompassPrimary::North]);
         check_directional_links!(c, []);
 
         g.link(b, c).expect("link failed");
@@ -578,9 +555,9 @@ mod tests {
         assert_eq!(links_sorted!(a), vec![b]);
         assert_eq!(links_sorted!(b), vec![a, c]);
 
-        check_directional_links!(a, [GridDirection::South]);
-        check_directional_links!(b, [GridDirection::North, GridDirection::South]);
-        check_directional_links!(c, [GridDirection::North]);
+        check_directional_links!(a, [CompassPrimary::South]);
+        check_directional_links!(b, [CompassPrimary::North, CompassPrimary::South]);
+        check_directional_links!(c, [CompassPrimary::North]);
 
         // a - b unlinked
         // b still linked to c bi-directionally
@@ -592,8 +569,8 @@ mod tests {
         assert_eq!(links_sorted!(b), vec![c]);
         assert_eq!(links_sorted!(c), vec![b]);
         check_directional_links!(a, []);
-        check_directional_links!(b, [GridDirection::South]);
-        check_directional_links!(c, [GridDirection::North]);
+        check_directional_links!(b, [CompassPrimary::South]);
+        check_directional_links!(c, [CompassPrimary::North]);
 
         // a, b and c start all unlinked again
         let is_bc_unlinked = g.unlink(b, c);
@@ -611,7 +588,7 @@ mod tests {
 
     #[test]
     fn no_self_linked_cycles() {
-        let mut g = SmallGrid::new(4);
+        let mut g = small_grid(4);
         let a = Cartesian2DCoordinate::new(0, 0);
         let link_result = g.link(a, a);
         assert_eq!(link_result, Err(CellLinkError::SelfLink));
@@ -619,7 +596,7 @@ mod tests {
 
     #[test]
     fn no_links_to_invalid_coordinates() {
-        let mut g = SmallGrid::new(4);
+        let mut g = small_grid(4);
         let good_coord = Cartesian2DCoordinate::new(0, 0);
         let invalid_coord = Cartesian2DCoordinate::new(100, 100);
         let link_result = g.link(good_coord, invalid_coord);
@@ -628,7 +605,7 @@ mod tests {
 
     #[test]
     fn no_parallel_duplicated_linked_cells() {
-        let mut g = SmallGrid::new(4);
+        let mut g = small_grid(4);
         let a = Cartesian2DCoordinate::new(0, 0);
         let b = Cartesian2DCoordinate::new(0, 1);
         g.link(a, b).expect("link failed");
