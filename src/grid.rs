@@ -114,7 +114,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// Link two cells
     ///
     /// Todo - only allow links between adjacent cells? If `b` not in `g.neighbours(a)`.
-    ///      - better to change the API to take an index and GridDirection
+    ///      - better to change the API to take an index and CompassPrimary
     ///
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: CellT::Coord, b: CellT::Coord) -> Result<(), CellLinkError> {
@@ -316,7 +316,7 @@ mod tests {
     fn small_grid(width_and_height: usize) -> SmallGrid {
         SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
                        Box::new(RectGridCoordinates),
-                       RectGridIterators);
+                       RectGridIterators)
     }
 
     // Compare a smallvec to e.g. a vec! or &[T].
@@ -365,7 +365,7 @@ mod tests {
         let check_neighbours =
             |coord, dirs: &[CompassPrimary], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
 
-                let neighbour_options: CoordinateOptionSmallVec =
+                let neighbour_options =
                     g.neighbours_at_directions(coord, dirs);
                 assert_eq!(&*neighbour_options, neighbour_opts);
             };
@@ -394,7 +394,7 @@ mod tests {
     fn neighbour_at_dir() {
         let g = small_grid(2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
-        let check_neighbour = |coord, dir: GridDirection, expected| {
+        let check_neighbour = |coord, dir: CompassPrimary, expected| {
             assert_eq!(g.neighbour_at_direction(coord, dir), expected);
         };
         check_neighbour(gc(0, 0), CompassPrimary::North, None);
@@ -415,9 +415,9 @@ mod tests {
     }
 
     #[test]
-    fn grid_dimension() {
+    fn grid_rows() {
         let g = small_grid(10);
-        assert_eq!(g.dimension(), 10);
+        assert_eq!(g.dimensions().rows().0, 10);
     }
 
     #[test]
@@ -501,11 +501,11 @@ mod tests {
 
         let directional_links_check = |grid: &SmallGrid,
                                        coord: Cartesian2DCoordinate,
-                                       expected_dirs_linked: &[GridDirection]| {
+                                       expected_dirs_linked: &[CompassPrimary]| {
 
-            let expected_complement: SmallVec<[GridDirection; 4]> = all_dirs.iter()
+            let expected_complement: SmallVec<[CompassPrimary; 4]> = all_dirs.iter()
                 .cloned()
-                .filter(|dir: &GridDirection| !expected_dirs_linked.contains(dir))
+                .filter(|dir: &CompassPrimary| !expected_dirs_linked.contains(dir))
                 .collect();
             for exp_dir in expected_dirs_linked {
                 assert!(grid.is_neighbour_linked(coord, *exp_dir));

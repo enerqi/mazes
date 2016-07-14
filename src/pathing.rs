@@ -274,7 +274,8 @@ mod tests {
     use quickcheck::quickcheck;
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, SquareCell};
+    use cells::{Cartesian2DCoordinate, SquareCell, Cell};
+    use grid::Grid;
     use grid_dimensions::RectGridDimensions;
     use grid_coordinates::RectGridCoordinates;
     use grid_iterators::RectGridIterators;
@@ -286,12 +287,12 @@ mod tests {
     fn small_grid(width_and_height: usize) -> SmallGrid {
         SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
                        Box::new(RectGridCoordinates),
-                       RectGridIterators);
+                       RectGridIterators)
     }
     /// Distances between cells in a rectangular grid
     type SmallDistances = Distances<SquareCell, u8>;
-    fn small_distances(g: &SmallGrid, coord: SquareCell::Coord) -> SmallDistances {
-
+    fn small_distances(g: &SmallGrid, coord: <SquareCell as Cell>::Coord) -> Option<SmallDistances> {
+        SmallDistances::new(&g, coord)
     }
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {
@@ -301,24 +302,24 @@ mod tests {
 
     #[test]
     fn distances_construction_requires_valid_start_coordinate() {
-        let g = SmallGrid::new(3);
-        let distances = SmallDistances::new(&g, OUT_OF_GRID_COORDINATE);
+        let g = small_grid(3);
+        let distances = small_distances(&g, OUT_OF_GRID_COORDINATE);
         assert!(distances.is_none());
     }
 
     #[test]
     fn start() {
-        let g = SmallGrid::new(3);
+        let g = small_grid(3);
         let start_coordinate = Cartesian2DCoordinate::new(1, 1);
-        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        let distances = small_distances(&g, start_coordinate).unwrap();
         assert_eq!(start_coordinate, distances.start());
     }
 
     #[test]
     fn distances_to_unreachable_cells_is_none() {
-        let g = SmallGrid::new(3);
+        let g = small_grid(3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
-        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        let distances = small_distances(&g, start_coordinate).unwrap();
         for coord in g.iter() {
             let d = distances.distance_from_start_to(coord);
 
@@ -333,16 +334,16 @@ mod tests {
 
     #[test]
     fn distance_to_invalid_coordinate_is_none() {
-        let g = SmallGrid::new(3);
+        let g = small_grid(3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
-        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        let distances = small_distances(&g, start_coordinate).unwrap();
         assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
                    None);
     }
 
     #[test]
     fn distances_on_open_grid() {
-        let mut g = SmallGrid::new(2);
+        let mut g = small_grid(2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let top_left = gc(0, 0);
         let top_right = gc(1, 0);
@@ -354,7 +355,7 @@ mod tests {
         g.link(bottom_left, bottom_right).expect("Link Failed");
 
         let start_coordinate = gc(0, 0);
-        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        let distances = small_distances(&g, start_coordinate).unwrap();
 
         assert_eq!(distances.distance_from_start_to(top_left), Some(0));
         assert_eq!(distances.distance_from_start_to(top_right), Some(1));
@@ -364,7 +365,7 @@ mod tests {
 
     #[test]
     fn max_distance() {
-        let mut g = SmallGrid::new(2);
+        let mut g = small_grid(2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let top_left = gc(0, 0);
         let top_right = gc(1, 0);
@@ -375,7 +376,7 @@ mod tests {
         g.link(top_right, bottom_right).expect("Link Failed");
         g.link(bottom_left, bottom_right).expect("Link Failed");
         let start_coordinate = gc(0, 0);
-        let distances = SmallDistances::new(&g, start_coordinate).unwrap();
+        let distances = small_distances(&g, start_coordinate).unwrap();
         assert_eq!(distances.max(), 2);
     }
 
