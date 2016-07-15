@@ -3,27 +3,31 @@
 extern crate mazes;
 extern crate test;
 
+use mazes::cells::{Cartesian2DCoordinate, SquareCell};
 use mazes::generators;
-use mazes::renderers;
+use mazes::grids::large_rect_grid;
 use mazes::pathing;
-use mazes::squaregrid;
+use mazes::renderers;
+use mazes::units::{ColumnLength, RowLength};
 
 use test::Bencher;
+
+
+type SquareCellDistances = pathing::Distances<SquareCell, u32>;
 
 #[bench]
 fn render_grid(b: &mut Bencher) {
 
-    let grid_size = 200;
-    let mut maze_grid = squaregrid::SquareGrid::<u32>::new(grid_size);
-    let start_coord = squaregrid::GridCoordinate::new(0, 0);
-    generators::recursive_backtracker(&mut maze_grid);
-    let distances = pathing::DijkstraDistances::<u32>::new(&maze_grid, start_coord);
+    let mut maze_grid = large_rect_grid(RowLength(200), ColumnLength(200)).unwrap();
+    let start_coord = Cartesian2DCoordinate::new(0, 0);
+    generators::recursive_backtracker(&mut maze_grid, None);
+    let distances = SquareCellDistances::new(&maze_grid, start_coord);
 
     let render_options = renderers::RenderOptionsBuilder::new()
              .colour_distances(true)
              .mark_start_end(true)
              .start(Some(start_coord))
-             .end(Some(squaregrid::GridCoordinate::new(199, 199)))
+             .end(Some(Cartesian2DCoordinate::new(199, 199)))
              .show_path(true)
              .distances(distances.as_ref())
              .build();

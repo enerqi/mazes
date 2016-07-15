@@ -296,7 +296,6 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 #[cfg(test)]
 mod tests {
 
-    use std::rc::Rc;
     use std::u32;
 
     use itertools::Itertools; // a trait
@@ -304,7 +303,7 @@ mod tests {
     use smallvec::SmallVec;
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, CompassPrimary, SquareCell};
+    use cells::{Cartesian2DCoordinate, CompassPrimary};
     use grids::{SmallRectangularGrid, small_rect_grid};
     use units;
 

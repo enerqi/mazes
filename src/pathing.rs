@@ -268,13 +268,12 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
 #[cfg(test)]
 mod tests {
 
-    use std::rc::Rc;
     use std::u32;
 
     use quickcheck::quickcheck;
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
+    use cells::{Cartesian2DCoordinate, Cell, SquareCell};
     use grids::{SmallRectangularGrid, small_rect_grid};
     use units;
 
