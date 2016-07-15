@@ -274,24 +274,18 @@ mod tests {
     use quickcheck::quickcheck;
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, SquareCell, Cell};
-    use grid::Grid;
-    use grid_dimensions::RectGridDimensions;
-    use grid_coordinates::RectGridCoordinates;
-    use grid_iterators::RectGridIterators;
+    use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
+    use grids::{SmallRectangularGrid, small_rect_grid};
     use units;
 
 
-    /// A Small Rectangular Grid
-    type SmallGrid = Grid<u8, SquareCell, RectGridIterators>;
-    fn small_grid(width_and_height: usize) -> SmallGrid {
-        SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
-                       Box::new(RectGridCoordinates),
-                       RectGridIterators)
+    fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
+        small_rect_grid(units::RowLength(w), units::ColumnLength(h)).expect("grid dimensions too large for small grid")
     }
+
     /// Distances between cells in a rectangular grid
     type SmallDistances = Distances<SquareCell, u8>;
-    fn small_distances(g: &SmallGrid, coord: <SquareCell as Cell>::Coord) -> Option<SmallDistances> {
+    fn small_distances(g: &SmallRectangularGrid, coord: <SquareCell as Cell>::Coord) -> Option<SmallDistances> {
         SmallDistances::new(&g, coord)
     }
 
@@ -302,14 +296,14 @@ mod tests {
 
     #[test]
     fn distances_construction_requires_valid_start_coordinate() {
-        let g = small_grid(3);
+        let g = small_grid(3, 3);
         let distances = small_distances(&g, OUT_OF_GRID_COORDINATE);
         assert!(distances.is_none());
     }
 
     #[test]
     fn start() {
-        let g = small_grid(3);
+        let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(1, 1);
         let distances = small_distances(&g, start_coordinate).unwrap();
         assert_eq!(start_coordinate, distances.start());
@@ -317,7 +311,7 @@ mod tests {
 
     #[test]
     fn distances_to_unreachable_cells_is_none() {
-        let g = small_grid(3);
+        let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
         let distances = small_distances(&g, start_coordinate).unwrap();
         for coord in g.iter() {
@@ -334,7 +328,7 @@ mod tests {
 
     #[test]
     fn distance_to_invalid_coordinate_is_none() {
-        let g = small_grid(3);
+        let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
         let distances = small_distances(&g, start_coordinate).unwrap();
         assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
@@ -343,7 +337,7 @@ mod tests {
 
     #[test]
     fn distances_on_open_grid() {
-        let mut g = small_grid(2);
+        let mut g = small_grid(2, 2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let top_left = gc(0, 0);
         let top_right = gc(1, 0);
@@ -365,7 +359,7 @@ mod tests {
 
     #[test]
     fn max_distance() {
-        let mut g = small_grid(2);
+        let mut g = small_grid(2, 2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let top_left = gc(0, 0);
         let top_right = gc(1, 0);

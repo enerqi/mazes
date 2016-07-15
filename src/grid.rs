@@ -305,18 +305,11 @@ mod tests {
 
     use super::*;
     use cells::{Cartesian2DCoordinate, CompassPrimary, SquareCell};
-    use grid_dimensions::RectGridDimensions;
-    use grid_coordinates::RectGridCoordinates;
-    use grid_iterators::RectGridIterators;
+    use grids::{SmallRectangularGrid, small_rect_grid};
     use units;
 
-
-    /// A Small Rectangular Grid
-    type SmallGrid = Grid<u8, SquareCell, RectGridIterators>;
-    fn small_grid(width_and_height: usize) -> SmallGrid {
-        SmallGrid::new(Rc::new(RectGridDimensions::new(units::RowLength(width_and_height), units::ColumnLength(width_and_height))),
-                       Box::new(RectGridCoordinates),
-                       RectGridIterators)
+    fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
+        small_rect_grid(units::RowLength(w), units::ColumnLength(h)).expect("grid dimensions too large for small grid")
     }
 
     // Compare a smallvec to e.g. a vec! or &[T].
@@ -329,7 +322,7 @@ mod tests {
 
     #[test]
     fn neighbour_cells() {
-        let g = small_grid(10);
+        let g = small_grid(10, 10);
 
         let check_expected_neighbours = |coord, expected_neighbours: &[Cartesian2DCoordinate]| {
             let node_indices: Vec<Cartesian2DCoordinate> =
@@ -359,7 +352,7 @@ mod tests {
 
     #[test]
     fn neighbours_at_dirs() {
-        let g = small_grid(2);
+        let g = small_grid(2, 2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
         let check_neighbours =
@@ -392,7 +385,7 @@ mod tests {
 
     #[test]
     fn neighbour_at_dir() {
-        let g = small_grid(2);
+        let g = small_grid(2, 2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let check_neighbour = |coord, dir: CompassPrimary, expected| {
             assert_eq!(g.neighbour_at_direction(coord, dir), expected);
@@ -410,19 +403,19 @@ mod tests {
 
     #[test]
     fn grid_size() {
-        let g = small_grid(10);
+        let g = small_grid(10, 10);
         assert_eq!(g.size(), 100);
     }
 
     #[test]
     fn grid_rows() {
-        let g = small_grid(10);
+        let g = small_grid(10, 10);
         assert_eq!(g.dimensions().rows().0, 10);
     }
 
     #[test]
     fn grid_coordinate_as_index() {
-        let g = small_grid(3);
+        let g = small_grid(3, 3);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
         let coords = &[gc(0, 0), gc(1, 0), gc(2, 0), gc(0, 1), gc(1, 1), gc(2, 1), gc(0, 2),
                        gc(1, 2), gc(2, 2)];
@@ -439,7 +432,7 @@ mod tests {
 
     #[test]
     fn random_cell() {
-        let g = small_grid(4);
+        let g = small_grid(4, 4);
         let cells_count = 4 * 4;
         let mut rng = rand::weak_rng();
         for _ in 0..1000 {
@@ -451,7 +444,7 @@ mod tests {
 
     #[test]
     fn cell_iter() {
-        let g = small_grid(2);
+        let g = small_grid(2, 2);
         assert_eq!(g.iter().collect::<Vec<Cartesian2DCoordinate>>(),
                    &[Cartesian2DCoordinate::new(0, 0),
                      Cartesian2DCoordinate::new(1, 0),
@@ -461,7 +454,7 @@ mod tests {
 
     #[test]
     fn row_iter() {
-        let g = small_grid(2);
+        let g = small_grid(2, 2);
         assert_eq!(g.iter_row().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
                    &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(1, 0)],
                      &[Cartesian2DCoordinate::new(0, 1), Cartesian2DCoordinate::new(1, 1)]]);
@@ -469,7 +462,7 @@ mod tests {
 
     #[test]
     fn column_iter() {
-        let g = small_grid(2);
+        let g = small_grid(2, 2);
         assert_eq!(g.iter_column().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
                    &[&[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(0, 1)],
                      &[Cartesian2DCoordinate::new(1, 0), Cartesian2DCoordinate::new(1, 1)]]);
@@ -477,13 +470,13 @@ mod tests {
 
     #[test]
     fn linking_cells() {
-        let mut g = small_grid(4);
+        let mut g = small_grid(4, 4);
         let a = Cartesian2DCoordinate::new(0, 1);
         let b = Cartesian2DCoordinate::new(0, 2);
         let c = Cartesian2DCoordinate::new(0, 3);
 
         // Testing the expected grid `links`
-        let sorted_links = |grid: &SmallGrid, coord| -> Vec<Cartesian2DCoordinate> {
+        let sorted_links = |grid: &SmallRectangularGrid, coord| -> Vec<Cartesian2DCoordinate> {
             grid.links(coord).expect("coordinate is invalid").iter().cloned().sorted()
         };
         macro_rules! links_sorted {
@@ -499,7 +492,7 @@ mod tests {
         let all_dirs =
             [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
 
-        let directional_links_check = |grid: &SmallGrid,
+        let directional_links_check = |grid: &SmallRectangularGrid,
                                        coord: Cartesian2DCoordinate,
                                        expected_dirs_linked: &[CompassPrimary]| {
 
@@ -588,7 +581,7 @@ mod tests {
 
     #[test]
     fn no_self_linked_cycles() {
-        let mut g = small_grid(4);
+        let mut g = small_grid(4, 4);
         let a = Cartesian2DCoordinate::new(0, 0);
         let link_result = g.link(a, a);
         assert_eq!(link_result, Err(CellLinkError::SelfLink));
@@ -596,7 +589,7 @@ mod tests {
 
     #[test]
     fn no_links_to_invalid_coordinates() {
-        let mut g = small_grid(4);
+        let mut g = small_grid(4, 4);
         let good_coord = Cartesian2DCoordinate::new(0, 0);
         let invalid_coord = Cartesian2DCoordinate::new(100, 100);
         let link_result = g.link(good_coord, invalid_coord);
@@ -605,7 +598,7 @@ mod tests {
 
     #[test]
     fn no_parallel_duplicated_linked_cells() {
-        let mut g = small_grid(4);
+        let mut g = small_grid(4, 4);
         let a = Cartesian2DCoordinate::new(0, 0);
         let b = Cartesian2DCoordinate::new(0, 1);
         g.link(a, b).expect("link failed");
