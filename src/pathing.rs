@@ -279,12 +279,15 @@ mod tests {
 
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(units::RowLength(w), units::ColumnLength(h)).expect("grid dimensions too large for small grid")
+        small_rect_grid(units::RowLength(w), units::ColumnLength(h))
+            .expect("grid dimensions too large for small grid")
     }
 
     /// Distances between cells in a rectangular grid
     type SmallDistances = Distances<SquareCell, u8>;
-    fn small_distances(g: &SmallRectangularGrid, coord: <SquareCell as Cell>::Coord) -> Option<SmallDistances> {
+    fn small_distances(g: &SmallRectangularGrid,
+                       coord: <SquareCell as Cell>::Coord)
+                       -> Option<SmallDistances> {
         SmallDistances::new(&g, coord)
     }
 

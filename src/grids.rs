@@ -1,18 +1,20 @@
 use std::rc::Rc;
-use std::{u8, u16, u32};
+use std::{u16, u32, u8};
 
 use cells::SquareCell;
 use grid::Grid;
 use grid_dimensions::RectGridDimensions;
 use grid_coordinates::RectGridCoordinates;
 use grid_iterators::RectGridIterators;
-use units::{RowLength, ColumnLength};
+use units::{ColumnLength, RowLength};
 
 pub type SmallRectangularGrid = Grid<u8, SquareCell, RectGridIterators>;
 pub type MediumRectangularGrid = Grid<u16, SquareCell, RectGridIterators>;
 pub type LargeRectangularGrid = Grid<u32, SquareCell, RectGridIterators>;
 
-pub fn small_rect_grid(row_width: RowLength, column_height: ColumnLength) -> Option<SmallRectangularGrid> {
+pub fn small_rect_grid(row_width: RowLength,
+                       column_height: ColumnLength)
+                       -> Option<SmallRectangularGrid> {
 
     if row_width.0 * column_height.0 <= u8::MAX as usize {
 
@@ -24,7 +26,9 @@ pub fn small_rect_grid(row_width: RowLength, column_height: ColumnLength) -> Opt
     }
 }
 
-pub fn medium_rect_grid(row_width: RowLength, column_height: ColumnLength) -> Option<MediumRectangularGrid> {
+pub fn medium_rect_grid(row_width: RowLength,
+                        column_height: ColumnLength)
+                        -> Option<MediumRectangularGrid> {
 
     if row_width.0 * column_height.0 <= u16::MAX as usize {
 
@@ -36,7 +40,9 @@ pub fn medium_rect_grid(row_width: RowLength, column_height: ColumnLength) -> Op
     }
 }
 
-pub fn large_rect_grid(row_width: RowLength, column_height: ColumnLength) -> Option<LargeRectangularGrid> {
+pub fn large_rect_grid(row_width: RowLength,
+                       column_height: ColumnLength)
+                       -> Option<LargeRectangularGrid> {
 
     if row_width.0 * column_height.0 <= u32::MAX as usize {
 

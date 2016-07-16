@@ -308,7 +308,8 @@ mod tests {
     use units;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(units::RowLength(w), units::ColumnLength(h)).expect("grid dimensions too large for small grid")
+        small_rect_grid(units::RowLength(w), units::ColumnLength(h))
+            .expect("grid dimensions too large for small grid")
     }
 
     // Compare a smallvec to e.g. a vec! or &[T].
@@ -357,8 +358,7 @@ mod tests {
         let check_neighbours =
             |coord, dirs: &[CompassPrimary], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
 
-                let neighbour_options =
-                    g.neighbours_at_directions(coord, dirs);
+                let neighbour_options = g.neighbours_at_directions(coord, dirs);
                 assert_eq!(&*neighbour_options, neighbour_opts);
             };
         check_neighbours(gc(0, 0), &[], &[]);
@@ -488,8 +488,10 @@ mod tests {
         }
 
         // Testing `is_neighbour_linked` for all directions
-        let all_dirs =
-            [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West];
+        let all_dirs = [CompassPrimary::North,
+                        CompassPrimary::South,
+                        CompassPrimary::East,
+                        CompassPrimary::West];
 
         let directional_links_check = |grid: &SmallRectangularGrid,
                                        coord: Cartesian2DCoordinate,
