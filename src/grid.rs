@@ -118,9 +118,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     ///
     /// Panics if a cell does not exist.
     pub fn link(&mut self, a: CellT::Coord, b: CellT::Coord) -> Result<(), CellLinkError> {
-        if a == b {
-            Err(CellLinkError::SelfLink)
-        } else {
+        if a != b {
             let a_index_opt = self.grid_coordinate_graph_index(a);
             let b_index_opt = self.grid_coordinate_graph_index(b);
             match (a_index_opt, b_index_opt) {
@@ -130,6 +128,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                 }
                 _ => Err(CellLinkError::InvalidGridCoordinate),
             }
+        } else {
+            Err(CellLinkError::SelfLink)
         }
     }
 
