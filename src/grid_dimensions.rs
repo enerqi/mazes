@@ -21,22 +21,28 @@ impl RectGridDimensions {
 }
 
 impl GridDimensions for RectGridDimensions {
+
+    #[inline(always)]
     fn size(&self) -> NodesCount {
         NodesCount(self.row_width.0 * self.column_height.0)
     }
 
+    #[inline(always)]
     fn rows(&self) -> RowsCount {
         RowsCount(self.column_height.0)
     }
 
+    #[inline(always)]
     fn row_length(&self, _: Option<RowIndex>) -> Option<RowLength> {
         Some(self.row_width)
     }
 
+    #[inline(always)]
     fn columns(&self) -> ColumnsCount {
         ColumnsCount(self.row_width.0)
     }
 
+    #[inline(always)]
     fn column_length(&self, _: Option<ColumnIndex>) -> ColumnLength {
         self.column_height
     }
