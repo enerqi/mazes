@@ -21,7 +21,6 @@ impl RectGridDimensions {
 }
 
 impl GridDimensions for RectGridDimensions {
-
     #[inline(always)]
     fn size(&self) -> NodesCount {
         NodesCount(self.row_width.0 * self.column_height.0)
