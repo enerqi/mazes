@@ -4,7 +4,7 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 
 [![Build status](https://api.travis-ci.org/enerqi/mazes.png)](https://travis-ci.org/enerqi/mazes)
 [![Windows build status](https://ci.appveyor.com/api/projects/status/github/enerqi/mazes?svg=true)](https://ci.appveyor.com/project/enerqi/mazes)
-[![Coverage Status](https://coveralls.io/repos/github/enerqi/mazes/badge.svg?branch=master)](https://coveralls.io/github/enerqi/mazes?branch=master)
+[![codecov.io](http://codecov.io/github/enerqi/mazes/coverage.svg?branch=master)](http://codecov.io/gh/enerqi/mazes?branch=master)
 [![](https://img.shields.io/badge/License-Apache2-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-APACHE)
 [![](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-MIT)
 
