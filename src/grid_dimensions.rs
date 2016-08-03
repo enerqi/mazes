@@ -53,3 +53,16 @@ impl GridDimensions for RectGridDimensions {
         (cells_count, EdgesCount(edges_count_hint))
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub struct PolarGridDimensions {
+    rows: RowsCount
+}
+
+impl PolarGridDimensions {
+    pub fn new(rows: RowsCount) -> PolarGridDimensions {
+        PolarGridDimensions {
+            rows: rows
+        }
+    }
+}
