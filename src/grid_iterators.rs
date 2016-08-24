@@ -215,6 +215,9 @@ impl<CellT: Cell> Iterator for PolarBatchIter<CellT> {
     type Item = Vec<CellT::Coord>;
     fn next(&mut self) -> Option<Self::Item> {
 
+        // this will be really slow for by column, row is fine
+        // start at the outside of the circle and work into the centre to define a "column"
+
         if let BatchIterType::Row = self.iter_type {
 
             None

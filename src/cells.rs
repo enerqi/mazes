@@ -206,10 +206,14 @@ impl Cell for PolarCell {
             ClockDirection::Clockwise => {}
             ClockDirection::CounterClockwise => {}
             // parent row, just y - 1?
+            // what is previous row length ? dimensions.row_length(n-1) and (n)
+            // if same then then cell[x][y-1] else cell[x/ratio][y-1]
+            // where ratio = ratio = round(row_length / previous_row_length) (usually 2)
             ClockDirection::Inward => {}
             // y + 1, but what about x as there can be many links outward 1/2/(more from centre)
             // so outward parameterising needs customising
-            ClockDirection::Outward(_) => {}
+            // cell[(x*ratio)+n][y+1]
+            ClockDirection::Outward(n) => {}
         };
 
         None
