@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
+use std::rc::Rc;
 
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
@@ -32,15 +33,15 @@ pub trait Cell {
     type DirectionSmallVec: FromIterator<Self::Direction> + Deref<Target = [Self::Direction]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(coord: &Option<Self::Coord>) -> Self::DirectionSmallVec;
+    fn offset_directions(coord: &Option<Self::Coord>, dimensions: &GridDimensions) -> Self::DirectionSmallVec;
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
-    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord>;
+    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction, dimensions: &GridDimensions) -> Option<Self::Coord>;
 
-    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction;
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction;
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction;
+    fn rand_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction;
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction;
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction;
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug, Ord, PartialOrd)]
@@ -73,14 +74,14 @@ impl Cell for SquareCell {
 
     type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionSmallVec {
+    fn offset_directions(_: &Option<Self::Coord>, _: &GridDimensions) -> Self::DirectionSmallVec {
         [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West]
             .into_iter()
             .cloned()
             .collect::<Self::DirectionSmallVec>()
     }
 
-    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
+    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction, _: &GridDimensions) -> Option<Self::Coord> {
 
         let (x, y) = (coord.x, coord.y);
         match dir {
@@ -103,7 +104,7 @@ impl Cell for SquareCell {
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Self::Coord) -> Self::Direction {
         const DIRS_COUNT: usize = 4;
         const DIRS: [CompassPrimary; DIRS_COUNT] = [CompassPrimary::North,
                                                     CompassPrimary::South,
@@ -113,14 +114,14 @@ impl Cell for SquareCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Self::Coord) -> Self::Direction {
         if rng.gen() {
             CompassPrimary::North
         } else {
             CompassPrimary::South
         }
     }
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Self::Coord) -> Self::Direction {
         if rng.gen() {
             CompassPrimary::East
         } else {
@@ -171,7 +172,7 @@ pub enum ClockDirection {
     Clockwise,
     CounterClockwise,
     Inward,
-    Outward, // (u8) // 0, 1
+    Outward(u8), // (u8) // 0, 1
 }
 
 impl Cell for PolarCell {
@@ -182,11 +183,11 @@ impl Cell for PolarCell {
     type DirectionSmallVec = SmallVec<[Self::Direction; 8]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(_: &Option<Self::Coord>) -> Self::DirectionSmallVec {
+    fn offset_directions(_: &Option<Self::Coord>, dimensions: &GridDimensions) -> Self::DirectionSmallVec {
         [ClockDirection::Clockwise,
          ClockDirection::CounterClockwise,
          ClockDirection::Inward,
-         ClockDirection::Outward]
+         ClockDirection::Outward(0)]
             .into_iter()
             .cloned()
             .collect::<Self::DirectionSmallVec>()
@@ -196,31 +197,36 @@ impl Cell for PolarCell {
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
-    fn offset_coordinate(_: Self::Coord, dir: Self::Direction) -> Option<Self::Coord> {
+    fn offset_coordinate(_: Self::Coord, dir: Self::Direction, dimensions: &GridDimensions) -> Option<Self::Coord> {
 
         // let (x, y) = (coord.x, coord.y);
         match dir {
+            // left or right, adjust x coord. Should we care about boundaries and disallow wrap around?
+            // some algorithms may need it to terminate?
             ClockDirection::Clockwise => {}
             ClockDirection::CounterClockwise => {}
+            // parent row, just y - 1?
             ClockDirection::Inward => {}
-            ClockDirection::Outward => {}
+            // y + 1, but what about x as there can be many links outward 1/2/(more from centre)
+            // so outward parameterising needs customising
+            ClockDirection::Outward(_) => {}
         };
 
         None
     }
 
-    fn rand_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction {
         // what about multiple outward options? outward is not a single direction
         const DIRS_COUNT: usize = 4;
         const DIRS: [ClockDirection; DIRS_COUNT] = [ClockDirection::Clockwise,
                                                     ClockDirection::CounterClockwise,
                                                     ClockDirection::Inward,
-                                                    ClockDirection::Outward];
+                                                    ClockDirection::Outward(0)];
         let dir_index = rng.gen::<usize>() % DIRS_COUNT;
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Clockwise
         } else {
@@ -228,11 +234,11 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng) -> Self::Direction {
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Inward
         } else {
-            ClockDirection::Outward
+            ClockDirection::Outward(0)
         }
     }
 }

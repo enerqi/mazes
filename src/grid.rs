@@ -173,11 +173,11 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
 
-        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(&Some(coord));
+        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(&Some(coord), self.dimensions());
         (&all_dirs)
             .iter()
             .cloned()
-            .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir))
+            .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir, self.dimensions()))
             .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| -> Option<CellT::Coord> {
                 if let Some(adjacent_coord) = adjacent_coord_opt {
                     if self.is_valid_coordinate(adjacent_coord) {
@@ -205,7 +205,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                                   coord: CellT::Coord,
                                   direction: CellT::Direction)
                                   -> Option<CellT::Coord> {
-        let neighbour_coord_opt = CellT::offset_coordinate(coord, direction);
+        let neighbour_coord_opt = CellT::offset_coordinate(coord, direction, self.dimensions());
 
         neighbour_coord_opt.and_then(|neighbour_coord: CellT::Coord| {
             if self.is_valid_coordinate(neighbour_coord) {

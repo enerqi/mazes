@@ -511,7 +511,7 @@ fn random_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
-    grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng))
+    grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng, grid.dimensions(), cell))
 }
 
 fn random_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
