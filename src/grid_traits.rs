@@ -10,10 +10,11 @@ use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, Row
 pub trait GridDimensions {
     fn size(&self) -> NodesCount;
     fn rows(&self) -> RowsCount;
-    fn row_length(&self, rowIndex: Option<RowIndex>) -> Option<RowLength>;
+    fn row_length(&self, row_index: Option<RowIndex>) -> Option<RowLength>;
     fn columns(&self) -> ColumnsCount;
-    fn column_length(&self, columnIndex: Option<ColumnIndex>) -> ColumnLength;
+    fn column_length(&self, column_index: Option<ColumnIndex>) -> ColumnLength;
     fn graph_size(&self) -> (NodesCount, EdgesCount);
+    fn nodes_count_up_to(&self, row_index: RowIndex) -> Option<NodesCount>;
 }
 
 pub trait GridCoordinates<CellT: Cell> {
