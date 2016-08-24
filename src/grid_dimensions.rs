@@ -155,7 +155,7 @@ impl GridDimensions for PolarGridDimensions {
     fn columns(&self) -> ColumnsCount {
         // There is no 'column' on a polar grid going all the way through from the
         // outer row to the inner centre.
-        ColumnsCount(0)
+        ColumnsCount(1)
     }
 
     #[inline(always)]

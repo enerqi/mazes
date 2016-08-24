@@ -154,3 +154,80 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
         (lower_bound, Some(upper_bound))
     }
 }
+
+
+#[derive(Debug, Copy, Clone)]
+pub struct PolarGridIterators;
+
+impl<CellT: Cell> GridIterators<CellT> for PolarGridIterators {
+    type CellIter = RectGridCellIter<CellT>; // exactly the same as RectGrid for the moment as they have same underlying coordinate type
+    type BatchIter = PolarBatchIter<CellT>;
+
+    fn iter(&self, dimensions: &Rc<GridDimensions>) -> Self::CellIter {
+        RectGridCellIter::<CellT> {
+            dimensions: dimensions.clone(),
+            current_cell_number: 0,
+            cells_count: dimensions.size().0,
+            cell_type: PhantomData,
+        }
+    }
+
+    fn iter_row(&self, dimensions: &Rc<GridDimensions>) -> Self::BatchIter {
+        PolarBatchIter::<CellT>::new(BatchIterType::Row, dimensions)
+    }
+
+    fn iter_column(&self, dimensions: &Rc<GridDimensions>) -> Self::BatchIter {
+        PolarBatchIter::<CellT>::new(BatchIterType::Column, dimensions)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct PolarBatchIter<CellT> {
+    iter_type: BatchIterType,
+    iter_initial_length: usize,
+    current_index: usize,
+    row_length: RowLength,
+    rows_size: RowsCount,
+    col_length: ColumnLength,
+    cols_size: ColumnsCount,
+    cell_type: PhantomData<CellT>,
+}
+
+impl<CellT> PolarBatchIter<CellT> {
+    fn new(iter_type: BatchIterType, dimensions: &Rc<GridDimensions>) -> PolarBatchIter<CellT> {
+        let rows_size = dimensions.rows();
+        let cols_size = dimensions.columns();
+        PolarBatchIter {
+            iter_type: iter_type,
+            iter_initial_length: rows_size.0 * cols_size.0,
+            current_index: 0,
+            row_length: dimensions.row_length(None).unwrap(),
+            rows_size: rows_size,
+            col_length: dimensions.column_length(None),
+            cols_size: cols_size,
+            cell_type: PhantomData,
+        }
+    }
+}
+
+impl<CellT: Cell> ExactSizeIterator for PolarBatchIter<CellT> {} // default impl using size_hint()
+impl<CellT: Cell> Iterator for PolarBatchIter<CellT> {
+    type Item = Vec<CellT::Coord>;
+    fn next(&mut self) -> Option<Self::Item> {
+
+        if let BatchIterType::Row = self.iter_type {
+
+            None
+
+        } else {
+
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let lower_bound = self.iter_initial_length - self.current_index;
+        let upper_bound = lower_bound;
+        (lower_bound, Some(upper_bound))
+    }
+}

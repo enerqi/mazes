@@ -25,8 +25,8 @@ pub fn binary_tree<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType, C
           Iters: GridIterators<CellT>
 {
     let mut rng = rand::weak_rng();
-    let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng),
-                               CellT::rand_roughly_horizontal_direction(&mut rng)];
+    let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
+                               CellT::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None)];
 
     for cell_coord in grid.iter() {
 
@@ -76,11 +76,11 @@ pub fn sidewinder<GridIndexType, Iters>(grid: &mut Grid<GridIndexType, SquareCel
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
         (CompassPrimary::East,
-         SquareCell::rand_roughly_vertical_direction(&mut rng),
+         SquareCell::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
          grid.iter_row())
     } else {
         (CompassPrimary::South,
-         SquareCell::rand_roughly_horizontal_direction(&mut rng),
+         SquareCell::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None),
          grid.iter_column())
     };
 

@@ -173,7 +173,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
 
-        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(&Some(coord), self.dimensions());
+        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(Some(coord), self.dimensions());
         (&all_dirs)
             .iter()
             .cloned()
