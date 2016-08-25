@@ -80,7 +80,7 @@ impl PolarGridDimensions {
 
         // working with a unit circle that can be scaled later
         let row_height = 1.0 / row_count as f32;
-        // The circle centre with one cell only that cannot be accessed.
+        // The circle centre with one cell only that can be accessed.
         cell_counts[0] = 1;
 
         for y in 1..row_count {
@@ -155,7 +155,7 @@ impl GridDimensions for PolarGridDimensions {
     fn columns(&self) -> ColumnsCount {
         // There is no 'column' on a polar grid going all the way through from the
         // outer row to the inner centre.
-        ColumnsCount(1) //???
+        ColumnsCount(1)
     }
 
     #[inline(always)]
