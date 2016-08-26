@@ -287,12 +287,13 @@ impl Cell for PolarCell {
     }
 
     fn rand_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction {
-        // what about multiple outward options? outward is not a single direction
-        const DIRS_COUNT: usize = 4;
+
+        const DIRS_COUNT: usize = 5;
         const DIRS: [ClockDirection; DIRS_COUNT] = [ClockDirection::Clockwise,
                                                     ClockDirection::CounterClockwise,
                                                     ClockDirection::Inward,
-                                                    ClockDirection::Outward(0)];
+                                                    ClockDirection::Outward(0),
+                                                    ClockDirection::Outward(1)]; // (1) not always valid
         let dir_index = rng.gen::<usize>() % DIRS_COUNT;
         DIRS[dir_index]
     }
