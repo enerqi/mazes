@@ -185,60 +185,77 @@ impl Cell for PolarCell {
     /// Creates a small vec of the possible directions away from this Cell.
     fn offset_directions(coord: Option<Self::Coord>, dimensions: &GridDimensions) -> Self::DirectionSmallVec {
 
-        let (x, y) = (coord.x, coord.y);
-        let next_row_length = dimensions.row_length(Some(RowIndex(y + 1 as usize)));
-
-        if let Some(next_len) = next_row_length {
-            let row_len = dimensions.row_length(Some(RowIndex(y as usize)))
-                            .expect("Invalid current row index");
-            let ratio = next_len / row_len;
-
-            let mut dirs = DirectionSmallVec::new();
-            dirs.push_all_move([ClockDirection::Clockwise,
-                                ClockDirection::CounterClockwise,
-                                ClockDirection::Inward,
-                                ClockDirection::Outward(0u8)]);
-            for i in 1..(ratio-1) {
-                dirs.push(ClockDirection::Outward(i as u8));
-            }
-            // dirs.push(ClockDirection::Clockwise);
-            // dirs.push(ClockDirection::CounterClockwise);
-            // dirs.push(ClockDirection::Inward);
-        } else {
-            // Gone passed the outermost rim of the circle - will be invalid
+        let default_directions = || {
             [ClockDirection::Clockwise,
              ClockDirection::CounterClockwise,
              ClockDirection::Inward,
              ClockDirection::Outward(0)].into_iter()
                                         .cloned()
                                         .collect::<Self::DirectionSmallVec>()
+        };
+
+        if let Some(c) = coord {
+
+            let (x, y) = (c.x, c.y);
+            let next_row_length = dimensions.row_length(Some(RowIndex(y as usize + 1)));
+
+            if let Some(RowLength(next_len)) = next_row_length {
+
+                let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
+                                                   .expect("Invalid current row index");
+                let ratio = next_len / row_len;
+
+                let mut dirs = Self::DirectionSmallVec::new();
+                let basic_dirs = [ClockDirection::Clockwise,
+                                  ClockDirection::CounterClockwise,
+                                  ClockDirection::Inward,
+                                  ClockDirection::Outward(0)];
+                dirs.push_all_move(basic_dirs.into_iter().cloned());
+                for i in 1..(ratio-1) {
+                    dirs.push(ClockDirection::Outward(i as u8));
+                }
+
+                dirs
+
+            } else {
+                // Gone passed the outermost rim of the circle - will be invalid
+                default_directions()
+            }
+        } else {
+            default_directions()
         }
     }
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
-    fn offset_coordinate(_: Self::Coord, dir: Self::Direction, dimensions: &GridDimensions) -> Option<Self::Coord> {
+    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction, dimensions: &GridDimensions) -> Option<Self::Coord> {
 
-        let (x, y) = (coord.x, coord.y);
+        let (x, y) = {
+            let c2d = coord.as_cartesian_2d();
+            (c2d.x, c2d.y)
+        };
+
         match dir {
             // left or right, adjust x coord. Should we care about boundaries and disallow wrap around?
             // some algorithms may need it to terminate?
-            ClockDirection::Clockwise => Some(Self::Coord::new(x + 1, y))
-            ClockDirection::CounterClockwise => Some(Self::Coord::new(x - 1, y))
+            ClockDirection::Clockwise => Some(Self::Coord::new(x + 1, y)),
+
+            ClockDirection::CounterClockwise => Some(Self::Coord::new(x - 1, y)),
+
             ClockDirection::Inward => {
                 if y != 0 {
 
                     if y != 1 {
-                        let row_len = dimensions.row_length(Some(RowIndex(y as usize)))
+                        let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
                                                 .expect("Invalid current row index");
-                        let prev_row_length = dimensions.row_length(Some(RowIndex(y-1 as usize)))
+                        let RowLength(prev_row_length) = dimensions.row_length(Some(RowIndex(y as usize - 1)))
                                                         .expect("Invalid prev row index");
 
                         if row_len == prev_row_length {
                            Some(Self::Coord::new(x, y - 1))
                         } else {
                             let ratio = row_len / prev_row_length;
-                            let inward_x = x / ratio;
+                            let inward_x = x / ratio as u32;
                             Some(Self::Coord::new(inward_x, y - 1))
                         }
                     } else {
@@ -253,17 +270,17 @@ impl Cell for PolarCell {
                 }
             }
             ClockDirection::Outward(n) => {
-                let row_len = dimensions.row_length(Some(RowIndex(y as usize)))
+                let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
                                         .expect("Invalid current row index");
-                let next_row_length = dimensions.row_length(Some(RowIndex(y + 1 as usize)));
-                if let Some(next_len) = next_row_length {
+                let next_row_length = dimensions.row_length(Some(RowIndex(y as usize + 1)));
+                if let Some(RowLength(next_len)) = next_row_length {
 
                     let ratio = next_len / row_len;
-                    let outward_x = (x * ratio) + n;
+                    let outward_x = (x * ratio as u32) + n as u32;
                     Some(Self::Coord::new(outward_x, y + 1))
                 } else {
                     // Gone passed the outermost rim of the circle - will be invalid
-                    Some(Self::Coord::new(x + n, y + 1))
+                    Some(Self::Coord::new(x + n as u32, y + 1))
                 }
             }
         }
