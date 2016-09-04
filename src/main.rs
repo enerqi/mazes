@@ -32,8 +32,8 @@ const USAGE: &'static str = "Mazes
 
 Usage:
     mazes_driver -h | --help
-    mazes_driver [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])]
-    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end ] [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])] [--mask-file=<path>]
+    mazes_driver [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])] [--block-passages=<n>] [--save-edges=<path>]
+    mazes_driver render (binary|sidewinder|aldous-broder|wilson|hunt-kill|recursive-backtracker) [text --text-out=<path> (--show-distances|--show-path) (--furthest-end-point --start-point-x=<x> --start-point-y=<y>|--end-point-x=<e1> --end-point-y=<e2> --start-point-x=<x> --start-point-y=<y>)] [image --image-out=<path> --cell-pixels=<n> --colour-distances --show-path --screen-view --mark-start-end ] [(--grid-size=<n>|[--grid-width=<w> --grid-height=<h>])] [--mask-file=<path>] [--block-passages=<n>] [--save-edges=<path>]
 
 Options:
     -h --help              Show this screen.
@@ -54,6 +54,8 @@ Options:
     --screen-view          When rendering to an image and saving to a file, also show the image on the screen.
     --mark-start-end       Draw an 'S' (start) and 'E' (end) to show the path start and end points.
     --mask-file=<path>     Path to a mask data image file (e.g. grayscale), where each pixel acts as a grid cell mask or not depending upon its intensity.
+    --block-passages=<n>   Randomly choose n cells to block a passage from.
+    --save-edges=<path>    Serialize the maze to a text file: each line is a pair of numbers. Line 1: n(#vertices) m(#edges). Line 2+ edge between vertices. Uses 1-based vertex indices.
 ";
 #[derive(RustcDecodable, Debug)]
 struct MazeArgs {
@@ -83,6 +85,8 @@ struct MazeArgs {
     flag_end_point_x: Option<u32>,
     flag_end_point_y: Option<u32>,
     flag_mask_file: String,
+    flag_block_passages: Option<usize>,
+    flag_save_edges: String,
 }
 
 fn main() {
@@ -115,6 +119,15 @@ fn main() {
     let mask: Option<BinaryMask2D> = mask_from_maze_args(&args);
 
     generate_maze_on_grid(&mut maze_grid, &args, mask.as_ref());
+
+    if let Some(wall_count) = args.flag_block_passages {
+        generators::rebuild_random_walls(&mut maze_grid, wall_count);
+    }
+
+    if !args.flag_save_edges.is_empty() {
+
+        save_maze_graph(&maze_grid, &args.flag_save_edges);
+    }
 
     let longest_path = longest_path_from_arg_constraints(&args, &maze_grid, mask.as_ref());
 
@@ -382,4 +395,32 @@ fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
 fn exit_with_msg(e: &str) -> ! {
     writeln!(&mut io::stderr(), "{}", e).expect(format!("Failed to print error: {}", e).as_str());
     exit(1);
+}
+
+fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>, file_path: &String) {
+
+    let mut graph_data = String::new();
+    let vertices_count = maze_grid.size();
+    let edges_count = maze_grid.links_count();
+    graph_data.push_str(vertices_count.to_string().as_ref());
+    graph_data.push(' ');
+    graph_data.push_str(edges_count.to_string().as_ref());
+    graph_data.push('\n');
+
+    for (src, dst) in maze_grid.iter_links() {
+        let index_a = maze_grid.grid_coordinate_to_index(src)
+                               .expect("Links iter should give valid coordinate");
+        let index_b = maze_grid.grid_coordinate_to_index(dst)
+                               .expect("Links iter should give valid coordinate");
+        let src_as_1_based_index = index_a + 1;
+        let dst_as_1_based_index = index_b + 1;
+
+        graph_data.push_str(src_as_1_based_index.to_string().as_ref());
+        graph_data.push(' ');
+        graph_data.push_str(dst_as_1_based_index.to_string().as_ref());
+        graph_data.push('\n');
+    }
+
+    write_text_to_file(&graph_data, file_path)
+        .expect(&format!("Failed to write maze graph to text file {}", file_path));
 }
