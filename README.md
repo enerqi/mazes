@@ -39,8 +39,7 @@ cargo run -- render wilson text image --text-out="maze.text" --grid-size=40
 
 ## Doc Links
 
-**Rust Core**: [Rust api docs](https://doc.rust-lang.org/std/). [Rust By Example](http://rustbyexample.com/).
 
-**SDL2**: [Rust sdl2](https://angrylawyer.github.io/rust-sdl2/sdl2/) + [Repository](https://github.com/AngryLawyer/rust-sdl2), [Rust sdl2-image src](https://github.com/xsleonard/rust-sdl2_image/blob/master/src/sdl2_image/), [Rust sdl2-ttf src](https://github.com/andelf/rust-sdl2_ttf).
+**Rust Core**: [Rust API docs](https://doc.rust-lang.org/std/). [Rust By Example](http://rustbyexample.com/).
 
-**Other Rust Libs**: [bitset](https://contain-rs.github.io/bit-set/bit_set/index.html), [docopt](http://burntsushi.net/rustdoc/docopt/), [fnv](https://doc.servo.org/fnv/), [itertools](https://bluss.github.io/rust-itertools/doc/itertools/index.html), [num](https://rust-num.github.io/num/num/index.html), [petgraph](https://bluss.github.io/petulant-avenger-graphlibrary/doc/petgraph/index.html), [rand](https://doc.rust-lang.org/rand/rand/index.html), [smallvec](http://doc.servo.org/smallvec/index.html), [walkdir](http://burntsushi.net/rustdoc/walkdir/).
+**Libs**: [docs.rs](https://docs.rs)
