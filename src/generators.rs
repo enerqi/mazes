@@ -502,11 +502,48 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIn
     }
 }
 
+pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
+                                                                          CellT,
+                                                                          Iters>,
+                                                         wall_count: usize)
+    where GridIndexType: IndexType,
+          CellT: Cell,
+          Iters: GridIterators<CellT>
+{
+    let max_rebuildable_cells = grid.iter()
+                                    .filter(|coord| grid.links(*coord).unwrap().len() > 0)
+                                    .count();
+    let build_target_count = if wall_count < max_rebuildable_cells { wall_count } else { max_rebuildable_cells };
+
+    let mut rng = rand::weak_rng();
+    let mut cells_with_wall_rebuilt: FnvHashSet<CellT::Coord> = utils::fnv_hashset(build_target_count);
+
+    while cells_with_wall_rebuilt.len() < build_target_count {
+
+        let cell_coord = random_cell(grid, None, &mut rng).expect("Should always get a random cell if not using a Mask");
+        if !cells_with_wall_rebuilt.contains(&cell_coord) {
+
+            let adjacent_linked_cells = grid.links(cell_coord).expect("Should always have a valid random cell coordinate");
+            let adjacents_count = adjacent_linked_cells.len();
+            if adjacents_count > 0 {
+
+                let linked: CellT::Coord = adjacent_linked_cells[rng.gen::<usize>() % adjacents_count];
+
+                if grid.unlink(cell_coord, linked) {
+                    cells_with_wall_rebuilt.insert(cell_coord);
+                }
+            }
+        }
+    }
+}
+
+
 #[inline]
 fn random_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
                                                  grid: &Grid<GridIndexType, CellT, Iters>,
                                                  mut rng: &mut XorShiftRng)
                                                  -> Option<CellT::Coord>
+
     where GridIndexType: IndexType,
           CellT: Cell,
           Iters: GridIterators<CellT>

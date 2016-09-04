@@ -1,6 +1,7 @@
 use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;
+use std::slice;
 
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
@@ -84,6 +85,11 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     #[inline(always)]
     pub fn size(&self) -> usize {
         self.dimensions.size().0
+    }
+
+    #[inline(always)]
+    pub fn links_count(&self) -> usize {
+        self.graph.edge_count()
     }
 
     #[inline(always)]
@@ -255,6 +261,14 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         self.iterators.iter_column(&self.dimensions)
     }
 
+    pub fn iter_links(&self) -> LinksIter<CellT, GridIndexType> {
+        LinksIter {
+            graph_edge_iter: self.graph.raw_edges().iter(),
+            dimensions: self.dimensions(),
+            cell_type: PhantomData
+        }
+    }
+
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     #[inline(always)]
     pub fn is_valid_coordinate(&self, coord: CellT::Coord) -> bool {
@@ -274,6 +288,35 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
                                    -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
         grid_index_raw_opt.map(graph::NodeIndex::<GridIndexType>::new)
+    }
+}
+
+pub struct LinksIter<'a, CellT: Cell, GridIndexType: IndexType> {
+    graph_edge_iter: slice::Iter<'a, graph::Edge<(), GridIndexType>>,
+    dimensions: &'a GridDimensions,
+    cell_type: PhantomData<CellT>
+}
+
+impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT, GridIndexType> {
+    type Item = (CellT::Coord, CellT::Coord);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.graph_edge_iter.next().map(|edge| {
+            let src_cell_coord = CellT::Coord::from_row_major_index(edge.source().index(), self.dimensions);
+            let dst_cell_coord = CellT::Coord::from_row_major_index(edge.target().index(), self.dimensions);
+            (src_cell_coord, dst_cell_coord)
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.graph_edge_iter.size_hint()
+    }
+}
+impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator for LinksIter<'a, CellT, GridIndexType> {} // default impl using size_hint()
+
+impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, CellT, GridIndexType> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "LinksIter :: edges iter : {:?}", self.graph_edge_iter)
     }
 }
 
