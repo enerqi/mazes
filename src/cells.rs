@@ -4,7 +4,6 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
-use std::rc::Rc;
 
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
@@ -196,7 +195,7 @@ impl Cell for PolarCell {
 
         if let Some(c) = coord {
 
-            let (x, y) = (c.x, c.y);
+            let y = c.y;
             let next_row_length = dimensions.row_length(Some(RowIndex(y as usize + 1)));
 
             if let Some(RowLength(next_len)) = next_row_length {
@@ -286,7 +285,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Self::Coord) -> Self::Direction {
+    fn rand_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Self::Coord) -> Self::Direction {
 
         const DIRS_COUNT: usize = 5;
         const DIRS: [ClockDirection; DIRS_COUNT] = [ClockDirection::Clockwise,
@@ -298,7 +297,7 @@ impl Cell for PolarCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Option<Self::Coord>) -> Self::Direction {
+    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Option<Self::Coord>) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Clockwise
         } else {
@@ -306,7 +305,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng, dimensions: &GridDimensions, from: Option<Self::Coord>) -> Self::Direction {
+    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng, _: &GridDimensions, _: Option<Self::Coord>) -> Self::Direction {
         if rng.gen() {
             ClockDirection::Inward
         } else {
