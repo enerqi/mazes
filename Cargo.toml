@@ -12,20 +12,20 @@ bit-set = "^0.4.0"
 docopt = "^0.6.78"
 fnv = "^1.0.2"
 image = "^0.10.0"
-itertools = "^0.4.6"
+itertools = "^0.5.1"
 num = "^0.1.31"
 petgraph = "^0.2.3"
 rand = "^0.3.10"
 rustc-serialize = "^0.3.18"
-sdl2 = "^0.21.0"
-sdl2_image = "^0.21.0"
-sdl2_ttf = "^0.21.0"
-smallvec = "^0.1.6"
+sdl2 = "^0.23.0"
+sdl2_image = "^0.23.0"
+sdl2_ttf = "^0.23.0"
+smallvec = "^0.2.0"
 
 clippy = { version = "*", optional = true }
 
 [dev-dependencies]
-quickcheck = "^0.2.7"
+quickcheck = "^0.3.1"
 
 [build-dependencies]
 walkdir = "^0.1.5"
