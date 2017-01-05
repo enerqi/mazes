@@ -135,7 +135,7 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
 
     // Logically eg. 20x20 grid === 200 x 200 pixels + 32 on the sides (232x232).
     // scaled to whatever the window size is, which maybe a different aspect ratio.
-    let (image_w, image_h) = maze_image_dimensions(&grid, &options);
+    let (image_w, image_h) = maze_image_dimensions(grid, options);
 
     // The visualisation window size can be whatever size we want. If it uses auto scaling by setting a logical size
     // we can easily have aspect ratio issues unless the logical size is the same aspect ratio as the image
@@ -172,7 +172,7 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     // SDL_HINT_RENDER_SCALE_QUALITY applies per texture, not per renderer.
     hint::set("SDL_RENDER_SCALE_QUALITY", "1");
 
-    draw_maze(&mut software_renderer, &grid, &options, &sdl_setup);
+    draw_maze(&mut software_renderer, grid, options, &sdl_setup);
 
     // Getting the surface from the renderer drops the renderer.
     let maze_surface: Surface = software_renderer.into_surface()
@@ -208,7 +208,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
     let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
     let mut font = sdl_setup.ttf_context
-        .load_font(&font_path, font_px_size)
+        .load_font(font_path, font_px_size)
         .expect("Failed to load font");
     font.set_style(sdl2_ttf::STYLE_BOLD);
 
@@ -255,7 +255,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
 
                 if cell_links_count_is_zero(c) {
                     grid.neighbour_at_direction(c, neighbour_direction)
-                        .map_or(false, |neighbour| cell_links_count_is_zero(neighbour))
+                        .map_or(false, cell_links_count_is_zero)
                 } else {
                     false
                 }
@@ -361,7 +361,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 }
             };
 
-        if path_long_enough_to_show(&path, &options) {
+        if path_long_enough_to_show(path, options) {
 
             let calc_cell_centre_screen_coordinate = |cell| {
                 let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);

@@ -23,27 +23,27 @@ impl RectGridDimensions {
 }
 
 impl GridDimensions for RectGridDimensions {
-    #[inline(always)]
+    #[inline]
     fn size(&self) -> NodesCount {
         NodesCount(self.row_width.0 * self.column_height.0)
     }
 
-    #[inline(always)]
+    #[inline]
     fn rows(&self) -> RowsCount {
         RowsCount(self.column_height.0)
     }
 
-    #[inline(always)]
+    #[inline]
     fn row_length(&self, _: Option<RowIndex>) -> Option<RowLength> {
         Some(self.row_width)
     }
 
-    #[inline(always)]
+    #[inline]
     fn columns(&self) -> ColumnsCount {
         ColumnsCount(self.row_width.0)
     }
 
-    #[inline(always)]
+    #[inline]
     fn column_length(&self, _: Option<ColumnIndex>) -> ColumnLength {
         self.column_height
     }
@@ -83,6 +83,7 @@ impl PolarGridDimensions {
         // The circle centre with one cell only that can be accessed.
         cell_counts[0] = 1;
 
+        //for (y, count) in cells_count.iter_mut().enumerate().take(row_count).skip(1)
         for y in 1..row_count {
 
             // radius of how far from centre the row inner boundary is
@@ -115,7 +116,7 @@ impl PolarGridDimensions {
                                *accumulator = *accumulator + cells_in_row;
                                Some(*accumulator)
                            })
-                           .map(|count: usize| NodesCount(count))
+                           .map(NodesCount)
                            .collect();
 
         let size = cell_counts.iter()
@@ -133,12 +134,12 @@ impl PolarGridDimensions {
 }
 
 impl GridDimensions for PolarGridDimensions {
-    #[inline(always)]
+    #[inline]
     fn size(&self) -> NodesCount {
         self.size
     }
 
-    #[inline(always)]
+    #[inline]
     fn rows(&self) -> RowsCount {
         self.rows
     }
@@ -151,14 +152,14 @@ impl GridDimensions for PolarGridDimensions {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn columns(&self) -> ColumnsCount {
         // There is no 'column' on a polar grid going all the way through from the
         // outer row to the inner centre.
         ColumnsCount(1)
     }
 
-    #[inline(always)]
+    #[inline]
     fn column_length(&self, _: Option<ColumnIndex>) -> ColumnLength {
         ColumnLength(self.rows.0)
     }

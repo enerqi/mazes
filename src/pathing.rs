@@ -128,22 +128,22 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         })
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn start(&self) -> CellT::Coord {
         self.start_coordinate
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn max(&self) -> MaxDistanceT {
         self.max_distance
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn distances(&self) -> &FnvHashMap<CellT::Coord, MaxDistanceT> {
         &self.distances
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn distance_from_start_to(&self, coord: CellT::Coord) -> Option<MaxDistanceT> {
         self.distances.get(&coord).cloned()
     }
@@ -152,7 +152,7 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         let mut furthest = SmallVec::<[CellT::Coord; 8]>::new();
         let furthest_distance = self.max();
 
-        for (coord, distance) in self.distances.iter() {
+        for (coord, distance) in &self.distances {
             if *distance == furthest_distance {
                 furthest.push(*coord);
             }
@@ -170,7 +170,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
           Iters: GridIterators<CellT>
 {
 
-    if let None = distances_from_start.distance_from_start_to(end_point) {
+    if distances_from_start.distance_from_start_to(end_point).is_none() {
         // The end point is not reachable from start.
         return None;
     }
@@ -261,7 +261,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
         Distances::<CellT, MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
     let end_point = distances_from_start.furthest_points_on_grid()[0];
 
-    shortest_path(&grid, &distances_from_start, end_point)
+    shortest_path(grid, &distances_from_start, end_point)
 }
 
 
@@ -288,7 +288,7 @@ mod tests {
     fn small_distances(g: &SmallRectangularGrid,
                        coord: <SquareCell as Cell>::Coord)
                        -> Option<SmallDistances> {
-        SmallDistances::new(&g, coord)
+        SmallDistances::new(g, coord)
     }
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {

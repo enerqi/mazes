@@ -151,7 +151,7 @@ impl Coordinate for Cartesian2DCoordinate {
         Cartesian2DCoordinate::new(col as u32, row as u32)
     }
 
-    #[inline(always)]
+    #[inline]
     fn as_cartesian_2d(&self) -> Cartesian2DCoordinate {
         *self
     }

@@ -62,59 +62,59 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         grid
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn set_grid_display(&mut self, grid_display: Option<Rc<GridDisplay<CellT>>>) {
         self.grid_display = grid_display;
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn grid_display(&self) -> &Option<Rc<GridDisplay<CellT>>> {
         &self.grid_display
     }
 
     // Todo: make a macro delegating some functions to sel.data.
 
-    #[inline(always)]
+    #[inline]
     pub fn dimensions(&self) -> &GridDimensions {
         self.dimensions.as_ref()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn coordinates(&self) -> &GridCoordinates<CellT> {
         self.coordinates.as_ref()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn size(&self) -> usize {
         self.dimensions.size().0
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn links_count(&self) -> usize {
         self.graph.edge_count()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn rows(&self) -> RowsCount {
         self.dimensions.rows()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn row_length(&self) -> Option<RowLength> {
         self.dimensions.row_length(None)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn columns(&self) -> ColumnsCount {
         self.dimensions.columns()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn column_length(&self) -> ColumnLength {
         self.dimensions.column_length(None)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
         self.coordinates.random_cell(&mut rng, &self.dimensions)
     }
@@ -243,22 +243,22 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
-    #[inline(always)]
+    #[inline]
     pub fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize> {
         self.coordinates.grid_coordinate_to_index(coord, &self.dimensions)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn iter(&self) -> Iters::CellIter {
         self.iterators.iter(&self.dimensions)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn iter_row(&self) -> Iters::BatchIter {
         self.iterators.iter_row(&self.dimensions)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn iter_column(&self) -> Iters::BatchIter {
         self.iterators.iter_column(&self.dimensions)
     }
@@ -272,7 +272,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
-    #[inline(always)]
+    #[inline]
     pub fn is_valid_coordinate(&self, coord: CellT::Coord) -> bool {
         self.coordinates.is_valid_coordinate(coord, &self.dimensions)
     }
