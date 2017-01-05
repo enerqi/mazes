@@ -8,7 +8,7 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 [![](https://img.shields.io/badge/License-Apache2-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-APACHE)
 [![](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/enerqi/mazes/blob/master/LICENSE-MIT)
 
-![Wilson Maze](resources/wilson-maze.jpg)
+![Wilson Maze](https://sublime.is/demo/mazes/wilson-maze.png)
 
 
 ## Build Requirements
@@ -33,13 +33,6 @@ Use the mazes driver executable to try out the mazes library. The commandline in
 cargo run -- --help
 
 # Examples
-cargo run -- render recursive-backtracker image --grid-size=60 --mark-start-end --colour-distances --show-path
+cargo run -- render recursive-backtracker image --grid-width=140 --grid-height=80 --mark-start-end --colour-distances --show-path
 cargo run -- render wilson text image --text-out="maze.text" --grid-size=40
 ```
-
-## Doc Links
-
-
-**Rust Core**: [Rust API docs](https://doc.rust-lang.org/std/). [Rust By Example](http://rustbyexample.com/).
-
-**Libs**: [docs.rs](https://docs.rs)
