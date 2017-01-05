@@ -1,3 +1,5 @@
+#![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
+
 use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;
@@ -334,7 +336,6 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, Cel
 //         self.iter()
 //     }
 // }
-
 
 #[cfg(test)]
 mod tests {
