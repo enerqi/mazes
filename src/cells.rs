@@ -209,7 +209,7 @@ impl Cell for PolarCell {
                                   ClockDirection::CounterClockwise,
                                   ClockDirection::Inward,
                                   ClockDirection::Outward(0)];
-                dirs.push_all_move(basic_dirs.into_iter().cloned());
+                dirs.extend(basic_dirs.into_iter().cloned());
                 for i in 1..(ratio-1) {
                     dirs.push(ClockDirection::Outward(i as u8));
                 }
