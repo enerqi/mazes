@@ -9,18 +9,18 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 bit-set = "^0.4.0"
-docopt = "^0.6.78"
+docopt = "^0.7.0"
 fnv = "^1.0.2"
-image = "^0.10.0"
-itertools = "^0.4.6"
+image = "^0.11.0"
+itertools = "^0.5.8"
 num = "^0.1.31"
-petgraph = "^0.2.3"
+petgraph = "^0.3.2"
 rand = "^0.3.10"
 rustc-serialize = "^0.3.18"
-sdl2 = "^0.21.0"
-sdl2_image = "^0.21.0"
-sdl2_ttf = "^0.21.0"
-smallvec = "^0.1.6"
+sdl2 = "^0.25.0"
+sdl2_image = "^0.25.0"
+sdl2_ttf = "^0.25.0"
+smallvec = "^0.3.1"
 
 clippy = { version = "*", optional = true }
 
@@ -28,13 +28,16 @@ clippy = { version = "*", optional = true }
 quickcheck = "^0.2.7"
 
 [build-dependencies]
-walkdir = "^0.1.5"
+walkdir = "^1.0.3"
 
 [features]
 # Not using clippy by default: requires unstable compiler apis -> nightly rust build.
 # Add `--features clippy` to the build or test command
 default = []
 test = []
+
+[profile.release]
+debug = true
 
 [profile.bench]
 debug = true
