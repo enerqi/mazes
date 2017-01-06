@@ -442,7 +442,8 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
 
         renderer.set_draw_color(WHITE);
         renderer.clear();
-        renderer.copy(&maze_texture, None, Some(maze_target_rect)).expect("Maze texture copy failed.");
+        renderer.copy(&maze_texture, None, Some(maze_target_rect))
+            .expect("Maze texture copy failed.");
         renderer.present();
     }
 }

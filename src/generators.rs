@@ -25,8 +25,9 @@ pub fn binary_tree<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType, C
           Iters: GridIterators<CellT>
 {
     let mut rng = rand::weak_rng();
-    let neighbours_to_check = [CellT::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
-                               CellT::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None)];
+    let neighbours_to_check =
+        [CellT::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
+         CellT::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None)];
 
     for cell_coord in grid.iter() {
 
@@ -170,10 +171,7 @@ pub fn aldous_broder<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
                 grid.link(current_cell, new_cell)
                     .expect("Failed to link a cell on random walk.");
 
-                visit_cell(new_cell,
-                           &mut visited_cells,
-                           Some(&mut visited_count),
-                           grid);
+                visit_cell(new_cell, &mut visited_cells, Some(&mut visited_count), grid);
             }
 
             current_cell = new_cell;
@@ -377,10 +375,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
                 grid.link(current_cell, new_cell)
                     .expect("Failed to link a cell on random walk.");
 
-                visit_cell(new_cell,
-                           &mut visited_cells,
-                           Some(&mut visited_count),
-                           grid);
+                visit_cell(new_cell, &mut visited_cells, Some(&mut visited_count), grid);
 
                 current_cell = new_cell;
 
@@ -500,31 +495,39 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIn
 }
 
 pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
-                                                                          CellT,
-                                                                          Iters>,
+                                                                         CellT,
+                                                                         Iters>,
                                                          wall_count: usize)
     where GridIndexType: IndexType,
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
     let max_rebuildable_cells = grid.iter()
-                                    .filter(|coord| grid.links(*coord).unwrap().len() > 0)
-                                    .count();
-    let build_target_count = if wall_count < max_rebuildable_cells { wall_count } else { max_rebuildable_cells };
+        .filter(|coord| grid.links(*coord).unwrap().len() > 0)
+        .count();
+    let build_target_count = if wall_count < max_rebuildable_cells {
+        wall_count
+    } else {
+        max_rebuildable_cells
+    };
 
     let mut rng = rand::weak_rng();
-    let mut cells_with_wall_rebuilt: FnvHashSet<CellT::Coord> = utils::fnv_hashset(build_target_count);
+    let mut cells_with_wall_rebuilt: FnvHashSet<CellT::Coord> =
+        utils::fnv_hashset(build_target_count);
 
     while cells_with_wall_rebuilt.len() < build_target_count {
 
-        let cell_coord = random_cell(grid, None, &mut rng).expect("Should always get a random cell if not using a Mask");
+        let cell_coord = random_cell(grid, None, &mut rng)
+            .expect("Should always get a random cell if not using a Mask");
         if !cells_with_wall_rebuilt.contains(&cell_coord) {
 
-            let adjacent_linked_cells = grid.links(cell_coord).expect("Should always have a valid random cell coordinate");
+            let adjacent_linked_cells = grid.links(cell_coord)
+                .expect("Should always have a valid random cell coordinate");
             let adjacents_count = adjacent_linked_cells.len();
             if adjacents_count > 0 {
 
-                let linked: CellT::Coord = adjacent_linked_cells[rng.gen::<usize>() % adjacents_count];
+                let linked: CellT::Coord = adjacent_linked_cells[rng.gen::<usize>() %
+                                                                 adjacents_count];
 
                 if grid.unlink(cell_coord, linked) {
                     cells_with_wall_rebuilt.insert(cell_coord);
@@ -540,12 +543,12 @@ fn random_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
                                                  grid: &Grid<GridIndexType, CellT, Iters>,
                                                  mut rng: &mut XorShiftRng)
                                                  -> Option<CellT::Coord>
-
     where GridIndexType: IndexType,
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
-    grid.neighbour_at_direction(cell, CellT::rand_direction(&mut rng, grid.dimensions(), cell))
+    grid.neighbour_at_direction(cell,
+                                CellT::rand_direction(&mut rng, grid.dimensions(), cell))
 }
 
 fn random_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,

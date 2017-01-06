@@ -407,9 +407,9 @@ fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>, file_pa
 
     for (src, dst) in maze_grid.iter_links() {
         let index_a = maze_grid.grid_coordinate_to_index(src)
-                               .expect("Links iter should give valid coordinate");
+            .expect("Links iter should give valid coordinate");
         let index_b = maze_grid.grid_coordinate_to_index(dst)
-                               .expect("Links iter should give valid coordinate");
+            .expect("Links iter should give valid coordinate");
         let src_as_1_based_index = index_a + 1;
         let dst_as_1_based_index = index_b + 1;
 

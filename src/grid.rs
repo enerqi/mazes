@@ -181,7 +181,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
 
-        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(Some(coord), self.dimensions());
+        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(Some(coord),
+                                                                          self.dimensions());
         (&all_dirs)
             .iter()
             .cloned()
@@ -267,7 +268,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         LinksIter {
             graph_edge_iter: self.graph.raw_edges().iter(),
             dimensions: self.dimensions(),
-            cell_type: PhantomData
+            cell_type: PhantomData,
         }
     }
 
@@ -296,7 +297,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 pub struct LinksIter<'a, CellT: Cell, GridIndexType: IndexType> {
     graph_edge_iter: slice::Iter<'a, graph::Edge<(), GridIndexType>>,
     dimensions: &'a GridDimensions,
-    cell_type: PhantomData<CellT>
+    cell_type: PhantomData<CellT>,
 }
 
 impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT, GridIndexType> {
@@ -304,8 +305,10 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT
 
     fn next(&mut self) -> Option<Self::Item> {
         self.graph_edge_iter.next().map(|edge| {
-            let src_cell_coord = CellT::Coord::from_row_major_index(edge.source().index(), self.dimensions);
-            let dst_cell_coord = CellT::Coord::from_row_major_index(edge.target().index(), self.dimensions);
+            let src_cell_coord = CellT::Coord::from_row_major_index(edge.source().index(),
+                                                                    self.dimensions);
+            let dst_cell_coord = CellT::Coord::from_row_major_index(edge.target().index(),
+                                                                    self.dimensions);
             (src_cell_coord, dst_cell_coord)
         })
     }
@@ -314,7 +317,10 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT
         self.graph_edge_iter.size_hint()
     }
 }
-impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator for LinksIter<'a, CellT, GridIndexType> {} // default impl using size_hint()
+impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator for LinksIter<'a,
+                                                                                CellT,
+                                                                                GridIndexType> {
+} // default impl using size_hint()
 
 impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, CellT, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

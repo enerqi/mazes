@@ -67,7 +67,7 @@ pub struct PolarGridDimensions {
     row_cell_counts: Vec<usize>,
     per_row_cumulative_node_count: Vec<NodesCount>,
     rows: RowsCount, // height (y coord) of the grid
-    size: NodesCount
+    size: NodesCount,
 }
 
 impl PolarGridDimensions {
@@ -83,7 +83,6 @@ impl PolarGridDimensions {
         // The circle centre with one cell only that can be accessed.
         cell_counts[0] = 1;
 
-        //for (y, count) in cells_count.iter_mut().enumerate().take(row_count).skip(1)
         for y in 1..row_count {
 
             // radius of how far from centre the row inner boundary is
@@ -110,25 +109,24 @@ impl PolarGridDimensions {
             cell_counts[y] = num_cells;
         }
 
-        let per_row_cumulative_node_count = cell_counts
-                           .iter()
-                           .scan(0, |accumulator: &mut usize, cells_in_row: &usize| {
-                               *accumulator = *accumulator + cells_in_row;
-                               Some(*accumulator)
-                           })
-                           .map(NodesCount)
-                           .collect();
+        let per_row_cumulative_node_count = cell_counts.iter()
+            .scan(0, |accumulator: &mut usize, cells_in_row: &usize| {
+                *accumulator = *accumulator + cells_in_row;
+                Some(*accumulator)
+            })
+            .map(NodesCount)
+            .collect();
 
         let size = cell_counts.iter()
-                              .cloned()
-                              .fold1(|x, y| x + y)
-                              .unwrap_or(0);
+            .cloned()
+            .fold1(|x, y| x + y)
+            .unwrap_or(0);
 
         PolarGridDimensions {
             row_cell_counts: cell_counts,
             per_row_cumulative_node_count: per_row_cumulative_node_count,
             rows: rows,
-            size: NodesCount(size)
+            size: NodesCount(size),
         }
     }
 }
@@ -146,8 +144,11 @@ impl GridDimensions for PolarGridDimensions {
 
     fn row_length(&self, row_index: Option<RowIndex>) -> Option<RowLength> {
         match row_index {
-            Some(row) => self.row_cell_counts.get(row.0)
-                                             .map(|row_len| RowLength(*row_len)),
+            Some(row) => {
+                self.row_cell_counts
+                    .get(row.0)
+                    .map(|row_len| RowLength(*row_len))
+            }
             None => None,
         }
     }
@@ -166,9 +167,10 @@ impl GridDimensions for PolarGridDimensions {
 
     fn graph_size(&self) -> (NodesCount, EdgesCount) {
         let cells_count = self.size();
-        let edges_count_hint = self.row_cell_counts.last()
-                                                   .map(|&outer_row| outer_row * 2 * 4)
-                                                   .unwrap_or(0);
+        let edges_count_hint = self.row_cell_counts
+            .last()
+            .map(|&outer_row| outer_row * 2 * 4)
+            .unwrap_or(0);
         (cells_count, EdgesCount(edges_count_hint))
     }
 
