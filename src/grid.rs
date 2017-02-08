@@ -165,10 +165,9 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         if let Some(graph_node_index) = self.grid_coordinate_graph_index(coord) {
 
             let linked_cells = self.graph
-                .edges(graph_node_index)
-                .map(|index_edge_data_pair| {
-                    let grid_node_index = index_edge_data_pair.0;
-                    CellT::Coord::from_row_major_index(grid_node_index.index(), self.dimensions())
+                .neighbors(graph_node_index) // graph neighbors is the same as our grid linked cells
+                .map(|node_index| {
+                    CellT::Coord::from_row_major_index(node_index.index(), self.dimensions())
                 })
                 .collect();
             Some(linked_cells)
