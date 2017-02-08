@@ -1,9 +1,10 @@
-use std::marker::PhantomData;
-use std::fmt;
-use std::rc::Rc;
+
 
 use cells::{Cell, Coordinate};
 use grid_traits::{GridDimensions, GridIterators};
+use std::fmt;
+use std::marker::PhantomData;
+use std::rc::Rc;
 use units::{ColumnIndex, ColumnLength, ColumnsCount, RowIndex, RowLength, RowsCount};
 
 #[derive(Debug, Copy, Clone)]

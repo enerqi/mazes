@@ -1,11 +1,12 @@
-use std::rc::Rc;
-use std::{u16, u32, u8};
+
 
 use cells::SquareCell;
 use grid::Grid;
-use grid_dimensions::RectGridDimensions;
 use grid_coordinates::RectGridCoordinates;
+use grid_dimensions::RectGridDimensions;
 use grid_iterators::RectGridIterators;
+use std::{u16, u32, u8};
+use std::rc::Rc;
 use units::{ColumnLength, RowLength};
 
 pub type SmallRectangularGrid = Grid<u8, SquareCell, RectGridIterators>;

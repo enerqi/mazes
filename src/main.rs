@@ -11,26 +11,26 @@ extern crate image;
 extern crate mazes;
 extern crate rustc_serialize;
 
-use std::io::prelude::*;
-use std::io;
-use std::fs::File;
-use std::path::Path;
-use std::rc::Rc;
 
 use docopt::Docopt;
 
 use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
+use mazes::generators;
 use mazes::grid::Grid;
 use mazes::grid_coordinates::RectGridCoordinates;
 use mazes::grid_dimensions::RectGridDimensions;
 use mazes::grid_displays::{PathDisplay, StartEndPointsDisplay};
-use mazes::grid_traits::GridDisplay;
 use mazes::grid_iterators::RectGridIterators;
-use mazes::generators;
+use mazes::grid_traits::GridDisplay;
 use mazes::masks::BinaryMask2D;
-use mazes::renderers;
 use mazes::pathing;
+use mazes::renderers;
 use mazes::units;
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::path::Path;
+use std::rc::Rc;
 
 const USAGE: &'static str = "Mazes
 
@@ -117,8 +117,7 @@ quick_main!(run);
 
 fn run() -> Result<()> {
 
-    let args: MazeArgs = Docopt::new(USAGE)
-        .and_then(|d| d.decode())?;
+    let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.decode())?;
 
     let large_grid_cell_count = 25 * 25;
     let (width, height) = if let Some(square_grid_size) = args.flag_grid_size {
@@ -252,7 +251,8 @@ fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell, RectGridItera
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
 fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
                         maze_args: &MazeArgs,
-                        longest_path: &[Cartesian2DCoordinate]) -> Result<()> {
+                        longest_path: &[Cartesian2DCoordinate])
+                        -> Result<()> {
 
     let start_opt = get_start_point(maze_args, longest_path);
     let end_opt = get_end_point(maze_args, longest_path);
@@ -363,8 +363,8 @@ fn get_start_point(maze_args: &MazeArgs,
                    longest_path: &[Cartesian2DCoordinate])
                    -> Option<(u32, u32)> {
 
-    if let (Some(start_x), Some(start_y)) = (maze_args.flag_start_point_x,
-                                             maze_args.flag_start_point_y) {
+    if let (Some(start_x), Some(start_y)) =
+        (maze_args.flag_start_point_x, maze_args.flag_start_point_y) {
         Some((start_x, start_y))
 
     } else if maze_arg_requires_start_and_end_point(maze_args) {
@@ -398,7 +398,8 @@ fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
     maze_args.flag_show_path || maze_args.flag_colour_distances || maze_args.flag_mark_start_end
 }
 
-fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> <SquareCell as Cell>::CoordinateSmallVec {
+fn as_coordinate_smallvec(coord: Cartesian2DCoordinate)
+                          -> <SquareCell as Cell>::CoordinateSmallVec {
     [coord].into_iter().cloned().collect::<<SquareCell as Cell>::CoordinateSmallVec>()
 }
 
@@ -413,7 +414,9 @@ fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>, file_path: &str) -> Result<()> {
+fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
+                   file_path: &str)
+                   -> Result<()> {
 
     let mut graph_data = String::new();
     let vertices_count = maze_grid.size();

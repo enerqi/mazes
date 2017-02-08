@@ -1,17 +1,17 @@
 #![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
 
-use std::fmt;
-use std::marker::PhantomData;
-use std::rc::Rc;
-use std::slice;
+
+use cells::{Cell, Coordinate};
+use grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
 
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
 pub use petgraph::graph::IndexType;
 use rand::XorShiftRng;
-
-use cells::{Cell, Coordinate};
-use grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
+use std::fmt;
+use std::marker::PhantomData;
+use std::rc::Rc;
+use std::slice;
 use units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount};
 
 
@@ -317,9 +317,8 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT
         self.graph_edge_iter.size_hint()
     }
 }
-impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator for LinksIter<'a,
-                                                                                CellT,
-                                                                                GridIndexType> {
+impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
+    for LinksIter<'a, CellT, GridIndexType> {
 } // default impl using size_hint()
 
 impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, CellT, GridIndexType> {
@@ -346,15 +345,15 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, Cel
 #[cfg(test)]
 mod tests {
 
-    use std::u32;
+    use cells::{Cartesian2DCoordinate, CompassPrimary};
+    use grids::{SmallRectangularGrid, small_rect_grid};
 
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;
+    use std::u32;
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, CompassPrimary};
-    use grids::{SmallRectangularGrid, small_rect_grid};
     use units;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {

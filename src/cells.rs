@@ -1,14 +1,15 @@
+
+
+use grid_traits::GridDimensions;
+
+use rand::{Rng, XorShiftRng};
+use smallvec::SmallVec;
 use std::convert::From;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
-
-use rand::{Rng, XorShiftRng};
-use smallvec::SmallVec;
-
-use grid_traits::GridDimensions;
 use units::{ColumnIndex, RowIndex, RowLength};
 
 pub trait Coordinate
