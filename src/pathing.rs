@@ -28,18 +28,18 @@
 // - Weak (requires downgrading an RC<T>) pointer or RC<T>
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
+
+use cells::{Cell, Coordinate};
+use grid::{Grid, IndexType};
+use grid_traits::GridIterators;
+
+use itertools::Itertools;
+use masks::BinaryMask2D;
+use num::traits::{Bounded, One, Unsigned, Zero};
+use smallvec::SmallVec;
 use std::fmt::{Debug, Display, LowerHex};
 use std::marker::PhantomData;
 use std::ops::Add;
-
-use itertools::Itertools;
-use num::traits::{Bounded, One, Unsigned, Zero};
-use smallvec::SmallVec;
-
-use cells::{Cell, Coordinate};
-use masks::BinaryMask2D;
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
 use units::{ColumnIndex, RowIndex};
 use utils;
 use utils::FnvHashMap;
@@ -193,7 +193,7 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
             .map(|coord| {
                 (*coord,
                  distances_from_start.distance_from_start_to(*coord)
-                    .expect("Coordinate invalid for distances_from_start data."))
+                     .expect("Coordinate invalid for distances_from_start data."))
             })
             .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
         let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> = &neighbour_distances.iter()
@@ -268,13 +268,13 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
 #[cfg(test)]
 mod tests {
 
-    use std::u32;
-
-    use quickcheck::quickcheck;
-
-    use super::*;
     use cells::{Cartesian2DCoordinate, Cell, SquareCell};
     use grids::{SmallRectangularGrid, small_rect_grid};
+
+    use quickcheck::quickcheck;
+    use std::u32;
+
+    use super::*;
     use units;
 
 

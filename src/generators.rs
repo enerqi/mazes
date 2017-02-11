@@ -1,14 +1,15 @@
-use std::cmp;
+
 
 use bit_set::BitSet;
+
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
+use grid::{Grid, IndexType};
+use grid_traits::GridIterators;
+use masks::BinaryMask2D;
 use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
-
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
-use masks::BinaryMask2D;
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
+use std::cmp;
 use units::{ColumnLength, Height, RowLength, Width};
 use utils;
 use utils::FnvHashSet;
@@ -334,11 +335,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
             .cloned()
             .filter(|c| is_cell_in_visited_set(*c, visited_set, grid))
             .collect();
-        if vn.is_empty() {
-            None
-        } else {
-            Some(vn)
-        }
+        if vn.is_empty() { None } else { Some(vn) }
     };
 
     let are_all_neighbours_visited_or_masked = |cell,
@@ -379,7 +376,10 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
 
                 current_cell = new_cell;
 
-            } else if are_all_neighbours_visited_or_masked(current_cell, &visited_cells, grid, mask) {
+            } else if are_all_neighbours_visited_or_masked(current_cell,
+                                                           &visited_cells,
+                                                           grid,
+                                                           mask) {
                 // The new_cell has been seen before, we are not allowed to go here...
                 // We will just try another random neighbour unless there are no unvisited neighbours
                 // in which case we take special steps to find one
@@ -461,11 +461,7 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIn
                 .collect()
         };
 
-        if vn.is_empty() {
-            None
-        } else {
-            Some(vn)
-        }
+        if vn.is_empty() { None } else { Some(vn) }
     };
 
     while !dfs_stack.is_empty() {
@@ -738,7 +734,9 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridI
 }
 
 fn random_unmasked_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
-                                                          grid: &Grid<GridIndexType, CellT, Iters>,
+                                                          grid: &Grid<GridIndexType,
+                                                                      CellT,
+                                                                      Iters>,
                                                           mask: &BinaryMask2D,
                                                           mut rng: &mut XorShiftRng)
                                                           -> Option<CellT::Coord>

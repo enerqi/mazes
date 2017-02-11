@@ -1,7 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use std::hash::{BuildHasherDefault, Hash};
+
 
 use fnv::FnvHasher;
+use std::collections::{HashMap, HashSet};
+use std::hash::{BuildHasherDefault, Hash};
 
 pub type FnvHashSet<T> = HashSet<T, BuildHasherDefault<FnvHasher>>;
 pub type FnvHashMap<K, V> = HashMap<K, V, BuildHasherDefault<FnvHasher>>;

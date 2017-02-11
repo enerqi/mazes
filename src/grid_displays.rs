@@ -1,10 +1,11 @@
-use std::fmt;
-use std::marker::PhantomData;
+
 
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::{GridDisplay, GridIterators};
 use pathing::{Distances, MaxDistance};
+use std::fmt;
+use std::marker::PhantomData;
 use units::{ColumnsCount, RowsCount};
 use utils::FnvHashSet;
 
@@ -199,20 +200,8 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
 
                 let corner = match (is_last_row, is_last_column) {
                     (true, true) => WALL_LU,
-                    (true, false) => {
-                        if east_open {
-                            WALL_LR
-                        } else {
-                            WALL_LRU
-                        }
-                    }
-                    (false, true) => {
-                        if south_open {
-                            WALL_UD
-                        } else {
-                            WALL_LUD
-                        }
-                    }
+                    (true, false) => if east_open { WALL_LR } else { WALL_LRU },
+                    (false, true) => if south_open { WALL_UD } else { WALL_LUD },
                     (false, false) => {
                         let access_se_from_east =
                             self.neighbour_at_direction(cell_coord, CompassPrimary::East)

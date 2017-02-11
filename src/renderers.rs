@@ -1,5 +1,12 @@
-use std::cmp;
-use std::path::Path;
+
+
+use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
+use grid::{Grid, IndexType};
+use grid_traits::GridIterators;
+use pathing;
+
+use sdl;
+use sdl::SdlSetup;
 
 use sdl2;
 use sdl2::event::{Event, WindowEventId};
@@ -10,14 +17,8 @@ use sdl2::render::Renderer; //  Teuxture
 use sdl2::surface::Surface;
 use sdl2_image::SaveSurface;
 use sdl2_ttf;
-
-use sdl;
-use sdl::SdlSetup;
-
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
-use pathing;
+use std::cmp;
+use std::path::Path;
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
@@ -289,16 +290,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
             let cell_x1 = x1 + 1;
             let cell_y1 = y1 + 1;
             // extend to cover where not drawing the wall if required
-            let cell_x2 = if must_draw_east_wall {
-                x2
-            } else {
-                x2 + 1
-            };
-            let cell_y2 = if must_draw_south_wall {
-                y2
-            } else {
-                y2 + 1
-            };
+            let cell_x2 = if must_draw_east_wall { x2 } else { x2 + 1 };
+            let cell_y2 = if must_draw_south_wall { y2 } else { y2 + 1 };
 
             let w = (cell_x2 - cell_x1) as u32;
             let h = (cell_y2 - cell_y1) as u32;

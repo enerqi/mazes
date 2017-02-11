@@ -3,11 +3,11 @@
 extern crate mazes;
 extern crate test;
 
-use test::Bencher;
 
 use mazes::cells::{Cartesian2DCoordinate, Coordinate};
 use mazes::grids::{small_rect_grid, medium_rect_grid, large_rect_grid};
 use mazes::units::{RowLength, ColumnLength};
+use test::Bencher;
 
 
 #[bench]

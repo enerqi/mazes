@@ -24,13 +24,13 @@ fn render_grid(b: &mut Bencher) {
     let distances = SquareCellDistances::new(&maze_grid, start_coord);
 
     let render_options = renderers::RenderOptionsBuilder::new()
-             .colour_distances(true)
-             .mark_start_end(true)
-             .start(Some(start_coord))
-             .end(Some(Cartesian2DCoordinate::new(199, 199)))
-             .show_path(true)
-             .distances(distances.as_ref())
-             .build();
+        .colour_distances(true)
+        .mark_start_end(true)
+        .start(Some(start_coord))
+        .end(Some(Cartesian2DCoordinate::new(199, 199)))
+        .show_path(true)
+        .distances(distances.as_ref())
+        .build();
 
     // Why does SDL_LogCritical get called so much by fill_rect/draw_line? At least according to the CodeXL sampling profiler.
     // render recursive-backtracker image --mark-start-end --grid-size 2500 --cell-pixels 8 --show-path --image-out=perf-test-maze.png --colour-distances

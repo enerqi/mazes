@@ -1,8 +1,9 @@
-use std::cmp;
 
-use itertools::Itertools;
 
 use grid_traits::GridDimensions;
+
+use itertools::Itertools;
+use std::cmp;
 use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
             RowsCount};
 

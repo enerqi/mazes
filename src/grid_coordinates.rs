@@ -1,9 +1,10 @@
-use std::rc::Rc;
 
-use rand::{Rng, XorShiftRng};
 
 use cells::{Cartesian2DCoordinate, Cell, Coordinate};
 use grid_traits::{GridCoordinates, GridDimensions};
+
+use rand::{Rng, XorShiftRng};
+use std::rc::Rc;
 use units::{NodesCount, RowIndex, RowLength};
 
 

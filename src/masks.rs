@@ -1,7 +1,7 @@
 use bit_set::BitSet;
-use image::{DynamicImage, GenericImage, Luma};
 
 use cells::{Cartesian2DCoordinate, Coordinate};
+use image::{DynamicImage, GenericImage, Luma};
 use units::{ColumnIndex, Height, RowIndex, Width};
 
 #[derive(Debug)]
