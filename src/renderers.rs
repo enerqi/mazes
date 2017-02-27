@@ -373,17 +373,18 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 (0, path.len())
             };
             let mut last_cell_draw_pos = calc_cell_centre_screen_coordinate(path[skip_amount]);
+            let mut path_draw_buffer = Vec::<Point>::with_capacity(take_amount - skip_amount);
 
             for cell in path.iter().skip(skip_amount).take(take_amount) {
                 let path_line_point_1 = last_cell_draw_pos;
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
-                r.draw_line(Point::from(path_line_point_1),
-                               Point::from(path_line_point_2))
-                    .unwrap();
+                path_draw_buffer.extend(&[Point::from(path_line_point_1), Point::from(path_line_point_2)]);
 
                 last_cell_draw_pos = path_line_point_2;
             }
+
+            r.draw_lines(&path_draw_buffer).unwrap();
         }
     }
 }
