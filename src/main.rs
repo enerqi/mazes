@@ -32,7 +32,7 @@ use std::io::prelude::*;
 use std::path::Path;
 use std::rc::Rc;
 
-const USAGE: &'static str = "Mazes
+const USAGE: &str = "Mazes
 
 Usage:
     mazes_driver -h | --help
@@ -289,7 +289,8 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
                 let end_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y));
                 let display_start_end_points = Rc::new(StartEndPointsDisplay::new(start_points,
                                                                                   end_points));
-                maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
+                maze_grid.set_grid_display(Some(display_start_end_points as
+                                                Rc<GridDisplay<SquareCell>>));
             }
         }
     } else {
@@ -320,9 +321,9 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                                      -> Result<Vec<Cartesian2DCoordinate>> {
 
     let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
-                                                  maze_args.flag_start_point_y,
-                                                  maze_args.flag_end_point_x,
-                                                  maze_args.flag_end_point_y) {
+           maze_args.flag_start_point_y,
+           maze_args.flag_end_point_x,
+           maze_args.flag_end_point_y) {
         (Some(_), Some(_), Some(_), Some(_)) => None,
         (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
         (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),

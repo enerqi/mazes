@@ -14,10 +14,10 @@ pub struct BinaryMask2D {
 impl BinaryMask2D {
     pub fn from_image(data_image: &DynamicImage) -> BinaryMask2D {
 
-        let w = data_image.width();
-        let h = data_image.height();
+        let width = data_image.width();
+        let height = data_image.height();
         let gray_scale_image = data_image.to_luma();
-        let mut mask = BitSet::with_capacity((w * h) as usize);
+        let mut mask = BitSet::with_capacity((width * height) as usize);
 
         for x in 0..gray_scale_image.width() {
             for y in 0..gray_scale_image.height() {
@@ -27,15 +27,15 @@ impl BinaryMask2D {
                 let off = gray_scale_value < 128;
 
                 if off {
-                    mask.insert((y * w + x) as usize);
+                    mask.insert((y * width + x) as usize);
                 }
             }
         }
 
         BinaryMask2D {
-            mask: mask,
-            width: w,
-            height: h,
+            mask,
+            width,
+            height,
         }
     }
 
@@ -79,8 +79,8 @@ impl BinaryMask2D {
         // (A BitVec would be more convenient for that purpose, and faster as bitset::contains
         //  does a length check)
         let mask_size = self.width * self.height;
-        let index: Option<usize> = (0..mask_size)
-            .position(|bit_index| !self.mask.contains(bit_index as usize));
+        let index: Option<usize> =
+            (0..mask_size).position(|bit_index| !self.mask.contains(bit_index as usize));
 
         if let Some(i) = index {
             let x = i % self.width as usize;

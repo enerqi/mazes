@@ -1,5 +1,3 @@
-
-
 use cells::{Cell, Coordinate};
 use grid_traits::{GridDimensions, GridIterators};
 use std::fmt;
@@ -118,9 +116,9 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
                 let coords = (0..length)
                     .into_iter()
                     .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(i),
-                                                              RowIndex(self.current_index))
-                    })
+                             CellT::Coord::from_row_column_indices(ColumnIndex(i),
+                                                                   RowIndex(self.current_index))
+                         })
                     .collect();
                 self.current_index += 1;
                 Some(coords)
@@ -136,9 +134,9 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
                 let coords = (0..length)
                     .into_iter()
                     .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index),
-                                                              RowIndex(i))
-                    })
+                             CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index),
+                                                                   RowIndex(i))
+                         })
                     .collect();
                 self.current_index += 1;
                 Some(coords)

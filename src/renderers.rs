@@ -155,10 +155,10 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
-        .expect("Surface creation failed.");
-    let mut software_renderer = Renderer::from_surface(software_surface)
-        .expect("Software renderer creation failed.");
+    let software_surface =
+        Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
+    let mut software_renderer =
+        Renderer::from_surface(software_surface).expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
@@ -176,15 +176,15 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     draw_maze(&mut software_renderer, grid, options, &sdl_setup);
 
     // Getting the surface from the renderer drops the renderer.
-    let maze_surface: Surface = software_renderer.into_surface()
-        .expect("Failed to get surface from software renderer");
+    let maze_surface: Surface =
+        software_renderer.into_surface().expect("Failed to get surface from software renderer");
 
     if let Some(file_path) = options.output_file {
         maze_surface.save(file_path).expect("Failed to save surface");
     }
 
     if options.show_on_screen {
-        show_maze_on_screen(maze_surface, sdl_setup);
+        show_maze_on_screen(maze_surface, &sdl_setup);
     }
 }
 
@@ -208,9 +208,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
     // Font creation
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
     let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
-    let mut font = sdl_setup.ttf_context
-        .load_font(font_path, font_px_size)
-        .expect("Failed to load font");
+    let mut font =
+        sdl_setup.ttf_context.load_font(font_path, font_px_size).expect("Failed to load font");
     font.set_style(sdl2_ttf::STYLE_BOLD);
 
     // Start and end symbol letters rendered to different surfaces
@@ -318,8 +317,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 };
                 if is_start {
                     s_surface.blit(None,
-                              r.surface_mut().unwrap(),
-                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                                   r.surface_mut().unwrap(),
+                                   Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                         .expect("S blit to maze surface failed");
                 }
 
@@ -335,8 +334,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                         &e_black_surface
                     };
                     end_surface.blit(None,
-                              r.surface_mut().unwrap(),
-                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                                     r.surface_mut().unwrap(),
+                                     Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                         .expect("E blit to maze surface failed");
                 }
             }
@@ -379,7 +378,8 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 let path_line_point_1 = last_cell_draw_pos;
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
-                path_draw_buffer.extend(&[Point::from(path_line_point_1), Point::from(path_line_point_2)]);
+                path_draw_buffer.extend(&[Point::from(path_line_point_1),
+                                          Point::from(path_line_point_2)]);
 
                 last_cell_draw_pos = path_line_point_2;
             }
@@ -389,7 +389,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
     }
 }
 
-fn show_maze_on_screen(maze_surface: Surface, sdl_setup: SdlSetup) {
+fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
 
     // Fit the window size to the texture unless the texture is bigger than the display resolution
     let primary_display_mode = sdl_setup.video_subsystem.current_display_mode(0).unwrap();

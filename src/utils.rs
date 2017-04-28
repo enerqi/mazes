@@ -1,5 +1,3 @@
-
-
 use fnv::FnvHasher;
 use std::collections::{HashMap, HashSet};
 use std::hash::{BuildHasherDefault, Hash};

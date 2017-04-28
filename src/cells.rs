@@ -1,5 +1,3 @@
-
-
 use grid_traits::GridDimensions;
 
 use rand::{Rng, XorShiftRng};
@@ -76,7 +74,7 @@ pub enum CompassPrimary {
 pub struct SquareCell;
 
 impl Cell for SquareCell {
-    type Coord = Cartesian2DCoordinate;  // : Debug, Copy, Clone
+    type Coord = Cartesian2DCoordinate; // : Debug, Copy, Clone
     type Direction = CompassPrimary;
     type CoordinateSmallVec = SmallVec<[Self::Coord; 4]>;
 
@@ -218,9 +216,9 @@ impl Cell for PolarCell {
              ClockDirection::CounterClockwise,
              ClockDirection::Inward,
              ClockDirection::Outward(0)]
-                .into_iter()
-                .cloned()
-                .collect::<Self::DirectionSmallVec>()
+                    .into_iter()
+                    .cloned()
+                    .collect::<Self::DirectionSmallVec>()
         };
 
         if let Some(c) = coord {
@@ -280,9 +278,10 @@ impl Cell for PolarCell {
                     if y != 1 {
                         let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
                             .expect("Invalid current row index");
-                        let RowLength(prev_row_length) =
-                            dimensions.row_length(Some(RowIndex(y as usize - 1)))
-                                .expect("Invalid prev row index");
+                        let RowLength(prev_row_length) = dimensions.row_length(Some(RowIndex(y as
+                                                                                             usize -
+                                                                                             1)))
+                            .expect("Invalid prev row index");
 
                         if row_len == prev_row_length {
                             Some(Self::Coord::new(x, y - 1))

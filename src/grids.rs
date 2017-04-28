@@ -1,5 +1,3 @@
-
-
 use cells::SquareCell;
 use grid::Grid;
 use grid_coordinates::RectGridCoordinates;

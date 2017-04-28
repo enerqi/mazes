@@ -1,5 +1,3 @@
-
-
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::{GridDisplay, GridIterators};
@@ -103,22 +101,22 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
           Iters: GridIterators<SquareCell>
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        const WALL_L: &'static str = "╴";
-        const WALL_R: &'static str = "╶";
-        const WALL_U: &'static str = "╵";
-        const WALL_D: &'static str = "╷";
-        const WALL_LR_3: &'static str = "───";
-        const WALL_LR: &'static str = "─";
-        const WALL_UD: &'static str = "│";
-        const WALL_LD: &'static str = "┐";
-        const WALL_RU: &'static str = "└";
-        const WALL_LU: &'static str = "┘";
-        const WALL_RD: &'static str = "┌";
-        const WALL_LRU: &'static str = "┴";
-        const WALL_LRD: &'static str = "┬";
-        const WALL_LRUD: &'static str = "┼";
-        const WALL_RUD: &'static str = "├";
-        const WALL_LUD: &'static str = "┤";
+        const WALL_L: &str = "╴";
+        const WALL_R: &str = "╶";
+        const WALL_U: &str = "╵";
+        const WALL_D: &str = "╷";
+        const WALL_LR_3: &str = "───";
+        const WALL_LR: &str = "─";
+        const WALL_UD: &str = "│";
+        const WALL_LD: &str = "┐";
+        const WALL_RU: &str = "└";
+        const WALL_LU: &str = "┘";
+        const WALL_RD: &str = "┌";
+        const WALL_LRU: &str = "┴";
+        const WALL_LRD: &str = "┬";
+        const WALL_LRUD: &str = "┼";
+        const WALL_RUD: &str = "├";
+        const WALL_LUD: &str = "┤";
         let default_cell_body = String::from("   ");
 
         let ColumnsCount(columns_count) = self.columns();
@@ -157,13 +155,12 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
 
                 let render_cell_side = |direction, passage_clear_text, blocking_wall_text| {
                     self.neighbour_at_direction(cell_coord, direction)
-                        .map_or(blocking_wall_text, |neighbour_coord| {
-                            if self.is_linked(cell_coord, neighbour_coord) {
-                                passage_clear_text
-                            } else {
-                                blocking_wall_text
-                            }
-                        })
+                        .map_or(blocking_wall_text,
+                                |neighbour_coord| if self.is_linked(cell_coord, neighbour_coord) {
+                                    passage_clear_text
+                                } else {
+                                    blocking_wall_text
+                                })
                 };
                 let is_first_column = index_column == 0;
                 let is_last_column = index_column == (columns_count - 1);
@@ -178,7 +175,7 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
                 // Cell Body
                 if let Some(ref displayer) = *self.grid_display() {
                     row_middle_section_render.push_str(displayer.render_cell_body(cell_coord)
-                        .as_str());
+                                                           .as_str());
                 } else {
                     row_middle_section_render.push_str(default_cell_body.as_str());
                 }

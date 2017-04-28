@@ -10,7 +10,10 @@ fn main() {
 
     // Assume libsdl2*-dev is installed on BSD, but the link search path may not include the directory
     // containing the libs.
-    if cfg!(any(target_os = "freebsd", target_os = "openbsd", target_os = "netbsd", target_os = "dragonfly")) {
+    if cfg!(any(target_os = "freebsd",
+                target_os = "openbsd",
+                target_os = "netbsd",
+                target_os = "dragonfly")) {
         println!("cargo:rustc-link-search=/usr/local/lib");
     }
 
@@ -25,13 +28,12 @@ fn main() {
         let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
         let win_sdl_dlls_dir = if let Ok(dir) = env::var("SDL_DLLS_RUN_DIR") {
-                dir
-            } else {
-                manifest_dir.clone()
-            };
+            dir
+        } else {
+            manifest_dir.clone()
+        };
 
-        let win_sdl_libs_dir =
-            format!("{}/sdl_libs", manifest_dir);
+        let win_sdl_libs_dir = format!("{}/sdl_libs", manifest_dir);
 
         let is_x64 = cfg!(target_arch = "x86_64");
         let is_mingw = cfg!(target_env = "gnu");
@@ -40,22 +42,13 @@ fn main() {
             let dir = format!("{}/{}/{}/{}",
                               win_sdl_libs_dir,
                               base_dir,
-                              if is_mingw {
-                                  "mingw"
-                              } else {
-                                  "msvc"
-                              },
-                              if is_x64 {
-                                  "x64"
-                              } else {
-                                  "x32"
-                              });
+                              if is_mingw { "mingw" } else { "msvc" },
+                              if is_x64 { "x64" } else { "x32" });
             dir
         };
 
-        let machine_lib_dirs = [select_libs_dir("sdl2"),
-                                select_libs_dir("sdl2-image"),
-                                select_libs_dir("sdl2-ttf")];
+        let machine_lib_dirs =
+            [select_libs_dir("sdl2"), select_libs_dir("sdl2-image"), select_libs_dir("sdl2-ttf")];
 
         for dir in &machine_lib_dirs {
 
@@ -72,7 +65,7 @@ fn main() {
                     let target_dir: &String = &win_sdl_dlls_dir;
                     let target_dir_path: &Path = Path::new(target_dir);
                     let target_file_str: OsString = target_dir_path.join(src_file_name)
-                                                                   .into_os_string();
+                        .into_os_string();
                     let target_file_path: &Path = Path::new(&target_file_str);
 
                     if !target_file_path.exists() ||
@@ -82,7 +75,7 @@ fn main() {
                             .expect(format!("Failed to copy windows os dll from {} to {}",
                                             src_file_path.display(),
                                             target_file_path.display())
-                                        .as_str());
+                                            .as_str());
                     }
                 }
             }

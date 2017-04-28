@@ -1,5 +1,3 @@
-
-
 use grid_traits::GridDimensions;
 
 use itertools::Itertools;
@@ -145,11 +143,7 @@ impl GridDimensions for PolarGridDimensions {
 
     fn row_length(&self, row_index: Option<RowIndex>) -> Option<RowLength> {
         match row_index {
-            Some(row) => {
-                self.row_cell_counts
-                    .get(row.0)
-                    .map(|row_len| RowLength(*row_len))
-            }
+            Some(row) => self.row_cell_counts.get(row.0).map(|row_len| RowLength(*row_len)),
             None => None,
         }
     }

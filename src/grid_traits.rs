@@ -1,5 +1,3 @@
-
-
 use cells::{Cell, Coordinate};
 
 use rand::XorShiftRng;

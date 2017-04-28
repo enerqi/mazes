@@ -1,5 +1,3 @@
-
-
 use cells::{Cartesian2DCoordinate, Cell, Coordinate};
 use grid_traits::{GridCoordinates, GridDimensions};
 

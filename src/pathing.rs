@@ -99,17 +99,17 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
                 // All cells except the start cell are by default infinity distance from
                 // the start until we process them, which is represented as Option::None when accessing the map.
                 let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord)
-                    .or_insert_with(Bounded::max_value);
+                                                          .or_insert_with(Bounded::max_value);
                 if distance_to_cell > max {
                     max = distance_to_cell;
                 }
 
-                let links: CellT::CoordinateSmallVec = grid.links(*cell_coord)
-                    .expect("Source cell has an invalid cell coordinate.");
+                let links: CellT::CoordinateSmallVec =
+                    grid.links(*cell_coord).expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
 
-                    let distance_to_link: MaxDistanceT = *distances.entry(*link_coordinate)
-                        .or_insert_with(Bounded::max_value);
+                    let distance_to_link: MaxDistanceT =
+                        *distances.entry(*link_coordinate).or_insert_with(Bounded::max_value);
                     if distance_to_link == Bounded::max_value() {
 
                         distances.insert(*link_coordinate, distance_to_cell + One::one());
@@ -121,11 +121,11 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         }
 
         Some(Distances {
-            start_coordinate: start_coordinate,
-            distances: distances,
-            max_distance: max,
-            cell_type: PhantomData,
-        })
+                 start_coordinate: start_coordinate,
+                 distances: distances,
+                 max_distance: max,
+                 cell_type: PhantomData,
+             })
     }
 
     #[inline]
@@ -189,17 +189,19 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
             .cloned()
             .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
             .collect::<CellT::CoordinateSmallVec>();
-        let neighbour_distances = &linked_neighbours.iter()
-            .map(|coord| {
-                (*coord,
+        let neighbour_distances =
+            &linked_neighbours.iter()
+                 .map(|coord| {
+                          (*coord,
                  distances_from_start.distance_from_start_to(*coord)
                      .expect("Coordinate invalid for distances_from_start data."))
-            })
-            .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
-        let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> = &neighbour_distances.iter()
-            .cloned()
-            .fold1(|closest_accumulator: (CellT::Coord, MaxDistanceT),
-                    closest_candidate: (CellT::Coord, MaxDistanceT)| {
+                      })
+                 .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
+        let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> =
+            &neighbour_distances.iter().cloned().fold1(|closest_accumulator: (CellT::Coord,
+                                                                              MaxDistanceT),
+                                                        closest_candidate: (CellT::Coord,
+                                                                            MaxDistanceT)| {
                 if closest_candidate.1 < closest_accumulator.1 {
                     closest_candidate
                 } else {
@@ -252,7 +254,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
 
     let first_distances = Distances::<CellT, MaxDistanceT>::new(grid,
                                                                 arbitrary_start_point.unwrap())
-        .expect("Invalid start coordinate.");
+            .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
     let long_path_start_coordinate = first_distances.furthest_points_on_grid()[0];
@@ -268,13 +270,13 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
 #[cfg(test)]
 mod tests {
 
+
+    use super::*;
     use cells::{Cartesian2DCoordinate, Cell, SquareCell};
     use grids::{SmallRectangularGrid, small_rect_grid};
 
     use quickcheck::quickcheck;
     use std::u32;
-
-    use super::*;
     use units;
 
 
