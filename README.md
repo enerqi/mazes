@@ -13,7 +13,7 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 
 ## Build Requirements
 
-- Install Rust.
+- Install Rust 1.18+.
 
 On unix/posix family systems install the C libraries:
 - libsdl2-dev
