@@ -1,5 +1,3 @@
-
-
 use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
 use grid::{Grid, IndexType};
 use grid_traits::GridIterators;
@@ -9,27 +7,28 @@ use sdl;
 use sdl::SdlSetup;
 
 use sdl2;
-use sdl2::event::{Event, WindowEventId};
+use sdl2::event::{Event, WindowEvent};
 use sdl2::hint;
+use sdl2::image::SaveSurface;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
-use sdl2::render::Renderer; //  Teuxture
+use sdl2::render::Canvas;
 use sdl2::surface::Surface;
-use sdl2_image::SaveSurface;
-use sdl2_ttf;
 use std::cmp;
 use std::path::Path;
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;
-const BLACK: Color = Color::RGB(0, 0, 0);
-const WHITE: Color = Color::RGB(0xff, 0xff, 0xff);
-const RED: Color = Color::RGB(0xff, 0, 0);
-const GREEN: Color = Color::RGB(0, 0xff, 0);
-const BLUE: Color = Color::RGB(0, 0, 0xff);
-const YELLOW: Color = Color::RGB(0xff, 0xff, 0);
-const HOT_PINK: Color = Color::RGB(255, 105, 180);
 
+lazy_static! {
+    static ref BLACK: Color = Color::RGB(0, 0, 0);
+    static ref WHITE: Color = Color::RGB(0xff, 0xff, 0xff);
+    static ref RED: Color = Color::RGB(0xff, 0, 0);
+    static ref GREEN: Color = Color::RGB(0, 0xff, 0);
+    static ref BLUE: Color = Color::RGB(0, 0, 0xff);
+    static ref YELLOW: Color = Color::RGB(0xff, 0xff, 0);
+    static ref HOT_PINK: Color = Color::RGB(255, 105, 180);
+}
 
 #[derive(Debug)]
 pub struct RenderOptions<'path, 'dist> {
@@ -155,15 +154,15 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    let software_surface =
-        Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
-    let mut software_renderer =
-        Renderer::from_surface(software_surface).expect("Software renderer creation failed.");
+    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888)
+        .expect("Surface creation failed.");
+    let mut surface_canvas = Canvas::from_surface(software_surface)
+        .expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
     // unknown if we just drop into fullscreen.
-    // software_renderer.set_logical_size(logical_w, logical_h).unwrap();
+    // surface_canvas.set_logical_size(logical_w, logical_h).unwrap();
 
     // 0 or 'nearest' == nearest pixel sampling
     // 1 or 'linear' == linear filtering (supported by OpenGL and Direct3D)
@@ -173,14 +172,15 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     // SDL_HINT_RENDER_SCALE_QUALITY applies per texture, not per renderer.
     hint::set("SDL_RENDER_SCALE_QUALITY", "1");
 
-    draw_maze(&mut software_renderer, grid, options, &sdl_setup);
+    draw_maze(&mut surface_canvas, grid, options, &sdl_setup);
 
     // Getting the surface from the renderer drops the renderer.
-    let maze_surface: Surface =
-        software_renderer.into_surface().expect("Failed to get surface from software renderer");
+    let maze_surface: Surface = surface_canvas.into_surface();
 
     if let Some(file_path) = options.output_file {
-        maze_surface.save(file_path).expect("Failed to save surface");
+        maze_surface
+            .save(file_path)
+            .expect("Failed to save surface");
     }
 
     if options.show_on_screen {
@@ -188,7 +188,7 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     }
 }
 
-fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
+fn draw_maze<GridIndexType, Iters>(canvas: &mut Canvas<Surface>,
                                    grid: &Grid<GridIndexType, SquareCell, Iters>,
                                    options: &RenderOptions,
                                    sdl_setup: &SdlSetup)
@@ -196,26 +196,28 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
           Iters: GridIterators<SquareCell>
 {
     // clear the texture background to white
-    r.set_draw_color(WHITE);
-    r.clear();
+    canvas.set_draw_color(*WHITE);
+    canvas.clear();
 
-    let distance_colour = GREEN;
-    let wall_colour = BLUE;
-    r.set_draw_color(wall_colour);
+    let distance_colour = *GREEN;
+    let wall_colour = *BLUE;
+    canvas.set_draw_color(wall_colour);
 
     let cell_size_pixels = options.cell_side_pixels_length as usize;
 
     // Font creation
     let font_path: &Path = Path::new("resources/Roboto-Regular.ttf");
     let font_px_size = ((cell_size_pixels as f32) * 0.8) as u16;
-    let mut font =
-        sdl_setup.ttf_context.load_font(font_path, font_px_size).expect("Failed to load font");
-    font.set_style(sdl2_ttf::STYLE_BOLD);
+    let mut font = sdl_setup
+        .ttf_context
+        .load_font(font_path, font_px_size)
+        .expect("Failed to load font");
+    font.set_style(sdl2::ttf::STYLE_BOLD);
 
     // Start and end symbol letters rendered to different surfaces
-    let s_surface = font.render("S").blended(BLACK).unwrap();
-    let e_white_surface = font.render("E").blended(WHITE).unwrap();
-    let e_black_surface = font.render("E").blended(BLACK).unwrap();
+    let s_surface = font.render("S").blended(*BLACK).unwrap();
+    let e_white_surface = font.render("E").blended(*WHITE).unwrap();
+    let e_black_surface = font.render("E").blended(*BLACK).unwrap();
 
     let calc_cell_screen_coordinates = |cell_coord: Cartesian2DCoordinate| -> (i32, i32, i32, i32) {
         let column = cell_coord.x as usize;
@@ -239,19 +241,27 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
         let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
 
         // special cases north and west to handle first row and column.
-        if grid.neighbour_at_direction(cell, CompassPrimary::North).is_none() {
-            r.draw_line(Point::new(x1, y1), Point::new(x2, y1)).unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::North)
+               .is_none() {
+            canvas
+                .draw_line(Point::new(x1, y1), Point::new(x2, y1))
+                .unwrap();
         }
-        if grid.neighbour_at_direction(cell, CompassPrimary::West).is_none() {
-            r.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::West)
+               .is_none() {
+            canvas
+                .draw_line(Point::new(x1, y1), Point::new(x1, y2))
+                .unwrap();
         }
 
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
             |c: Cartesian2DCoordinate, neighbour_direction: CompassPrimary| -> bool {
-                let cell_links_count_is_zero =
-                    |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
+                let cell_links_count_is_zero = |c| {
+                    grid.links(c)
+                        .map_or(false, |linked_cells| linked_cells.is_empty())
+                };
 
                 if cell_links_count_is_zero(c) {
                     grid.neighbour_at_direction(c, neighbour_direction)
@@ -268,15 +278,20 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                                                                         CompassPrimary::South);
 
         if must_draw_east_wall {
-            r.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
+            canvas
+                .draw_line(Point::new(x2, y1), Point::new(x2, y2))
+                .unwrap();
         }
         if must_draw_south_wall {
-            r.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
+            canvas
+                .draw_line(Point::new(x1, y2), Point::new(x2, y2))
+                .unwrap();
         }
 
         let distance_to_cell = if let Some(dist) = options.distances {
             // The cell maybe unreachable
-            dist.distance_from_start_to(cell).unwrap_or(max_cell_distance)
+            dist.distance_from_start_to(cell)
+                .unwrap_or(max_cell_distance)
         } else {
             0
         };
@@ -301,10 +316,10 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
 
                 // let cell_colour = rainbow_colour(intensity);
 
-                r.set_draw_color(cell_colour);
+                canvas.set_draw_color(cell_colour);
                 let cell_bg_rect = Rect::new(cell_x1, cell_y1, w, h);
-                r.fill_rect(cell_bg_rect).unwrap();
-                r.set_draw_color(wall_colour);
+                canvas.fill_rect(cell_bg_rect).unwrap();
+                canvas.set_draw_color(wall_colour);
             }
 
             if options.mark_start_end {
@@ -316,9 +331,10 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                     distance_to_cell == 0
                 };
                 if is_start {
-                    s_surface.blit(None,
-                                   r.surface_mut().unwrap(),
-                                   Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                    s_surface
+                        .blit(None,
+                              canvas.surface_mut(),
+                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                         .expect("S blit to maze surface failed");
                 }
 
@@ -333,9 +349,10 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                     } else {
                         &e_black_surface
                     };
-                    end_surface.blit(None,
-                                     r.surface_mut().unwrap(),
-                                     Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
+                    end_surface
+                        .blit(None,
+                              canvas.surface_mut(),
+                              Some(Rect::new(cell_x1 + 1, cell_y1 - 1, w - 1, h - 1)))
                         .expect("E blit to maze surface failed");
                 }
             }
@@ -364,7 +381,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 (mid_x, mid_y)
             };
 
-            r.set_draw_color(HOT_PINK);
+            canvas.set_draw_color(*HOT_PINK);
 
             let (skip_amount, take_amount) = if options.mark_start_end {
                 (1, path.len() - 2)
@@ -384,7 +401,7 @@ fn draw_maze<GridIndexType, Iters>(r: &mut Renderer,
                 last_cell_draw_pos = path_line_point_2;
             }
 
-            r.draw_lines(&path_draw_buffer).unwrap();
+            canvas.draw_lines(path_draw_buffer.as_slice()).unwrap();
         }
     }
 }
@@ -399,20 +416,27 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
     let window_w = cmp::min(display_w, maze_w + maze_image_padding);
     let window_h = cmp::min(display_h, maze_h + maze_image_padding);
 
-    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_w, window_h);
-    let window = window_builder.position_centered()
+    let mut window_builder = sdl_setup
+        .video_subsystem
+        .window("Mazes", window_w, window_h);
+    let window = window_builder
+        .position_centered()
         .resizable()
         .allow_highdpi()
         .build()
         .unwrap();
-    let mut renderer = window.renderer()
+    let mut canvas = window
+        .into_canvas()
         .present_vsync()
         .accelerated()
         .target_texture()
         .build()
         .unwrap();
+    let texture_creator = canvas.texture_creator();
 
-    let maze_texture = renderer.create_texture_from_surface(maze_surface).unwrap();
+    let maze_texture = texture_creator
+        .create_texture_from_surface(maze_surface)
+        .unwrap();
     let mut maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
 
     let mut events = sdl_setup.sdl_context.event_pump().unwrap();
@@ -421,10 +445,9 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
             match event {
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Q), .. } => break 'running,
-                Event::Window { win_event_id: WindowEventId::Resized,
-                                data1: new_width,
-                                data2: new_height,
-                                .. } => {
+                Event::Window {
+                    win_event: WindowEvent::Resized(new_width, new_height), ..
+                } => {
                     maze_target_rect =
                         centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
                 }
@@ -434,11 +457,12 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
             }
         }
 
-        renderer.set_draw_color(WHITE);
-        renderer.clear();
-        renderer.copy(&maze_texture, None, Some(maze_target_rect))
+        canvas.set_draw_color(*WHITE);
+        canvas.clear();
+        canvas
+            .copy(&maze_texture, None, Some(maze_target_rect))
             .expect("Maze texture copy failed.");
-        renderer.present();
+        canvas.present();
     }
 }
 
@@ -480,18 +504,12 @@ fn maze_image_dimensions<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType,
 // }
 
 fn colour_mul(colour: Color, scale: f32) -> Color {
-    match colour {
-        Color::RGB(r, g, b) => {
-            Color::RGB((r as f32 * scale) as u8,
-                       (g as f32 * scale) as u8,
-                       (b as f32 * scale) as u8)
-        }
-        Color::RGBA(r, g, b, a) => {
-            Color::RGBA((r as f32 * scale) as u8,
-                        (g as f32 * scale) as u8,
-                        (b as f32 * scale) as u8,
-                        a)
-        }
+
+    Color {
+        r: (colour.r as f32 * scale) as u8,
+        g: (colour.g as f32 * scale) as u8,
+        b: (colour.b as f32 * scale) as u8,
+        a: colour.a,
     }
 }
 

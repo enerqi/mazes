@@ -20,12 +20,12 @@ extern crate bit_set;
 extern crate fnv;
 extern crate image;
 extern crate itertools;
+#[macro_use]
+extern crate lazy_static;
 extern crate num;
 extern crate petgraph;
 extern crate rand;
 extern crate sdl2;
-extern crate sdl2_image;
-extern crate sdl2_ttf;
 extern crate smallvec;
 
 #[cfg(test)]
