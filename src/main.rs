@@ -10,7 +10,10 @@ extern crate docopt;
 extern crate error_chain;
 extern crate image;
 extern crate mazes;
-extern crate rustc_serialize;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+
 
 
 use docopt::Docopt;
@@ -62,7 +65,7 @@ Options:
     --block-passages=<n>   Randomly choose n cells to block a passage from.
     --save-edges=<path>    Serialize the maze to a text file: each line is a pair of numbers. Line 1: n(#vertices) m(#edges). Line 2+ edge between vertices. Uses 1-based vertex indices.
 ";
-#[derive(RustcDecodable, Debug)]
+#[derive(Debug, Deserialize)]
 struct MazeArgs {
     flag_grid_size: Option<usize>,
     flag_grid_width: usize,
@@ -118,7 +121,7 @@ quick_main!(run);
 
 fn run() -> Result<()> {
 
-    let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.decode())?;
+    let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.deserialize())?;
 
     let large_grid_cell_count = 25 * 25;
     let (width, height) = if let Some(square_grid_size) = args.flag_grid_size {

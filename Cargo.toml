@@ -8,7 +8,7 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 bit-set = "^0.4.0"
-docopt = "^0.7.0"
+docopt = "^0.8.0"
 error-chain = "^0.10.0"
 fnv = "^1.0.2"
 image = "^0.13.0"
@@ -16,10 +16,11 @@ itertools = "^0.6.0"
 num = "^0.1.31"
 petgraph = "^0.4.0"
 rand = "^0.3.10"
-rustc-serialize = "^0.3.18"
 sdl2 = "^0.25.0"
 sdl2_image = "^0.25.0"
 sdl2_ttf = "^0.25.0"
+serde = "^1.0"
+serde_derive = "^1.0"
 smallvec = "^0.3.1"
 
 clippy = { version = "*", optional = true }
