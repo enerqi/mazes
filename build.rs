@@ -47,8 +47,9 @@ fn main() {
             dir
         };
 
-        let machine_lib_dirs =
-            [select_libs_dir("sdl2"), select_libs_dir("sdl2-image"), select_libs_dir("sdl2-ttf")];
+        let machine_lib_dirs = [select_libs_dir("sdl2"),
+                                select_libs_dir("sdl2-image"),
+                                select_libs_dir("sdl2-ttf")];
 
         for dir in &machine_lib_dirs {
 
@@ -64,8 +65,8 @@ fn main() {
                     let src_file_name: &OsStr = entry.file_name();
                     let target_dir: &String = &win_sdl_dlls_dir;
                     let target_dir_path: &Path = Path::new(target_dir);
-                    let target_file_str: OsString = target_dir_path.join(src_file_name)
-                        .into_os_string();
+                    let target_file_str: OsString =
+                        target_dir_path.join(src_file_name).into_os_string();
                     let target_file_path: &Path = Path::new(&target_file_str);
 
                     if !target_file_path.exists() ||

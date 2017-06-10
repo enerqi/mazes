@@ -50,11 +50,12 @@ impl<CellT: Cell> GridCoordinates<CellT> for PolarGridCoordinates {
 
             let row_num = grid_2d_coord.y;
 
-            dimensions.nodes_count_up_to(RowIndex(row_num as usize))
+            dimensions
+                .nodes_count_up_to(RowIndex(row_num as usize))
                 .map(|node_count| {
-                    let NodesCount(count) = node_count;
-                    grid_2d_coord.x as usize + count
-                })
+                         let NodesCount(count) = node_count;
+                         grid_2d_coord.x as usize + count
+                     })
         } else {
             None
         }

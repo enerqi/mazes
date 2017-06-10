@@ -19,9 +19,9 @@ const FULLMASK_IMAGE_PATH: &str = "resources/mask-all-60x60.png";
 
 
 fn open_test_image(file_path_str: &str) -> DynamicImage {
-    let img = image::open(&Path::new(file_path_str))
-        .expect(format!("Unable to open and read test mask image file {}",
-                        file_path_str)
+    let img =
+        image::open(&Path::new(file_path_str))
+            .expect(format!("Unable to open and read test mask image file {}", file_path_str)
                         .as_ref());
     assert_eq!(img.width(), 60);
     assert_eq!(img.height(), 60);

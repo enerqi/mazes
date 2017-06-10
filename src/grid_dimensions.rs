@@ -108,7 +108,8 @@ impl PolarGridDimensions {
             cell_counts[y] = num_cells;
         }
 
-        let per_row_cumulative_node_count = cell_counts.iter()
+        let per_row_cumulative_node_count = cell_counts
+            .iter()
             .scan(0, |accumulator: &mut usize, cells_in_row: &usize| {
                 *accumulator = *accumulator + cells_in_row;
                 Some(*accumulator)
@@ -116,10 +117,7 @@ impl PolarGridDimensions {
             .map(NodesCount)
             .collect();
 
-        let size = cell_counts.iter()
-            .cloned()
-            .fold1(|x, y| x + y)
-            .unwrap_or(0);
+        let size = cell_counts.iter().cloned().fold1(|x, y| x + y).unwrap_or(0);
 
         PolarGridDimensions {
             row_cell_counts: cell_counts,
@@ -162,10 +160,8 @@ impl GridDimensions for PolarGridDimensions {
 
     fn graph_size(&self) -> (NodesCount, EdgesCount) {
         let cells_count = self.size();
-        let edges_count_hint = self.row_cell_counts
-            .last()
-            .map(|&outer_row| outer_row * 2 * 4)
-            .unwrap_or(0);
+        let edges_count_hint =
+            self.row_cell_counts.last().map(|&outer_row| outer_row * 2 * 4).unwrap_or(0);
         (cells_count, EdgesCount(edges_count_hint))
     }
 

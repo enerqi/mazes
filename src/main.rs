@@ -325,9 +325,9 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                                      -> Result<Vec<Cartesian2DCoordinate>> {
 
     let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
-           maze_args.flag_start_point_y,
-           maze_args.flag_end_point_x,
-           maze_args.flag_end_point_y) {
+                                                  maze_args.flag_start_point_y,
+                                                  maze_args.flag_end_point_x,
+                                                  maze_args.flag_end_point_y) {
         (Some(_), Some(_), Some(_), Some(_)) => None,
         (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
         (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),
@@ -405,7 +405,10 @@ fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
 
 fn as_coordinate_smallvec(coord: Cartesian2DCoordinate)
                           -> <SquareCell as Cell>::CoordinateSmallVec {
-    [coord].into_iter().cloned().collect::<<SquareCell as Cell>::CoordinateSmallVec>()
+    [coord]
+        .into_iter()
+        .cloned()
+        .collect::<<SquareCell as Cell>::CoordinateSmallVec>()
 }
 
 fn load_binary_mask(file_path_str: &str) -> Result<BinaryMask2D> {
@@ -432,9 +435,11 @@ fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
     graph_data.push('\n');
 
     for (src, dst) in maze_grid.iter_links() {
-        let index_a = maze_grid.grid_coordinate_to_index(src)
+        let index_a = maze_grid
+            .grid_coordinate_to_index(src)
             .expect("Links iter should give valid coordinate");
-        let index_b = maze_grid.grid_coordinate_to_index(dst)
+        let index_b = maze_grid
+            .grid_coordinate_to_index(dst)
             .expect("Links iter should give valid coordinate");
         let src_as_1_based_index = index_a + 1;
         let dst_as_1_based_index = index_b + 1;

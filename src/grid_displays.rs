@@ -174,8 +174,8 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
 
                 // Cell Body
                 if let Some(ref displayer) = *self.grid_display() {
-                    row_middle_section_render.push_str(displayer.render_cell_body(cell_coord)
-                                                           .as_str());
+                    row_middle_section_render
+                        .push_str(displayer.render_cell_body(cell_coord).as_str());
                 } else {
                     row_middle_section_render.push_str(default_cell_body.as_str());
                 }

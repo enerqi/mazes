@@ -87,10 +87,13 @@ impl Cell for SquareCell {
     type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
     fn offset_directions(_: Option<Self::Coord>, _: &GridDimensions) -> Self::DirectionSmallVec {
-        [CompassPrimary::North, CompassPrimary::South, CompassPrimary::East, CompassPrimary::West]
-            .into_iter()
-            .cloned()
-            .collect::<Self::DirectionSmallVec>()
+        [CompassPrimary::North,
+         CompassPrimary::South,
+         CompassPrimary::East,
+         CompassPrimary::West]
+                .into_iter()
+                .cloned()
+                .collect::<Self::DirectionSmallVec>()
     }
 
     fn offset_coordinate(coord: Self::Coord,
@@ -228,7 +231,8 @@ impl Cell for PolarCell {
 
             if let Some(RowLength(next_len)) = next_row_length {
 
-                let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
+                let RowLength(row_len) = dimensions
+                    .row_length(Some(RowIndex(y as usize)))
                     .expect("Invalid current row index");
                 let ratio = next_len / row_len;
 
@@ -276,11 +280,11 @@ impl Cell for PolarCell {
                 if y != 0 {
 
                     if y != 1 {
-                        let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
+                        let RowLength(row_len) = dimensions
+                            .row_length(Some(RowIndex(y as usize)))
                             .expect("Invalid current row index");
-                        let RowLength(prev_row_length) = dimensions.row_length(Some(RowIndex(y as
-                                                                                             usize -
-                                                                                             1)))
+                        let RowLength(prev_row_length) = dimensions
+                            .row_length(Some(RowIndex(y as usize - 1)))
                             .expect("Invalid prev row index");
 
                         if row_len == prev_row_length {
@@ -302,7 +306,8 @@ impl Cell for PolarCell {
                 }
             }
             ClockDirection::Outward(n) => {
-                let RowLength(row_len) = dimensions.row_length(Some(RowIndex(y as usize)))
+                let RowLength(row_len) = dimensions
+                    .row_length(Some(RowIndex(y as usize)))
                     .expect("Invalid current row index");
                 let next_row_length = dimensions.row_length(Some(RowIndex(y as usize + 1)));
                 if let Some(RowLength(next_len)) = next_row_length {

@@ -24,7 +24,8 @@ pub trait GridCoordinates<CellT: Cell> {
     fn is_valid_coordinate(&self, coord: CellT::Coord, dimensions: &Rc<GridDimensions>) -> bool {
 
         let grid_2d_coord = coord.as_cartesian_2d();
-        let RowLength(width) = dimensions.row_length(Some(RowIndex(grid_2d_coord.y as usize)))
+        let RowLength(width) = dimensions
+            .row_length(Some(RowIndex(grid_2d_coord.y as usize)))
             .expect("RowIndex invalid");
         let ColumnLength(height) =
             dimensions.column_length(Some(ColumnIndex(grid_2d_coord.x as usize)));

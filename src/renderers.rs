@@ -178,9 +178,7 @@ pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, Squar
     let maze_surface: Surface = surface_canvas.into_surface();
 
     if let Some(file_path) = options.output_file {
-        maze_surface
-            .save(file_path)
-            .expect("Failed to save surface");
+        maze_surface.save(file_path).expect("Failed to save surface");
     }
 
     if options.show_on_screen {
@@ -241,27 +239,19 @@ fn draw_maze<GridIndexType, Iters>(canvas: &mut Canvas<Surface>,
         let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
 
         // special cases north and west to handle first row and column.
-        if grid.neighbour_at_direction(cell, CompassPrimary::North)
-               .is_none() {
-            canvas
-                .draw_line(Point::new(x1, y1), Point::new(x2, y1))
-                .unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::North).is_none() {
+            canvas.draw_line(Point::new(x1, y1), Point::new(x2, y1)).unwrap();
         }
-        if grid.neighbour_at_direction(cell, CompassPrimary::West)
-               .is_none() {
-            canvas
-                .draw_line(Point::new(x1, y1), Point::new(x1, y2))
-                .unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::West).is_none() {
+            canvas.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
             |c: Cartesian2DCoordinate, neighbour_direction: CompassPrimary| -> bool {
-                let cell_links_count_is_zero = |c| {
-                    grid.links(c)
-                        .map_or(false, |linked_cells| linked_cells.is_empty())
-                };
+                let cell_links_count_is_zero =
+                    |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
 
                 if cell_links_count_is_zero(c) {
                     grid.neighbour_at_direction(c, neighbour_direction)
@@ -278,20 +268,15 @@ fn draw_maze<GridIndexType, Iters>(canvas: &mut Canvas<Surface>,
                                                                         CompassPrimary::South);
 
         if must_draw_east_wall {
-            canvas
-                .draw_line(Point::new(x2, y1), Point::new(x2, y2))
-                .unwrap();
+            canvas.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
         }
         if must_draw_south_wall {
-            canvas
-                .draw_line(Point::new(x1, y2), Point::new(x2, y2))
-                .unwrap();
+            canvas.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
         }
 
         let distance_to_cell = if let Some(dist) = options.distances {
             // The cell maybe unreachable
-            dist.distance_from_start_to(cell)
-                .unwrap_or(max_cell_distance)
+            dist.distance_from_start_to(cell).unwrap_or(max_cell_distance)
         } else {
             0
         };
@@ -395,8 +380,8 @@ fn draw_maze<GridIndexType, Iters>(canvas: &mut Canvas<Surface>,
                 let path_line_point_1 = last_cell_draw_pos;
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
-                path_draw_buffer.extend(&[Point::from(path_line_point_1),
-                                          Point::from(path_line_point_2)]);
+                path_draw_buffer
+                    .extend(&[Point::from(path_line_point_1), Point::from(path_line_point_2)]);
 
                 last_cell_draw_pos = path_line_point_2;
             }
@@ -416,15 +401,8 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
     let window_w = cmp::min(display_w, maze_w + maze_image_padding);
     let window_h = cmp::min(display_h, maze_h + maze_image_padding);
 
-    let mut window_builder = sdl_setup
-        .video_subsystem
-        .window("Mazes", window_w, window_h);
-    let window = window_builder
-        .position_centered()
-        .resizable()
-        .allow_highdpi()
-        .build()
-        .unwrap();
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_w, window_h);
+    let window = window_builder.position_centered().resizable().allow_highdpi().build().unwrap();
     let mut canvas = window
         .into_canvas()
         .present_vsync()
@@ -434,9 +412,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
         .unwrap();
     let texture_creator = canvas.texture_creator();
 
-    let maze_texture = texture_creator
-        .create_texture_from_surface(maze_surface)
-        .unwrap();
+    let maze_texture = texture_creator.create_texture_from_surface(maze_surface).unwrap();
     let mut maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
 
     let mut events = sdl_setup.sdl_context.event_pump().unwrap();

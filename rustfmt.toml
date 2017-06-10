@@ -1,3 +1,7 @@
-format_strings = false
-newline_style = "Unix"
+array_width = 80
+chain_one_line_max = 80
+fn_call_width = 80
+newline_style = "Native"
 reorder_imports = true
+reorder_imported_names = true
+reorder_imports_in_group = true

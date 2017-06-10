@@ -98,8 +98,8 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
 
                 // All cells except the start cell are by default infinity distance from
                 // the start until we process them, which is represented as Option::None when accessing the map.
-                let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord)
-                                                          .or_insert_with(Bounded::max_value);
+                let distance_to_cell: MaxDistanceT =
+                    *distances.entry(*cell_coord).or_insert_with(Bounded::max_value);
                 if distance_to_cell > max {
                     max = distance_to_cell;
                 }
@@ -181,8 +181,10 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
 
     while current_coord != start {
 
-        let current_distance_to_start = distances_from_start.distance_from_start_to(current_coord)
-            .expect("Coordinate invalid for distances_from_start data.");
+        let current_distance_to_start =
+            distances_from_start
+                .distance_from_start_to(current_coord)
+                .expect("Coordinate invalid for distances_from_start data.");
 
         let linked_neighbours = grid.neighbours(current_coord)
             .iter()
@@ -190,24 +192,27 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
             .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
             .collect::<CellT::CoordinateSmallVec>();
         let neighbour_distances =
-            &linked_neighbours.iter()
+            &linked_neighbours
+                 .iter()
                  .map(|coord| {
                           (*coord,
-                 distances_from_start.distance_from_start_to(*coord)
-                     .expect("Coordinate invalid for distances_from_start data."))
+                           distances_from_start
+                               .distance_from_start_to(*coord)
+                               .expect("Coordinate invalid for distances_from_start data."))
                       })
                  .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
         let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> =
-            &neighbour_distances.iter().cloned().fold1(|closest_accumulator: (CellT::Coord,
-                                                                              MaxDistanceT),
-                                                        closest_candidate: (CellT::Coord,
-                                                                            MaxDistanceT)| {
-                if closest_candidate.1 < closest_accumulator.1 {
-                    closest_candidate
-                } else {
-                    closest_accumulator
-                }
-            });
+            &neighbour_distances
+                 .iter()
+                 .cloned()
+                 .fold1(|closest_accumulator: (CellT::Coord, MaxDistanceT),
+                         closest_candidate: (CellT::Coord, MaxDistanceT)| {
+                            if closest_candidate.1 < closest_accumulator.1 {
+                                closest_candidate
+                            } else {
+                                closest_accumulator
+                            }
+                        });
 
         if let Some((closer_coord, closer_distance)) = *closest_to_start {
 
@@ -335,8 +340,7 @@ mod tests {
         let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
         let distances = small_distances(&g, start_coordinate).unwrap();
-        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
-                   None);
+        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE), None);
     }
 
     #[test]
