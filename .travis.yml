@@ -1,9 +1,10 @@
 sudo: required # necessary to add the sdl2-snapshots ppa
+dist: trusty
 language: rust
 
 before_install:
   # sdl2 C libraries
-  - sudo add-apt-repository ppa:zoogie/sdl2-snapshots/ppa -y
+  - sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y
   - sudo apt-get update -q
 
 install:
