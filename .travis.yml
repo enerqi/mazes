@@ -1,20 +1,26 @@
 sudo: required # necessary to add the sdl2-snapshots ppa
 dist: trusty
 language: rust
-
-before_install:
-  # sdl2 C libraries
-  - sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y
-  - sudo apt-get update -q
     
 install:
-  # sdl2 C libraries, overwrite the default sdl2
+  # sdl2 C libraries, build from source as PPA not up to date with SDL2 2.0.5
   - sudo apt-get install libsdl2-ttf-dev libsdl2-image-dev
   - hg clone https://hg.libsdl.org/SDL SDL
   - cd SDL && mkdir build && cd build
   - ../configure
   - make
   - sudo make install
+  - cd ../..
+  - wget https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.1.zip && unzip SDL2_image-2.0.1.zip && cd SDL2_image-2.0.1
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
+  - wget https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14.zip && unzip SDL2_ttf-2.0.14.zip && cd SDL2_ttf-2.0.14
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
 
 addons:
   apt:
