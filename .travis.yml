@@ -4,7 +4,6 @@ language: rust
     
 install:
   # sdl2 C libraries, build from source as PPA not up to date with SDL2 2.0.5
-  - sudo apt-get install libsdl2-ttf-dev libsdl2-image-dev
   - hg clone https://hg.libsdl.org/SDL SDL
   - cd SDL && mkdir build && cd build
   - ../configure
