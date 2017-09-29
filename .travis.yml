@@ -6,15 +6,14 @@ before_install:
   # sdl2 C libraries
   - sudo add-apt-repository ppa:zoogie/sdl2-snapshots -y
   - sudo apt-get update -q
+    
+install:
+  # sdl2 C libraries, overwrite the default sdl2
+  - sudo apt-get install libsdl2-ttf-dev libsdl2-image-dev
   - hg clone https://hg.libsdl.org/SDL SDL
   - cd SDL && mkdir build && cd build
   - ../configure
   - make
-  
-install:
-  # sdl2 C libraries, overwrite the default sdl2
-  - sudo apt-get install libsdl2-ttf-dev libsdl2-image-dev
-  - cd SDL/build
   - sudo make install
 
 addons:
