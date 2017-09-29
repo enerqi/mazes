@@ -16,7 +16,7 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 - Install Rust 1.18+.
 
 On unix/posix family systems install the C libraries:
-- libsdl2-dev
+- libsdl2-dev  >= 2.0.5
 - libsdl2-ttf-dev
 - libsdl2-image-dev
 
