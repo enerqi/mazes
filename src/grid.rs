@@ -301,7 +301,7 @@ pub struct LinksIter<'a, CellT: Cell, GridIndexType: IndexType> {
     cell_type: PhantomData<CellT>,
 }
 
-impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'_, CellT, GridIndexType> {
     type Item = (CellT::Coord, CellT::Coord);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -320,11 +320,11 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT
         self.graph_edge_iter.size_hint()
     }
 }
-impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
-    for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
+    for LinksIter<'_, CellT, GridIndexType> {
 } // default impl using size_hint()
 
-impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'_, CellT, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "LinksIter :: edges iter : {:?}", self.graph_edge_iter)
     }

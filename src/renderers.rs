@@ -48,7 +48,7 @@ pub struct RenderOptions<'path, 'dist> {
 pub struct RenderOptionsBuilder<'path, 'dist> {
     options: RenderOptions<'path, 'dist>,
 }
-impl<'path, 'dist> Default for RenderOptionsBuilder<'path, 'dist> {
+impl<> Default for RenderOptionsBuilder<'_, '_> {
     fn default() -> Self {
         RenderOptionsBuilder::new()
     }

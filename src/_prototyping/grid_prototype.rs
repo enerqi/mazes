@@ -91,8 +91,8 @@ pub struct Iter<'a> {
     current: usize,
     size: usize,
 }
-impl<'a> Iterator for Iter<'a> {
-    type Item = &'a GridCell;
+impl<'a> Iterator for Iter<'_> {
+    type Item = &GridCell;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current < self.size {
             let gridcell_ref = &self.cells[self.current];
