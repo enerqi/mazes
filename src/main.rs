@@ -115,11 +115,7 @@ mod errors {
 }
 use crate::errors::*;
 
-// Generate a `fn main` that if the result of `run` is an Error, writes the
-// error chain to stderr and exits with code 1.
-quick_main!(run);
-
-fn run() -> Result<()> {
+fn main() -> Result<()> {
 
     let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.deserialize())?;
 
