@@ -417,8 +417,8 @@ fn load_binary_mask(file_path_str: &str) -> Result<BinaryMask2D> {
 }
 
 fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
-    let mut f = r#try!(File::create(file_name));
-    r#try!(f.write_all(data.as_bytes()));
+    let mut f = File::create(file_name)?;
+    f.write_all(data.as_bytes())?;
     Ok(())
 }
 
