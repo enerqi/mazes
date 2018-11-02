@@ -1,12 +1,15 @@
-use crate::cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
-use crate::grid::{Grid, IndexType};
-use crate::grid_traits::{GridDisplay, GridIterators};
-use crate::pathing::{Distances, MaxDistance};
-use std::fmt;
-use std::marker::PhantomData;
-use crate::units::{ColumnsCount, RowsCount};
-use crate::utils::FnvHashSet;
-
+use crate::{
+    cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell},
+    grid::{Grid, IndexType},
+    grid_traits::{GridDisplay, GridIterators},
+    pathing::{Distances, MaxDistance},
+    units::{ColumnsCount, RowsCount},
+    utils::FnvHashSet
+};
+use std::{
+    fmt,
+    marker::PhantomData
+};
 
 impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
     where CellT: Cell,

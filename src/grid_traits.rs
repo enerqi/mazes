@@ -1,9 +1,10 @@
-use crate::cells::{Cell, Coordinate};
+use crate::{
+    cells::{Cell, Coordinate},
+    units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength, RowsCount}
+};
 
 use rand::XorShiftRng;
 use std::rc::Rc;
-use crate::units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
-            RowsCount};
 
 
 pub trait GridDimensions {

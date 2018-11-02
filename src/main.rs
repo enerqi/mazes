@@ -7,23 +7,27 @@
 
 use docopt::Docopt;
 use serde_derive::Deserialize;
-use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
-use mazes::generators;
-use mazes::grid::Grid;
-use mazes::grid_coordinates::RectGridCoordinates;
-use mazes::grid_dimensions::RectGridDimensions;
-use mazes::grid_displays::{PathDisplay, StartEndPointsDisplay};
-use mazes::grid_iterators::RectGridIterators;
-use mazes::grid_traits::GridDisplay;
-use mazes::masks::BinaryMask2D;
-use mazes::pathing;
-use mazes::renderers;
-use mazes::units;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::path::Path;
-use std::rc::Rc;
+use mazes::{
+    cells::{Cartesian2DCoordinate, Cell, SquareCell},
+    generators,
+    grid::Grid,
+    grid_coordinates::RectGridCoordinates,
+    grid_dimensions::RectGridDimensions,
+    grid_displays::{PathDisplay, StartEndPointsDisplay},
+    grid_iterators::RectGridIterators,
+    grid_traits::GridDisplay,
+    masks::BinaryMask2D,
+    pathing,
+    renderers,
+    units,
+};
+use std::{
+    io,
+    io::prelude::*,
+    fs::File,
+    path::Path,
+    rc::Rc
+};
 
 const USAGE: &str = "Mazes
 

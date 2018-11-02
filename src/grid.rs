@@ -1,19 +1,25 @@
 #![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
 
 
-use crate::cells::{Cell, Coordinate};
-use crate::grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
+use crate::{
+    cells::{Cell, Coordinate},
+    grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators},
+    units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount}
+};
 
-use petgraph::{Graph, Undirected};
-use petgraph::graph;
+use petgraph::{
+    Graph,
+    Undirected,
+    graph
+};
 pub use petgraph::graph::IndexType;
 use rand::XorShiftRng;
-use std::fmt;
-use std::marker::PhantomData;
-use std::rc::Rc;
-use std::slice;
-use crate::units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount};
-
+use std::{
+    fmt,
+    marker::PhantomData,
+    rc::Rc,
+    slice
+};
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
     graph: Graph<(), (), Undirected, GridIndexType>,

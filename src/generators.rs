@@ -1,16 +1,18 @@
 use bit_set::BitSet;
 
-use crate::cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
-use crate::grid::{Grid, IndexType};
-use crate::grid_traits::GridIterators;
-use crate::masks::BinaryMask2D;
+use crate::{
+    cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell},
+    grid_traits::GridIterators,
+    grid::{Grid, IndexType},
+    masks::BinaryMask2D,
+    units::{ColumnLength, Height, RowLength, Width},
+    utils,
+    utils::FnvHashSet
+};
 use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 use std::cmp;
-use crate::units::{ColumnLength, Height, RowLength, Width};
-use crate::utils;
-use crate::utils::FnvHashSet;
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage

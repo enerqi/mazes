@@ -1,14 +1,17 @@
-use crate::grid_traits::GridDimensions;
+use crate::{
+    grid_traits::GridDimensions,
+    units::{ColumnIndex, RowIndex, RowLength}
+};
 
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
-use std::convert::From;
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::iter::FromIterator;
-use std::iter::Iterator;
-use std::ops::Deref;
-use crate::units::{ColumnIndex, RowIndex, RowLength};
+use std::{
+    convert::From,
+    fmt::Debug,
+    hash::Hash,
+    iter::{FromIterator, Iterator},
+    ops::Deref
+};
 
 pub trait Coordinate
     : PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {

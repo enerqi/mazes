@@ -1,22 +1,27 @@
-use crate::cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
-use crate::grid::{Grid, IndexType};
-use crate::grid_traits::GridIterators;
-use crate::pathing;
-
-use crate::sdl;
-use crate::sdl::SdlSetup;
+use crate::{
+    cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell},
+    grid_traits::GridIterators,
+    grid::{Grid, IndexType},
+    pathing,
+    sdl,
+    sdl::SdlSetup
+};
 
 use lazy_static::*; // macro
 use sdl2;
-use sdl2::event::{Event, WindowEvent};
-use sdl2::hint;
-use sdl2::image::SaveSurface;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::{Point, Rect};
-use sdl2::render::Canvas;
-use sdl2::surface::Surface;
-use std::cmp;
-use std::path::Path;
+use sdl2::{
+    event::{Event, WindowEvent},
+    hint,
+    image::SaveSurface,
+    pixels::{Color, PixelFormatEnum},
+    rect::{Point, Rect},
+    render::Canvas,
+    surface::Surface
+};
+use std::{
+    cmp,
+    path::Path
+};
 
 const WINDOW_W: u32 = 1920;
 const WINDOW_H: u32 = 1080;

@@ -1,10 +1,9 @@
-use crate::grid_traits::GridDimensions;
-
+use crate::{
+    grid_traits::GridDimensions,
+    units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength, RowsCount}
+};
 use itertools::Itertools;
 use std::cmp;
-use crate::units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
-            RowsCount};
-
 
 #[derive(Debug, Copy, Clone)]
 pub struct RectGridDimensions {

@@ -29,20 +29,24 @@
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
 
-use crate::cells::{Cell, Coordinate};
-use crate::grid::{Grid, IndexType};
-use crate::grid_traits::GridIterators;
+use crate::{
+    cells::{Cell, Coordinate},
+    grid_traits::GridIterators,
+    grid::{Grid, IndexType},
+    masks::BinaryMask2D,
+    units::{ColumnIndex, RowIndex},
+    utils,
+    utils::FnvHashMap,
+};
 
 use itertools::Itertools;
-use crate::masks::BinaryMask2D;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
-use std::fmt::{Debug, Display, LowerHex};
-use std::marker::PhantomData;
-use std::ops::Add;
-use crate::units::{ColumnIndex, RowIndex};
-use crate::utils;
-use crate::utils::FnvHashMap;
+use std::{
+    fmt::{Debug, Display, LowerHex},
+    marker::PhantomData,
+    ops::Add
+};
 
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time

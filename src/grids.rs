@@ -1,11 +1,13 @@
-use crate::cells::SquareCell;
-use crate::grid::Grid;
-use crate::grid_coordinates::RectGridCoordinates;
-use crate::grid_dimensions::RectGridDimensions;
-use crate::grid_iterators::RectGridIterators;
+use crate::{
+    cells::SquareCell,
+    grid::Grid,
+    grid_coordinates::RectGridCoordinates,
+    grid_dimensions::RectGridDimensions,
+    grid_iterators::RectGridIterators,
+    units::{ColumnLength, RowLength}
+};
 use std::{u16, u32, u8};
 use std::rc::Rc;
-use crate::units::{ColumnLength, RowLength};
 
 pub type SmallRectangularGrid = Grid<u8, SquareCell, RectGridIterators>;
 pub type MediumRectangularGrid = Grid<u16, SquareCell, RectGridIterators>;
