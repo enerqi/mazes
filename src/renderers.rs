@@ -6,6 +6,7 @@ use crate::pathing;
 use crate::sdl;
 use crate::sdl::SdlSetup;
 
+use lazy_static::*; // macro
 use sdl2;
 use sdl2::event::{Event, WindowEvent};
 use sdl2::hint;

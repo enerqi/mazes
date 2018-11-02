@@ -5,13 +5,8 @@
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
-#[macro_use]
-extern crate error_chain;
-#[macro_use]
-extern crate serde_derive;
-
 use docopt::Docopt;
-
+use serde_derive::Deserialize;
 use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
 use mazes::generators;
 use mazes::grid::Grid;
@@ -99,6 +94,7 @@ mod errors {
     // Result is a typedef of std `Result` with the error type our own `Error`
     // Defines the From conversions that let try! and ? work for our `Error`.
     // ResultExt adds the `chain_err` trait method.
+    use error_chain::*;
     error_chain! {
 
         foreign_links {

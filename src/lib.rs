@@ -16,9 +16,6 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", allow(similar_names))]
 
-#[macro_use]
-extern crate lazy_static;
-
 pub mod cells;
 pub mod generators;
 pub mod grid;
