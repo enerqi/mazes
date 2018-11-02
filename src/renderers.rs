@@ -1,10 +1,10 @@
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
-use pathing;
+use crate::cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
+use crate::grid::{Grid, IndexType};
+use crate::grid_traits::GridIterators;
+use crate::pathing;
 
-use sdl;
-use sdl::SdlSetup;
+use crate::sdl;
+use crate::sdl::SdlSetup;
 
 use sdl2;
 use sdl2::event::{Event, WindowEvent};

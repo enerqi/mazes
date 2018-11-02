@@ -46,11 +46,6 @@ debug = true
 [profile.bench]
 debug = true
 
-[[bin]]
-name = "mazes_driver"
-test = false
-bench = false
-
 [[bench]]
 name = "generators"
 path = "./benches/generators.rs"

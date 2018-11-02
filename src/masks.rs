@@ -1,8 +1,8 @@
 use bit_set::BitSet;
 
-use cells::{Cartesian2DCoordinate, Coordinate};
+use crate::cells::{Cartesian2DCoordinate, Coordinate};
 use image::{DynamicImage, GenericImage, Luma};
-use units::{ColumnIndex, Height, RowIndex, Width};
+use crate::units::{ColumnIndex, Height, RowIndex, Width};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {

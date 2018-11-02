@@ -1,16 +1,16 @@
 use bit_set::BitSet;
 
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
-use masks::BinaryMask2D;
+use crate::cells::{Cartesian2DCoordinate, Cell, CompassPrimary, Coordinate, SquareCell};
+use crate::grid::{Grid, IndexType};
+use crate::grid_traits::GridIterators;
+use crate::masks::BinaryMask2D;
 use rand;
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
 use std::cmp;
-use units::{ColumnLength, Height, RowLength, Width};
-use utils;
-use utils::FnvHashSet;
+use crate::units::{ColumnLength, Height, RowLength, Width};
+use crate::utils;
+use crate::utils::FnvHashSet;
 
 /// Apply the binary tree maze generation algorithm to a grid
 /// It works simply by visiting each cell in the grid and choosing to carve a passage
@@ -621,7 +621,7 @@ fn undo_cell_visit<GridIndexType, CellT, Iters>(cell: CellT::Coord,
 
 fn random_unvisited_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                                       visited_set_with_count: (&BitSet, usize),
-                                                      mut rng: &mut XorShiftRng)
+                                                      rng: &mut XorShiftRng)
                                                       -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -649,7 +649,7 @@ fn random_unvisited_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType,
 fn random_unmasked_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                                      mask_with_unmasked_count: (&BinaryMask2D,
                                                                                 usize),
-                                                     mut rng: &mut XorShiftRng)
+                                                     rng: &mut XorShiftRng)
                                                      -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -726,7 +726,7 @@ fn random_unmasked_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
                                                                       CellT,
                                                                       Iters>,
                                                           mask: &BinaryMask2D,
-                                                          mut rng: &mut XorShiftRng)
+                                                          rng: &mut XorShiftRng)
                                                           -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,

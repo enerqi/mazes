@@ -29,20 +29,20 @@
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
 
-use cells::{Cell, Coordinate};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
+use crate::cells::{Cell, Coordinate};
+use crate::grid::{Grid, IndexType};
+use crate::grid_traits::GridIterators;
 
 use itertools::Itertools;
-use masks::BinaryMask2D;
+use crate::masks::BinaryMask2D;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 use std::fmt::{Debug, Display, LowerHex};
 use std::marker::PhantomData;
 use std::ops::Add;
-use units::{ColumnIndex, RowIndex};
-use utils;
-use utils::FnvHashMap;
+use crate::units::{ColumnIndex, RowIndex};
+use crate::utils;
+use crate::utils::FnvHashMap;
 
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
@@ -277,12 +277,12 @@ mod tests {
 
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, Cell, SquareCell};
-    use grids::{SmallRectangularGrid, small_rect_grid};
+    use crate::cells::{Cartesian2DCoordinate, Cell, SquareCell};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use quickcheck::quickcheck;
     use std::u32;
-    use units;
+    use crate::units;
 
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {

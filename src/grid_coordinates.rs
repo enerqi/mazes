@@ -1,9 +1,9 @@
-use cells::{Cartesian2DCoordinate, Cell, Coordinate};
-use grid_traits::{GridCoordinates, GridDimensions};
+use crate::cells::{Cartesian2DCoordinate, Cell, Coordinate};
+use crate::grid_traits::{GridCoordinates, GridDimensions};
 
 use rand::{Rng, XorShiftRng};
 use std::rc::Rc;
-use units::{NodesCount, RowIndex, RowLength};
+use crate::units::{NodesCount, RowIndex, RowLength};
 
 
 #[derive(Debug, Copy, Clone)]

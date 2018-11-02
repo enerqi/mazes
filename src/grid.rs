@@ -1,8 +1,8 @@
 #![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
 
 
-use cells::{Cell, Coordinate};
-use grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
+use crate::cells::{Cell, Coordinate};
+use crate::grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
 
 use petgraph::{Graph, Undirected};
 use petgraph::graph;
@@ -12,7 +12,7 @@ use std::fmt;
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::slice;
-use units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount};
+use crate::units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount};
 
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
@@ -350,14 +350,14 @@ mod tests {
 
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, CompassPrimary};
-    use grids::{SmallRectangularGrid, small_rect_grid};
+    use crate::cells::{Cartesian2DCoordinate, CompassPrimary};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use itertools::Itertools; // a trait
     use rand;
     use smallvec::SmallVec;
     use std::u32;
-    use units;
+    use crate::units;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
         small_rect_grid(units::RowLength(w), units::ColumnLength(h))

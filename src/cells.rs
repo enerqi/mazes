@@ -1,4 +1,4 @@
-use grid_traits::GridDimensions;
+use crate::grid_traits::GridDimensions;
 
 use rand::{Rng, XorShiftRng};
 use smallvec::SmallVec;
@@ -8,7 +8,7 @@ use std::hash::Hash;
 use std::iter::FromIterator;
 use std::iter::Iterator;
 use std::ops::Deref;
-use units::{ColumnIndex, RowIndex, RowLength};
+use crate::units::{ColumnIndex, RowIndex, RowLength};
 
 pub trait Coordinate
     : PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {

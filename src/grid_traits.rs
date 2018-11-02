@@ -1,8 +1,8 @@
-use cells::{Cell, Coordinate};
+use crate::cells::{Cell, Coordinate};
 
 use rand::XorShiftRng;
 use std::rc::Rc;
-use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
+use crate::units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
             RowsCount};
 
 

@@ -113,7 +113,7 @@ mod errors {
         }
     }
 }
-use errors::*;
+use crate::errors::*;
 
 // Generate a `fn main` that if the result of `run` is an Error, writes the
 // error chain to stderr and exits with code 1.
@@ -417,8 +417,8 @@ fn load_binary_mask(file_path_str: &str) -> Result<BinaryMask2D> {
 }
 
 fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
-    let mut f = try!(File::create(file_name));
-    try!(f.write_all(data.as_bytes()));
+    let mut f = r#try!(File::create(file_name));
+    r#try!(f.write_all(data.as_bytes()));
     Ok(())
 }
 
