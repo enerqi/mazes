@@ -1,8 +1,5 @@
 #![feature(test)]
 
-extern crate mazes;
-extern crate test;
-
 use mazes::generators;
 use mazes::grids::medium_rect_grid;
 use mazes::units::{ColumnLength, RowLength};

@@ -16,20 +16,8 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", allow(similar_names))]
 
-extern crate bit_set;
-extern crate fnv;
-extern crate image;
-extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
-extern crate num;
-extern crate petgraph;
-extern crate rand;
-extern crate sdl2;
-extern crate smallvec;
-
-#[cfg(test)]
-extern crate quickcheck;
 
 pub mod cells;
 pub mod generators;

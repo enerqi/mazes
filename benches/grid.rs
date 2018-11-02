@@ -1,9 +1,5 @@
 #![feature(test)]
 
-extern crate mazes;
-extern crate test;
-
-
 use mazes::cells::{Cartesian2DCoordinate, Coordinate};
 use mazes::grids::{large_rect_grid, medium_rect_grid, small_rect_grid};
 use mazes::units::{ColumnLength, RowLength};

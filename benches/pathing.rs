@@ -1,9 +1,5 @@
 #![feature(test)]
 
-extern crate mazes;
-extern crate test;
-
-
 use mazes::cells::{Cartesian2DCoordinate, SquareCell};
 use mazes::generators;
 use mazes::grids::large_rect_grid;

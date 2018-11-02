@@ -5,16 +5,10 @@
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
-extern crate docopt;
 #[macro_use]
 extern crate error_chain;
-extern crate image;
-extern crate mazes;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-
-
 
 use docopt::Docopt;
 

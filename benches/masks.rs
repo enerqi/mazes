@@ -1,10 +1,5 @@
 #![feature(test)]
 
-extern crate image;
-extern crate mazes;
-extern crate test;
-
-
 use image::{DynamicImage, GenericImage};
 
 use mazes::cells::Cartesian2DCoordinate;

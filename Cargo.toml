@@ -5,6 +5,7 @@ authors = ["enerqi <enerqi@enerqi>"]
 repository = "https://github.com/enerqi/mazes.git"
 homepage = "https://github.com/enerqi/mazes.git"
 license = "MIT/Apache-2.0"
+edition = "2018"
 
 [dependencies]
 bit-set = "^0.4.0"
