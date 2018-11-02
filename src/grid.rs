@@ -1,6 +1,3 @@
-#![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
-
-
 use crate::{
     cells::{Cell, Coordinate},
     grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators},

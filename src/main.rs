@@ -2,9 +2,6 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
-
 use docopt::Docopt;
 use serde_derive::Deserialize;
 use mazes::{

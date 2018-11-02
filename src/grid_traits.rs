@@ -6,7 +6,6 @@ use crate::{
 use rand::XorShiftRng;
 use std::rc::Rc;
 
-
 pub trait GridDimensions {
     fn size(&self) -> NodesCount;
     fn rows(&self) -> RowsCount;
