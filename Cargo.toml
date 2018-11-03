@@ -28,6 +28,7 @@ default-features = false
 features = ["image", "ttf"]
 
 [dev-dependencies]
+criterion = "^0.2.5"
 quickcheck = "^0.7.2"
 
 [build-dependencies]
@@ -41,35 +42,25 @@ debug = true
 
 [[bench]]
 name = "generators"
+harness = false  # disable the libtest benchmark harness so can use criterion instead
 path = "./benches/generators.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "grid"
+harness = false
 path = "./benches/grid.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "masks"
+harness = false
 path = "./benches/masks.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "pathing"
+harness = false
 path = "./benches/pathing.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "renderers"
+harness = false
 path = "./benches/renderers.rs"
-test = false
-bench = true
-doc = false
