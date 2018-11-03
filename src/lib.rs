@@ -11,10 +11,6 @@
         unused_extern_crates, unused_import_braces, unused_qualifications)]
 #![cfg_attr(not(test), deny(trivial_casts))] // quickcheck test requirement
 
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", allow(similar_names))]
-
 pub mod cells;
 pub mod generators;
 pub mod grid;

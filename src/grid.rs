@@ -47,6 +47,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType,
                                                                               CellT,
                                                                               Iters> {
+    #[allow(clippy::needless_pass_by_value)]  // Rc<GridDimensions>
     pub fn new(dimensions: Rc<GridDimensions>,
                coordinates: Box<GridCoordinates<CellT>>,
                iterators: Iters)
@@ -57,8 +58,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes, edges),
             dimensions: dimensions.clone(),
-            coordinates: coordinates,
-            iterators: iterators,
+            coordinates,
+            iterators,
             grid_display: None,
             cell_type: PhantomData,
         };
@@ -360,10 +361,9 @@ mod tests {
     use rand;
     use smallvec::SmallVec;
     use std::u32;
-    use crate::units;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(units::RowLength(w), units::ColumnLength(h))
+        small_rect_grid(RowLength(w), ColumnLength(h))
             .expect("grid dimensions too large for small grid")
     }
 

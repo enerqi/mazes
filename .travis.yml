@@ -1,7 +1,7 @@
 sudo: required # necessary to add the sdl2-snapshots ppa
 dist: trusty
 language: rust
-    
+
 install:
   # sdl2 C libraries, build from source as PPA not up to date with SDL2 2.0.5
   - hg clone https://hg.libsdl.org/SDL SDL
@@ -37,7 +37,6 @@ matrix:
     - rust: stable
     - rust: beta
     - rust: nightly
-      env: FEATURES="--features clippy"
   allow_failures:
     - rust: nightly
 

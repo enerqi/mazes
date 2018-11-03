@@ -488,9 +488,9 @@ fn maze_image_dimensions<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType,
 fn colour_mul(colour: Color, scale: f32) -> Color {
 
     Color {
-        r: (colour.r as f32 * scale) as u8,
-        g: (colour.g as f32 * scale) as u8,
-        b: (colour.b as f32 * scale) as u8,
+        r: (f32::from(colour.r) * scale) as u8,
+        g: (f32::from(colour.g) * scale) as u8,
+        b: (f32::from(colour.b) * scale) as u8,
         a: colour.a,
     }
 }

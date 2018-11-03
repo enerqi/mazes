@@ -14,8 +14,8 @@ pub struct RectGridDimensions {
 impl RectGridDimensions {
     pub fn new(row_width: RowLength, column_height: ColumnLength) -> RectGridDimensions {
         RectGridDimensions {
-            row_width: row_width,
-            column_height: column_height,
+            row_width,
+            column_height
         }
     }
 }
@@ -110,7 +110,7 @@ impl PolarGridDimensions {
         let per_row_cumulative_node_count = cell_counts
             .iter()
             .scan(0, |accumulator: &mut usize, cells_in_row: &usize| {
-                *accumulator = *accumulator + cells_in_row;
+                *accumulator += cells_in_row;
                 Some(*accumulator)
             })
             .map(NodesCount)
@@ -120,8 +120,8 @@ impl PolarGridDimensions {
 
         PolarGridDimensions {
             row_cell_counts: cell_counts,
-            per_row_cumulative_node_count: per_row_cumulative_node_count,
-            rows: rows,
+            per_row_cumulative_node_count,
+            rows,
             size: NodesCount(size),
         }
     }

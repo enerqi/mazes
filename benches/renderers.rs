@@ -18,7 +18,7 @@ fn render_grid(b: &mut Bencher) {
     let mut maze_grid = large_rect_grid(RowLength(200), ColumnLength(200)).unwrap();
     let start_coord = Cartesian2DCoordinate::new(0, 0);
     generators::recursive_backtracker(&mut maze_grid, None);
-    let distances = SquareCellDistances::new(&maze_grid, start_coord);
+    let distances = SquareCellDistances::for_grid(&maze_grid, start_coord);
 
     let render_options = renderers::RenderOptionsBuilder::new()
         .colour_distances(true)

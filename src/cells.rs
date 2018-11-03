@@ -108,16 +108,16 @@ impl Cell for SquareCell {
         match dir {
             CompassPrimary::North => {
                 if y > 0 {
-                    Some(Cartesian2DCoordinate { x: x, y: y - 1 })
+                    Some(Cartesian2DCoordinate { x, y: y - 1 })
                 } else {
                     None
                 }
             }
-            CompassPrimary::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
-            CompassPrimary::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
+            CompassPrimary::South => Some(Cartesian2DCoordinate { x, y: y + 1 }),
+            CompassPrimary::East => Some(Cartesian2DCoordinate { x: x + 1, y }),
             CompassPrimary::West => {
                 if x > 0 {
-                    Some(Cartesian2DCoordinate { x: x - 1, y: y })
+                    Some(Cartesian2DCoordinate { x: x - 1, y })
                 } else {
                     None
                 }
@@ -163,7 +163,7 @@ impl Cell for SquareCell {
 
 impl Cartesian2DCoordinate {
     pub fn new(x: u32, y: u32) -> Cartesian2DCoordinate {
-        Cartesian2DCoordinate { x: x, y: y }
+        Cartesian2DCoordinate { x, y }
     }
 }
 impl Coordinate for Cartesian2DCoordinate {
@@ -316,11 +316,11 @@ impl Cell for PolarCell {
                 if let Some(RowLength(next_len)) = next_row_length {
 
                     let ratio = next_len / row_len;
-                    let outward_x = (x * ratio as u32) + n as u32;
+                    let outward_x = (x * ratio as u32) + u32::from(n);
                     Some(Self::Coord::new(outward_x, y + 1))
                 } else {
                     // Gone passed the outermost rim of the circle - will be invalid
-                    Some(Self::Coord::new(x + n as u32, y + 1))
+                    Some(Self::Coord::new(x + u32::from(n), y + 1))
                 }
             }
         }

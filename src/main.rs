@@ -1,6 +1,4 @@
 #![windows_subsystem(windows)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
 
 use docopt::Docopt;
 use serde_derive::Deserialize;
@@ -177,7 +175,7 @@ fn main() -> Result<()> {
         let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
                            args.flag_show_path {
             let (start_x, start_y) = start_opt.unwrap();
-            Some(pathing::Distances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+            Some(pathing::Distances::<SquareCell, u32>::for_grid(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                     .ok_or("Provided invalid start coordinate from which to show path distances.")?)
         } else {
             None
@@ -251,7 +249,7 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
     if maze_args.flag_show_distances || maze_args.flag_show_path {
 
         let (start_x, start_y) = start_opt.unwrap();
-        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::new(maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::for_grid(maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                 .ok_or("Provided invalid start coordinate from which to show path distances.")?);
 
         if maze_args.flag_show_distances {
@@ -305,7 +303,6 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
     Ok(())
 }
 
-#[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                                      maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
                                      mask: Option<&BinaryMask2D>)
@@ -322,7 +319,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::Distances::<SquareCell, u32>::new(maze_grid,
+        let distances = pathing::Distances::<SquareCell, u32>::for_grid(maze_grid,
                                                                    Cartesian2DCoordinate::new(x,
                                                                                               y))
             .ok_or("Provided invalid start coordinate.")?;
@@ -337,7 +334,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
         maze_args.flag_end_point_y) {
 
         let distances = pathing::Distances::<SquareCell,
-                                         u32>::new(maze_grid,
+                                         u32>::for_grid(maze_grid,
                                                    Cartesian2DCoordinate::new(start_x,
                                                                               start_y))
         .ok_or("Provided invalid start coordinate.")?;

@@ -240,7 +240,7 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
                     }
                 };
 
-                row_bottom_section_render.push_str(corner.as_ref());
+                row_bottom_section_render.push_str(corner);
             }
 
             output.push_str(row_middle_section_render.as_ref());

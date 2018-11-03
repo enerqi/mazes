@@ -17,9 +17,9 @@ pub fn init() -> SdlSetup {
     sdl2::image::init(INIT_PNG | INIT_JPG).unwrap();
 
     SdlSetup {
-        sdl_context: sdl_context,
-        video_subsystem: video_subsystem,
-        timer_subsystem: timer_subsystem,
-        ttf_context: ttf_context,
+        sdl_context,
+        video_subsystem,
+        timer_subsystem,
+        ttf_context,
     }
 }
