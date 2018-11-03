@@ -9,8 +9,11 @@ use crate::{
     utils,
     utils::FnvHashSet
 };
-use rand;
-use rand::{Rng, XorShiftRng};
+use rand::{
+    FromEntropy,
+    rngs::SmallRng,
+    Rng
+};
 use smallvec::SmallVec;
 use std::cmp;
 
@@ -25,7 +28,7 @@ pub fn binary_tree<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType, C
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
     let neighbours_to_check =
         [CellT::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
          CellT::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None)];
@@ -75,7 +78,7 @@ pub fn sidewinder<GridIndexType, Iters>(grid: &mut Grid<GridIndexType, SquareCel
     where GridIndexType: IndexType,
           Iters: GridIterators<SquareCell>
 {
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
 
     let runs_are_horizontal = rng.gen();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
@@ -136,7 +139,7 @@ pub fn aldous_broder<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
 {
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(grid, mask);
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
 
     let current_cell_opt = random_cell(grid, mask.map(|m| (m, unmasked_count)), &mut rng);
     if current_cell_opt.is_none() {
@@ -189,7 +192,7 @@ pub fn wilson<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType, CellT,
     let unmasked_count = unmasked_cells_count(grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
         mask.map(|m| (m, unmasked_count));
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
 
     let start_cell = random_cell(grid, mask_with_unmasked_count, &mut rng);
     if start_cell.is_none() {
@@ -301,7 +304,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIndexType,
     let unmasked_count = unmasked_cells_count(grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> =
         mask.map(|m| (m, unmasked_count));
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
 
     let start_cell = random_cell(grid, mask_with_unmasked_count, &mut rng);
     if start_cell.is_none() {
@@ -417,7 +420,7 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(grid: &mut Grid<GridIn
           CellT: Cell,
           Iters: GridIterators<CellT>
 {
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(grid, mask);
 
@@ -497,7 +500,7 @@ pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(grid: &mut Grid<GridInd
         max_rebuildable_cells
     };
 
-    let mut rng = rand::weak_rng();
+    let mut rng = SmallRng::from_entropy();
     let mut cells_with_wall_rebuilt: FnvHashSet<CellT::Coord> =
         utils::fnv_hashset(build_target_count);
 
@@ -528,7 +531,7 @@ pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(grid: &mut Grid<GridInd
 #[inline]
 fn random_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
                                                  grid: &Grid<GridIndexType, CellT, Iters>,
-                                                 mut rng: &mut XorShiftRng)
+                                                 mut rng: &mut SmallRng)
                                                  -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -540,7 +543,7 @@ fn random_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
 fn random_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                             mask_with_unmasked_count: Option<(&BinaryMask2D,
                                                                               usize)>,
-                                            mut rng: &mut XorShiftRng)
+                                            mut rng: &mut SmallRng)
                                             -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -623,7 +626,7 @@ fn undo_cell_visit<GridIndexType, CellT, Iters>(cell: CellT::Coord,
 
 fn random_unvisited_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                                       visited_set_with_count: (&BitSet, usize),
-                                                      rng: &mut XorShiftRng)
+                                                      rng: &mut SmallRng)
                                                       -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -651,7 +654,7 @@ fn random_unvisited_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType,
 fn random_unmasked_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                                      mask_with_unmasked_count: (&BinaryMask2D,
                                                                                 usize),
-                                                     rng: &mut XorShiftRng)
+                                                     rng: &mut SmallRng)
                                                      -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -682,7 +685,7 @@ fn random_unvisited_unmasked_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridI
                                                                                     usize)>,
                                                     mask_with_unmasked_count: Option<(&BinaryMask2D,
                                                                                       usize)>,
-                                                    mut rng: &mut XorShiftRng)
+                                                    mut rng: &mut SmallRng)
                                                     -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,
@@ -728,7 +731,7 @@ fn random_unmasked_neighbour<GridIndexType, CellT, Iters>(cell: CellT::Coord,
                                                                       CellT,
                                                                       Iters>,
                                                           mask: &BinaryMask2D,
-                                                          rng: &mut XorShiftRng)
+                                                          rng: &mut SmallRng)
                                                           -> Option<CellT::Coord>
     where GridIndexType: IndexType,
           CellT: Cell,

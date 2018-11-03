@@ -10,7 +10,7 @@ use petgraph::{
     graph
 };
 pub use petgraph::graph::IndexType;
-use rand::XorShiftRng;
+use rand::rngs::SmallRng;
 use std::{
     fmt,
     marker::PhantomData,
@@ -123,7 +123,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     #[inline]
-    pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
+    pub fn random_cell(&self, mut rng: &mut SmallRng) -> CellT::Coord {
         self.coordinates.random_cell(&mut rng, &self.dimensions)
     }
 
@@ -358,7 +358,10 @@ mod tests {
     use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use itertools::Itertools; // a trait
-    use rand;
+    use rand::{
+        FromEntropy,
+        rngs::SmallRng
+    };
     use smallvec::SmallVec;
     use std::u32;
 
@@ -482,7 +485,7 @@ mod tests {
     fn random_cell() {
         let g = small_grid(4, 4);
         let cells_count = 4 * 4;
-        let mut rng = rand::weak_rng();
+        let mut rng = SmallRng::from_entropy();
         for _ in 0..1000 {
             let coord = g.random_cell(&mut rng);
             assert!(coord.x < cells_count);

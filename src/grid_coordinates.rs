@@ -4,7 +4,10 @@ use crate::{
     units::{NodesCount, RowIndex, RowLength}
 };
 
-use rand::{Rng, XorShiftRng};
+use rand::{
+    Rng,
+    rngs::SmallRng
+};
 use std::rc::Rc;
 
 
@@ -29,7 +32,7 @@ impl<CellT: Cell> GridCoordinates<CellT> for RectGridCoordinates {
         }
     }
 
-    fn random_cell(&self, rng: &mut XorShiftRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord {
+    fn random_cell(&self, rng: &mut SmallRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord {
 
         let index = rng.gen::<usize>() % dimensions.size().0;
         CellT::Coord::from_row_major_index(index, dimensions.as_ref())
@@ -63,7 +66,7 @@ impl<CellT: Cell> GridCoordinates<CellT> for PolarGridCoordinates {
         }
     }
 
-    fn random_cell(&self, rng: &mut XorShiftRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord {
+    fn random_cell(&self, rng: &mut SmallRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord {
 
         let index = rng.gen::<usize>() % dimensions.size().0;
         CellT::Coord::from_row_major_index(index, dimensions.as_ref())

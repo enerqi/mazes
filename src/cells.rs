@@ -3,7 +3,10 @@ use crate::{
     units::{ColumnIndex, RowIndex, RowLength}
 };
 
-use rand::{Rng, XorShiftRng};
+use rand::{
+    Rng,
+    rngs::SmallRng
+};
 use smallvec::SmallVec;
 use std::{
     convert::From,
@@ -45,15 +48,15 @@ pub trait Cell {
                          dimensions: &GridDimensions)
                          -> Option<Self::Coord>;
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       dimensions: &GridDimensions,
                       from: Self::Coord)
                       -> Self::Direction;
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        dimensions: &GridDimensions,
                                        from: Option<Self::Coord>)
                                        -> Self::Direction;
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          dimensions: &GridDimensions,
                                          from: Option<Self::Coord>)
                                          -> Self::Direction;
@@ -125,7 +128,7 @@ impl Cell for SquareCell {
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       _: &GridDimensions,
                       _: Self::Coord)
                       -> Self::Direction {
@@ -138,7 +141,7 @@ impl Cell for SquareCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        _: &GridDimensions,
                                        _: Option<Self::Coord>)
                                        -> Self::Direction {
@@ -148,7 +151,7 @@ impl Cell for SquareCell {
             CompassPrimary::South
         }
     }
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          _: &GridDimensions,
                                          _: Option<Self::Coord>)
                                          -> Self::Direction {
@@ -326,7 +329,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       _: &GridDimensions,
                       _: Self::Coord)
                       -> Self::Direction {
@@ -341,7 +344,7 @@ impl Cell for PolarCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        _: &GridDimensions,
                                        _: Option<Self::Coord>)
                                        -> Self::Direction {
@@ -352,7 +355,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          _: &GridDimensions,
                                          _: Option<Self::Coord>)
                                          -> Self::Direction {
@@ -440,7 +443,7 @@ impl Cell for PolarCell {
 //     fn column_length(&self) -> ColumnLength;
 
 //     fn grid_coordinate_to_index(coord: CellT::Coord) -> Option<usize>; /// ???
-//     fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord;
+//     fn random_cell(&self, rng: &mut SmallRng) -> CellT::Coord;
 
 //     fn graphSize(&self) -> (usize, usize); // (node hint, edges hint)
 

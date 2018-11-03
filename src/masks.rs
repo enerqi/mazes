@@ -4,7 +4,7 @@ use crate::{
     cells::{Cartesian2DCoordinate, Coordinate},
     units::{ColumnIndex, Height, RowIndex, Width}
 };
-use image::{DynamicImage, GenericImage, Luma};
+use image::{DynamicImage, Luma};
 
 #[derive(Debug)]
 pub struct BinaryMask2D {
@@ -16,9 +16,8 @@ pub struct BinaryMask2D {
 impl BinaryMask2D {
     pub fn from_image(data_image: &DynamicImage) -> BinaryMask2D {
 
-        let width = data_image.width();
-        let height = data_image.height();
         let gray_scale_image = data_image.to_luma();
+        let (width, height) = gray_scale_image.dimensions();
         let mut mask = BitSet::with_capacity((width * height) as usize);
 
         for x in 0..gray_scale_image.width() {
