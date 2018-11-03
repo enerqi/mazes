@@ -23,9 +23,6 @@ use std::{
     path::Path
 };
 
-const WINDOW_W: u32 = 1920;
-const WINDOW_H: u32 = 1080;
-
 lazy_static! {
     static ref BLACK: Color = Color::RGB(0, 0, 0);
     static ref WHITE: Color = Color::RGB(0xff, 0xff, 0xff);
@@ -495,6 +492,7 @@ fn colour_mul(colour: Color, scale: f32) -> Color {
     }
 }
 
+#[allow(dead_code)]  // for now
 fn rainbow_colour(cycle_complete_percent: f32) -> Color {
 
     let rainbow_point = match cycle_complete_percent {

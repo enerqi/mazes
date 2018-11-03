@@ -1,4 +1,4 @@
-#![windows_subsystem(windows)]
+#![windows_subsystem(windows)]  // Do not display a console when running a windowed application
 
 use docopt::Docopt;
 use serde_derive::Deserialize;

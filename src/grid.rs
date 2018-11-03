@@ -283,6 +283,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         self.coordinates.is_valid_coordinate(coord, &self.dimensions)
     }
 
+    #[allow(dead_code)]  // for now
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
         // For .iter Coord satifies `Deref<Target=[Self::Coord]>`
         self.neighbours(a).iter().any(|&coord| coord == b)

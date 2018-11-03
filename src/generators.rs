@@ -602,28 +602,6 @@ fn visit_cell<GridIndexType, CellT, Iters>(cell: CellT::Coord,
     }
 }
 
-fn undo_cell_visit<GridIndexType, CellT, Iters>(cell: CellT::Coord,
-                                                visited_set: &mut BitSet,
-                                                visited_count: Option<&mut usize>,
-                                                grid: &Grid<GridIndexType, CellT, Iters>)
-                                                -> bool
-    where GridIndexType: IndexType,
-          CellT: Cell,
-          Iters: GridIterators<CellT>
-{
-    let index = bit_index(cell, grid);
-    let was_present = visited_set.remove(index);
-
-    if was_present {
-
-        if let Some(count) = visited_count {
-            *count -= 1;
-        }
-    }
-
-    was_present
-}
-
 fn random_unvisited_cell<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                                       visited_set_with_count: (&BitSet, usize),
                                                       rng: &mut SmallRng)
