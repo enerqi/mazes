@@ -13,7 +13,6 @@ environment:
         RUST_BACKTRACE: full
 
     matrix:
-        - fast_finish: true
         # - TARGET: x86_64-pc-windows-msvc
         #   CHANNEL: stable
         #   BITS: 64
