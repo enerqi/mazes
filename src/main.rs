@@ -1,40 +1,28 @@
-#![windows_subsystem(windows)]
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-
-// `error_chain!` can recurse deeply
-#![recursion_limit = "1024"]
-
-extern crate docopt;
-#[macro_use]
-extern crate error_chain;
-extern crate image;
-extern crate mazes;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-
-
+#![windows_subsystem(windows)]  // Do not display a console when running a windowed application
 
 use docopt::Docopt;
-
-use mazes::cells::{Cartesian2DCoordinate, Cell, SquareCell};
-use mazes::generators;
-use mazes::grid::Grid;
-use mazes::grid_coordinates::RectGridCoordinates;
-use mazes::grid_dimensions::RectGridDimensions;
-use mazes::grid_displays::{PathDisplay, StartEndPointsDisplay};
-use mazes::grid_iterators::RectGridIterators;
-use mazes::grid_traits::GridDisplay;
-use mazes::masks::BinaryMask2D;
-use mazes::pathing;
-use mazes::renderers;
-use mazes::units;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::path::Path;
-use std::rc::Rc;
+use serde_derive::Deserialize;
+use mazes::{
+    cells::{Cartesian2DCoordinate, Cell, SquareCell},
+    generators,
+    grid::Grid,
+    grid_coordinates::RectGridCoordinates,
+    grid_dimensions::RectGridDimensions,
+    grid_displays::{PathDisplay, StartEndPointsDisplay},
+    grid_iterators::RectGridIterators,
+    grid_traits::GridDisplay,
+    masks::BinaryMask2D,
+    pathing,
+    renderers,
+    units,
+};
+use std::{
+    io,
+    io::prelude::*,
+    fs::File,
+    path::Path,
+    rc::Rc
+};
 
 const USAGE: &str = "Mazes
 
@@ -105,6 +93,7 @@ mod errors {
     // Result is a typedef of std `Result` with the error type our own `Error`
     // Defines the From conversions that let try! and ? work for our `Error`.
     // ResultExt adds the `chain_err` trait method.
+    use error_chain::*;
     error_chain! {
 
         foreign_links {
@@ -113,13 +102,9 @@ mod errors {
         }
     }
 }
-use errors::*;
+use crate::errors::*;
 
-// Generate a `fn main` that if the result of `run` is an Error, writes the
-// error chain to stderr and exits with code 1.
-quick_main!(run);
-
-fn run() -> Result<()> {
+fn main() -> Result<()> {
 
     let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.deserialize())?;
 
@@ -190,7 +175,7 @@ fn run() -> Result<()> {
         let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
                            args.flag_show_path {
             let (start_x, start_y) = start_opt.unwrap();
-            Some(pathing::Distances::<SquareCell, u32>::new(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+            Some(pathing::Distances::<SquareCell, u32>::for_grid(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                     .ok_or("Provided invalid start coordinate from which to show path distances.")?)
         } else {
             None
@@ -264,7 +249,7 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
     if maze_args.flag_show_distances || maze_args.flag_show_path {
 
         let (start_x, start_y) = start_opt.unwrap();
-        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::new(maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
+        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::for_grid(maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
                 .ok_or("Provided invalid start coordinate from which to show path distances.")?);
 
         if maze_args.flag_show_distances {
@@ -318,7 +303,6 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
     Ok(())
 }
 
-#[cfg_attr(feature="clippy", allow(match_same_arms))]
 fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
                                      maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
                                      mask: Option<&BinaryMask2D>)
@@ -335,7 +319,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::Distances::<SquareCell, u32>::new(maze_grid,
+        let distances = pathing::Distances::<SquareCell, u32>::for_grid(maze_grid,
                                                                    Cartesian2DCoordinate::new(x,
                                                                                               y))
             .ok_or("Provided invalid start coordinate.")?;
@@ -350,7 +334,7 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
         maze_args.flag_end_point_y) {
 
         let distances = pathing::Distances::<SquareCell,
-                                         u32>::new(maze_grid,
+                                         u32>::for_grid(maze_grid,
                                                    Cartesian2DCoordinate::new(start_x,
                                                                               start_y))
         .ok_or("Provided invalid start coordinate.")?;
@@ -417,8 +401,8 @@ fn load_binary_mask(file_path_str: &str) -> Result<BinaryMask2D> {
 }
 
 fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
-    let mut f = try!(File::create(file_name));
-    try!(f.write_all(data.as_bytes()));
+    let mut f = File::create(file_name)?;
+    f.write_all(data.as_bytes())?;
     Ok(())
 }
 

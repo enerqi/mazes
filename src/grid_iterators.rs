@@ -1,9 +1,13 @@
-use cells::{Cell, Coordinate};
-use grid_traits::{GridDimensions, GridIterators};
-use std::fmt;
-use std::marker::PhantomData;
-use std::rc::Rc;
-use units::{ColumnIndex, ColumnLength, ColumnsCount, RowIndex, RowLength, RowsCount};
+use crate::{
+    cells::{Cell, Coordinate},
+    grid_traits::{GridDimensions, GridIterators},
+    units::{ColumnIndex, ColumnLength, ColumnsCount, RowIndex, RowLength, RowsCount}
+};
+use std::{
+    fmt,
+    marker::PhantomData,
+    rc::Rc
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct RectGridIterators;
@@ -91,13 +95,13 @@ impl<CellT> RectBatchIter<CellT> {
         let rows_size = dimensions.rows();
         let cols_size = dimensions.columns();
         RectBatchIter {
-            iter_type: iter_type,
+            iter_type,
             iter_initial_length: rows_size.0 * cols_size.0,
             current_index: 0,
             row_length: dimensions.row_length(None).unwrap(),
-            rows_size: rows_size,
+            rows_size,
             col_length: dimensions.column_length(None),
-            cols_size: cols_size,
+            cols_size,
             cell_type: PhantomData,
         }
     }
@@ -114,7 +118,6 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
             if self.current_index < count {
                 let RowLength(length) = self.row_length;
                 let coords = (0..length)
-                    .into_iter()
                     .map(|i: usize| {
                              CellT::Coord::from_row_column_indices(ColumnIndex(i),
                                                                    RowIndex(self.current_index))
@@ -132,7 +135,6 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
             if self.current_index < count {
                 let ColumnLength(length) = self.col_length;
                 let coords = (0..length)
-                    .into_iter()
                     .map(|i: usize| {
                              CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index),
                                                                    RowIndex(i))
@@ -197,13 +199,13 @@ impl<CellT> PolarBatchIter<CellT> {
         let rows_size = dimensions.rows();
         let cols_size = dimensions.columns();
         PolarBatchIter {
-            iter_type: iter_type,
+            iter_type,
             iter_initial_length: rows_size.0 * cols_size.0,
             current_index: 0,
             row_length: dimensions.row_length(None).unwrap(),
-            rows_size: rows_size,
+            rows_size,
             col_length: dimensions.column_length(None),
-            cols_size: cols_size,
+            cols_size,
             cell_type: PhantomData,
         }
     }

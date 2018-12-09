@@ -1,24 +1,27 @@
-use cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
-use pathing;
+use crate::{
+    cells::{Cartesian2DCoordinate, Cell, CompassPrimary, SquareCell},
+    grid_traits::GridIterators,
+    grid::{Grid, IndexType},
+    pathing,
+    sdl,
+    sdl::SdlSetup
+};
 
-use sdl;
-use sdl::SdlSetup;
-
+use lazy_static::*; // macro
 use sdl2;
-use sdl2::event::{Event, WindowEvent};
-use sdl2::hint;
-use sdl2::image::SaveSurface;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::{Point, Rect};
-use sdl2::render::Canvas;
-use sdl2::surface::Surface;
-use std::cmp;
-use std::path::Path;
-
-const WINDOW_W: u32 = 1920;
-const WINDOW_H: u32 = 1080;
+use sdl2::{
+    event::{Event, WindowEvent},
+    hint,
+    image::SaveSurface,
+    pixels::{Color, PixelFormatEnum},
+    rect::{Point, Rect},
+    render::Canvas,
+    surface::Surface
+};
+use std::{
+    cmp,
+    path::Path
+};
 
 lazy_static! {
     static ref BLACK: Color = Color::RGB(0, 0, 0);
@@ -48,7 +51,7 @@ pub struct RenderOptions<'path, 'dist> {
 pub struct RenderOptionsBuilder<'path, 'dist> {
     options: RenderOptions<'path, 'dist>,
 }
-impl<'path, 'dist> Default for RenderOptionsBuilder<'path, 'dist> {
+impl<> Default for RenderOptionsBuilder<'_, '_> {
     fn default() -> Self {
         RenderOptionsBuilder::new()
     }
@@ -482,13 +485,14 @@ fn maze_image_dimensions<GridIndexType, CellT, Iters>(grid: &Grid<GridIndexType,
 fn colour_mul(colour: Color, scale: f32) -> Color {
 
     Color {
-        r: (colour.r as f32 * scale) as u8,
-        g: (colour.g as f32 * scale) as u8,
-        b: (colour.b as f32 * scale) as u8,
+        r: (f32::from(colour.r) * scale) as u8,
+        g: (f32::from(colour.g) * scale) as u8,
+        b: (f32::from(colour.b) * scale) as u8,
         a: colour.a,
     }
 }
 
+#[allow(dead_code)]  // for now
 fn rainbow_colour(cycle_complete_percent: f32) -> Color {
 
     let rainbow_point = match cycle_complete_percent {

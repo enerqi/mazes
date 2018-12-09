@@ -1,10 +1,10 @@
-use cells::{Cell, Coordinate};
+use crate::{
+    cells::{Cell, Coordinate},
+    units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength, RowsCount}
+};
 
-use rand::XorShiftRng;
+use rand::rngs::SmallRng;
 use std::rc::Rc;
-use units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength,
-            RowsCount};
-
 
 pub trait GridDimensions {
     fn size(&self) -> NodesCount;
@@ -31,7 +31,7 @@ pub trait GridCoordinates<CellT: Cell> {
             dimensions.column_length(Some(ColumnIndex(grid_2d_coord.x as usize)));
         (grid_2d_coord.x as usize) < width && (grid_2d_coord.y as usize) < height
     }
-    fn random_cell(&self, rng: &mut XorShiftRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord; // consider &Rng simple trait object. Note <R : Rng> meant GridCoordinates could not be made a trait object
+    fn random_cell(&self, rng: &mut SmallRng, dimensions: &Rc<GridDimensions>) -> CellT::Coord; // consider &Rng simple trait object. Note <R : Rng> meant GridCoordinates could not be made a trait object
 }
 
 pub trait GridIterators<CellT: Cell> {

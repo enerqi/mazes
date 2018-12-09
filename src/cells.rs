@@ -1,14 +1,20 @@
-use grid_traits::GridDimensions;
+use crate::{
+    grid_traits::GridDimensions,
+    units::{ColumnIndex, RowIndex, RowLength}
+};
 
-use rand::{Rng, XorShiftRng};
+use rand::{
+    Rng,
+    rngs::SmallRng
+};
 use smallvec::SmallVec;
-use std::convert::From;
-use std::fmt::Debug;
-use std::hash::Hash;
-use std::iter::FromIterator;
-use std::iter::Iterator;
-use std::ops::Deref;
-use units::{ColumnIndex, RowIndex, RowLength};
+use std::{
+    convert::From,
+    fmt::Debug,
+    hash::Hash,
+    iter::{FromIterator, Iterator},
+    ops::Deref
+};
 
 pub trait Coordinate
     : PartialEq + Eq + Hash + Copy + Clone + Debug + Ord + PartialOrd {
@@ -42,15 +48,15 @@ pub trait Cell {
                          dimensions: &GridDimensions)
                          -> Option<Self::Coord>;
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       dimensions: &GridDimensions,
                       from: Self::Coord)
                       -> Self::Direction;
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        dimensions: &GridDimensions,
                                        from: Option<Self::Coord>)
                                        -> Self::Direction;
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          dimensions: &GridDimensions,
                                          from: Option<Self::Coord>)
                                          -> Self::Direction;
@@ -105,16 +111,16 @@ impl Cell for SquareCell {
         match dir {
             CompassPrimary::North => {
                 if y > 0 {
-                    Some(Cartesian2DCoordinate { x: x, y: y - 1 })
+                    Some(Cartesian2DCoordinate { x, y: y - 1 })
                 } else {
                     None
                 }
             }
-            CompassPrimary::South => Some(Cartesian2DCoordinate { x: x, y: y + 1 }),
-            CompassPrimary::East => Some(Cartesian2DCoordinate { x: x + 1, y: y }),
+            CompassPrimary::South => Some(Cartesian2DCoordinate { x, y: y + 1 }),
+            CompassPrimary::East => Some(Cartesian2DCoordinate { x: x + 1, y }),
             CompassPrimary::West => {
                 if x > 0 {
-                    Some(Cartesian2DCoordinate { x: x - 1, y: y })
+                    Some(Cartesian2DCoordinate { x: x - 1, y })
                 } else {
                     None
                 }
@@ -122,7 +128,7 @@ impl Cell for SquareCell {
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       _: &GridDimensions,
                       _: Self::Coord)
                       -> Self::Direction {
@@ -135,7 +141,7 @@ impl Cell for SquareCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        _: &GridDimensions,
                                        _: Option<Self::Coord>)
                                        -> Self::Direction {
@@ -145,7 +151,7 @@ impl Cell for SquareCell {
             CompassPrimary::South
         }
     }
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          _: &GridDimensions,
                                          _: Option<Self::Coord>)
                                          -> Self::Direction {
@@ -160,7 +166,7 @@ impl Cell for SquareCell {
 
 impl Cartesian2DCoordinate {
     pub fn new(x: u32, y: u32) -> Cartesian2DCoordinate {
-        Cartesian2DCoordinate { x: x, y: y }
+        Cartesian2DCoordinate { x, y }
     }
 }
 impl Coordinate for Cartesian2DCoordinate {
@@ -313,17 +319,17 @@ impl Cell for PolarCell {
                 if let Some(RowLength(next_len)) = next_row_length {
 
                     let ratio = next_len / row_len;
-                    let outward_x = (x * ratio as u32) + n as u32;
+                    let outward_x = (x * ratio as u32) + u32::from(n);
                     Some(Self::Coord::new(outward_x, y + 1))
                 } else {
                     // Gone passed the outermost rim of the circle - will be invalid
-                    Some(Self::Coord::new(x + n as u32, y + 1))
+                    Some(Self::Coord::new(x + u32::from(n), y + 1))
                 }
             }
         }
     }
 
-    fn rand_direction(rng: &mut XorShiftRng,
+    fn rand_direction(rng: &mut SmallRng,
                       _: &GridDimensions,
                       _: Self::Coord)
                       -> Self::Direction {
@@ -338,7 +344,7 @@ impl Cell for PolarCell {
         DIRS[dir_index]
     }
 
-    fn rand_roughly_vertical_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_vertical_direction(rng: &mut SmallRng,
                                        _: &GridDimensions,
                                        _: Option<Self::Coord>)
                                        -> Self::Direction {
@@ -349,7 +355,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_roughly_horizontal_direction(rng: &mut XorShiftRng,
+    fn rand_roughly_horizontal_direction(rng: &mut SmallRng,
                                          _: &GridDimensions,
                                          _: Option<Self::Coord>)
                                          -> Self::Direction {
@@ -437,7 +443,7 @@ impl Cell for PolarCell {
 //     fn column_length(&self) -> ColumnLength;
 
 //     fn grid_coordinate_to_index(coord: CellT::Coord) -> Option<usize>; /// ???
-//     fn random_cell(&self, rng: &mut XorShiftRng) -> CellT::Coord;
+//     fn random_cell(&self, rng: &mut SmallRng) -> CellT::Coord;
 
 //     fn graphSize(&self) -> (usize, usize); // (node hint, edges hint)
 

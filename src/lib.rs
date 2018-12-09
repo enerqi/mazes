@@ -1,35 +1,7 @@
 //! **mazes** is a maze generation, visualisation and route finding library.
 
 // TODO infrastructure:
-// - public docs
-// - deny dead_code, missing_docs
-
-#![allow(dead_code, missing_docs)]
-#![warn(variant_size_differences)]
-#![deny(missing_debug_implementations, missing_copy_implementations,
-        trivial_numeric_casts,
-        unsafe_code,
-        unused_extern_crates, unused_import_braces, unused_qualifications)]
-#![cfg_attr(not(test), deny(trivial_casts))] // quickcheck test requirement
-
-#![cfg_attr(feature="clippy", feature(plugin))]
-#![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", allow(similar_names))]
-
-extern crate bit_set;
-extern crate fnv;
-extern crate image;
-extern crate itertools;
-#[macro_use]
-extern crate lazy_static;
-extern crate num;
-extern crate petgraph;
-extern crate rand;
-extern crate sdl2;
-extern crate smallvec;
-
-#[cfg(test)]
-extern crate quickcheck;
+// - public docs / tutorial / examples
 
 pub mod cells;
 pub mod generators;

@@ -3,7 +3,6 @@ use std::ffi::{OsStr, OsString};
 use std::fs::copy;
 use std::path::Path;
 
-extern crate walkdir;
 use walkdir::{DirEntry, WalkDir};
 
 fn main() {

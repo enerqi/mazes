@@ -29,20 +29,24 @@
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
 
-use cells::{Cell, Coordinate};
-use grid::{Grid, IndexType};
-use grid_traits::GridIterators;
+use crate::{
+    cells::{Cell, Coordinate},
+    grid_traits::GridIterators,
+    grid::{Grid, IndexType},
+    masks::BinaryMask2D,
+    units::{ColumnIndex, RowIndex},
+    utils,
+    utils::FnvHashMap,
+};
 
 use itertools::Itertools;
-use masks::BinaryMask2D;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
-use std::fmt::{Debug, Display, LowerHex};
-use std::marker::PhantomData;
-use std::ops::Add;
-use units::{ColumnIndex, RowIndex};
-use utils;
-use utils::FnvHashMap;
+use std::{
+    fmt::{Debug, Display, LowerHex},
+    marker::PhantomData,
+    ops::Add
+};
 
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
@@ -67,7 +71,7 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
     where CellT: Cell,
           MaxDistanceT: MaxDistance
 {
-    pub fn new<GridIndexType, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
+    pub fn for_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
                                      start_coordinate: CellT::Coord)
                                      -> Option<Distances<CellT, MaxDistanceT>>
         where GridIndexType: IndexType,
@@ -121,8 +125,8 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         }
 
         Some(Distances {
-                 start_coordinate: start_coordinate,
-                 distances: distances,
+                 start_coordinate,
+                 distances,
                  max_distance: max,
                  cell_type: PhantomData,
              })
@@ -170,10 +174,8 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
           Iters: GridIterators<CellT>
 {
 
-    if distances_from_start.distance_from_start_to(end_point).is_none() {
-        // The end point is not reachable from start.
-        return None;
-    }
+    // The end point is not reachable from start?
+    distances_from_start.distance_from_start_to(end_point)?;
 
     let mut path = vec![end_point];
     let start = distances_from_start.start();
@@ -253,11 +255,9 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
         Some(CellT::Coord::from_row_column_indices(ColumnIndex(0), RowIndex(0)))
     };
 
-    if arbitrary_start_point.is_none() {
-        return None;
-    }
+    arbitrary_start_point?;
 
-    let first_distances = Distances::<CellT, MaxDistanceT>::new(grid,
+    let first_distances = Distances::<CellT, MaxDistanceT>::for_grid(grid,
                                                                 arbitrary_start_point.unwrap())
             .expect("Invalid start coordinate.");
 
@@ -265,7 +265,7 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
     let long_path_start_coordinate = first_distances.furthest_points_on_grid()[0];
 
     let distances_from_start =
-        Distances::<CellT, MaxDistanceT>::new(grid, long_path_start_coordinate).unwrap();
+        Distances::<CellT, MaxDistanceT>::for_grid(grid, long_path_start_coordinate).unwrap();
     let end_point = distances_from_start.furthest_points_on_grid()[0];
 
     shortest_path(grid, &distances_from_start, end_point)
@@ -277,12 +277,12 @@ mod tests {
 
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, Cell, SquareCell};
-    use grids::{SmallRectangularGrid, small_rect_grid};
+    use crate::cells::{Cartesian2DCoordinate, Cell, SquareCell};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use quickcheck::quickcheck;
     use std::u32;
-    use units;
+    use crate::units;
 
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
@@ -295,7 +295,7 @@ mod tests {
     fn small_distances(g: &SmallRectangularGrid,
                        coord: <SquareCell as Cell>::Coord)
                        -> Option<SmallDistances> {
-        SmallDistances::new(g, coord)
+        SmallDistances::for_grid(g, coord)
     }
 
     static OUT_OF_GRID_COORDINATE: Cartesian2DCoordinate = Cartesian2DCoordinate {

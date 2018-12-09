@@ -1,19 +1,22 @@
-#![allow(unused_qualifications)] // until rust 1.15 is stable or fn small_grid works in beta and stable.
+use crate::{
+    cells::{Cell, Coordinate},
+    grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators},
+    units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount}
+};
 
-
-use cells::{Cell, Coordinate};
-use grid_traits::{GridCoordinates, GridDimensions, GridDisplay, GridIterators};
-
-use petgraph::{Graph, Undirected};
-use petgraph::graph;
+use petgraph::{
+    Graph,
+    Undirected,
+    graph
+};
 pub use petgraph::graph::IndexType;
-use rand::XorShiftRng;
-use std::fmt;
-use std::marker::PhantomData;
-use std::rc::Rc;
-use std::slice;
-use units::{ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowLength, RowsCount};
-
+use rand::rngs::SmallRng;
+use std::{
+    fmt,
+    marker::PhantomData,
+    rc::Rc,
+    slice
+};
 
 pub struct Grid<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> {
     graph: Graph<(), (), Undirected, GridIndexType>,
@@ -44,6 +47,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
 impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType,
                                                                               CellT,
                                                                               Iters> {
+    #[allow(clippy::needless_pass_by_value)]  // Rc<GridDimensions>
     pub fn new(dimensions: Rc<GridDimensions>,
                coordinates: Box<GridCoordinates<CellT>>,
                iterators: Iters)
@@ -54,8 +58,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         let mut grid = Grid {
             graph: Graph::with_capacity(nodes, edges),
             dimensions: dimensions.clone(),
-            coordinates: coordinates,
-            iterators: iterators,
+            coordinates,
+            iterators,
             grid_display: None,
             cell_type: PhantomData,
         };
@@ -119,7 +123,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     }
 
     #[inline]
-    pub fn random_cell(&self, mut rng: &mut XorShiftRng) -> CellT::Coord {
+    pub fn random_cell(&self, mut rng: &mut SmallRng) -> CellT::Coord {
         self.coordinates.random_cell(&mut rng, &self.dimensions)
     }
 
@@ -279,6 +283,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         self.coordinates.is_valid_coordinate(coord, &self.dimensions)
     }
 
+    #[allow(dead_code)]  // for now
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
         // For .iter Coord satifies `Deref<Target=[Self::Coord]>`
         self.neighbours(a).iter().any(|&coord| coord == b)
@@ -301,7 +306,7 @@ pub struct LinksIter<'a, CellT: Cell, GridIndexType: IndexType> {
     cell_type: PhantomData<CellT>,
 }
 
-impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'_, CellT, GridIndexType> {
     type Item = (CellT::Coord, CellT::Coord);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -320,11 +325,11 @@ impl<'a, CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'a, CellT
         self.graph_edge_iter.size_hint()
     }
 }
-impl<'a, CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
-    for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
+    for LinksIter<'_, CellT, GridIndexType> {
 } // default impl using size_hint()
 
-impl<'a, CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'a, CellT, GridIndexType> {
+impl<CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'_, CellT, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "LinksIter :: edges iter : {:?}", self.graph_edge_iter)
     }
@@ -350,17 +355,19 @@ mod tests {
 
 
     use super::*;
-    use cells::{Cartesian2DCoordinate, CompassPrimary};
-    use grids::{SmallRectangularGrid, small_rect_grid};
+    use crate::cells::{Cartesian2DCoordinate, CompassPrimary};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use itertools::Itertools; // a trait
-    use rand;
+    use rand::{
+        FromEntropy,
+        rngs::SmallRng
+    };
     use smallvec::SmallVec;
     use std::u32;
-    use units;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(units::RowLength(w), units::ColumnLength(h))
+        small_rect_grid(RowLength(w), ColumnLength(h))
             .expect("grid dimensions too large for small grid")
     }
 
@@ -479,7 +486,7 @@ mod tests {
     fn random_cell() {
         let g = small_grid(4, 4);
         let cells_count = 4 * 4;
-        let mut rng = rand::weak_rng();
+        let mut rng = SmallRng::from_entropy();
         for _ in 0..1000 {
             let coord = g.random_cell(&mut rng);
             assert!(coord.x < cells_count);

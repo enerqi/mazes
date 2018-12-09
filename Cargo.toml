@@ -5,40 +5,34 @@ authors = ["enerqi <enerqi@enerqi>"]
 repository = "https://github.com/enerqi/mazes.git"
 homepage = "https://github.com/enerqi/mazes.git"
 license = "MIT/Apache-2.0"
+edition = "2018"
 
 [dependencies]
-bit-set = "^0.4.0"
-docopt = "^0.8.0"
-error-chain = "^0.11.0"
+bit-set = "^0.5.0"
+docopt = "^1.0.0"
+error-chain = "^0.12.0"
 fnv = "^1.0.2"
-image = "^0.15.0"
-itertools = "^0.6.0"
-lazy_static = "^0.2"
-num = "^0.1.31"
+image = "^0.20.0"
+itertools = "^0.7.0"
+lazy_static = "^1.1.0"
+num = "^0.2.0"
 petgraph = "^0.4.0"
-rand = "^0.3.10"
+rand = "^0.5.5"
 serde = "^1.0"
 serde_derive = "^1.0"
-smallvec = "^0.4.0"
-
-clippy = { version = "*", optional = true }
+smallvec = "^0.6.5"
 
 [dependencies.sdl2]
-version = "^0.30.0"
+version = "^0.31.0"
 default-features = false
 features = ["image", "ttf"]
 
 [dev-dependencies]
-quickcheck = "^0.4.0"
+criterion = "^0.2.5"
+quickcheck = "^0.7.2"
 
 [build-dependencies]
-walkdir = "^1.0.3"
-
-[features]
-# Not using clippy by default: requires unstable compiler apis -> nightly rust build.
-# Add `--features clippy` to the build or test command
-default = []
-test = []
+walkdir = "^2.2.6"
 
 [profile.release]
 debug = true
@@ -46,42 +40,27 @@ debug = true
 [profile.bench]
 debug = true
 
-[[bin]]
-name = "mazes_driver"
-test = false
-bench = false
-
 [[bench]]
 name = "generators"
+harness = false  # disable the libtest benchmark harness so can use criterion instead
 path = "./benches/generators.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "grid"
+harness = false
 path = "./benches/grid.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "masks"
+harness = false
 path = "./benches/masks.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "pathing"
+harness = false
 path = "./benches/pathing.rs"
-test = false
-bench = true
-doc = false
 
 [[bench]]
 name = "renderers"
+harness = false
 path = "./benches/renderers.rs"
-test = false
-bench = true
-doc = false
