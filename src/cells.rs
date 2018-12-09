@@ -97,7 +97,7 @@ impl Cell for SquareCell {
          CompassPrimary::South,
          CompassPrimary::East,
          CompassPrimary::West]
-                .into_iter()
+                .iter()
                 .cloned()
                 .collect::<Self::DirectionSmallVec>()
     }
@@ -225,7 +225,7 @@ impl Cell for PolarCell {
              ClockDirection::CounterClockwise,
              ClockDirection::Inward,
              ClockDirection::Outward(0)]
-                    .into_iter()
+                    .iter()
                     .cloned()
                     .collect::<Self::DirectionSmallVec>()
         };
@@ -247,7 +247,7 @@ impl Cell for PolarCell {
                                   ClockDirection::CounterClockwise,
                                   ClockDirection::Inward,
                                   ClockDirection::Outward(0)];
-                dirs.extend(basic_dirs.into_iter().cloned());
+                dirs.extend(basic_dirs.iter().cloned());
                 for i in 1..(ratio - 1) {
                     dirs.push(ClockDirection::Outward(i as u8));
                 }

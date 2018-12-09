@@ -26,7 +26,8 @@ install:
   - bash scripts/travis-install-sdl2.sh
 
 before_script:
-  - rustup component add clippy-preview
+  - rustup component add clippy
+  - rustup component add rustfmt
 
 
 # Better rust debugging info.
@@ -38,7 +39,7 @@ env:
 
 branches:
   only:
-    - 2018-edition
+    - master
 
 # build, test and check benchmarks compile
 script:
@@ -49,7 +50,7 @@ script:
   # - cargo clippy --all-targets -- -D warnings
   - cargo test --verbose
   # ensure performance tests compile
-  - 'if [ $TRAVIS_RUST_VERSION = beta ]; then cargo bench --no-run; fi'
+  - cargo bench --no-run
 
 # After built rust and run the tests once, check the code coverage
 after_success: |
