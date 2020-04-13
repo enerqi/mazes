@@ -1,5 +1,4 @@
-use sdl2;
-use sdl2::image::{INIT_JPG, INIT_PNG};
+use sdl2::image::InitFlag;
 
 pub struct SdlSetup {
     pub sdl_context: sdl2::Sdl,
@@ -13,7 +12,7 @@ pub fn init() -> SdlSetup {
     let video_subsystem: sdl2::VideoSubsystem = sdl_context.video().unwrap();
     let timer_subsystem = sdl_context.timer().unwrap();
     let ttf_context = sdl2::ttf::init().expect("Failed to init true type fonts");
-    sdl2::image::init(INIT_PNG | INIT_JPG).unwrap();
+    sdl2::image::init(InitFlag::PNG | InitFlag::JPG).unwrap();
 
     SdlSetup {
         sdl_context,

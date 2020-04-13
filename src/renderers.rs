@@ -7,7 +7,6 @@ use crate::{
 };
 
 use lazy_static::*; // macro
-use sdl2;
 use sdl2::{
     event::{Event, WindowEvent},
     hint,
@@ -218,7 +217,7 @@ fn draw_maze<GridIndexType, Iters>(
         .ttf_context
         .load_font(font_path, font_px_size)
         .expect("Failed to load font");
-    font.set_style(sdl2::ttf::STYLE_BOLD);
+    font.set_style(sdl2::ttf::FontStyle::BOLD);
 
     // Start and end symbol letters rendered to different surfaces
     let s_surface = font.render("S").blended(*BLACK).unwrap();

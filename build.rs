@@ -6,13 +6,14 @@ use std::path::Path;
 use walkdir::{DirEntry, WalkDir};
 
 fn main() {
-
     // Assume libsdl2*-dev is installed on BSD, but the link search path may not include the directory
     // containing the libs.
-    if cfg!(any(target_os = "freebsd",
-                target_os = "openbsd",
-                target_os = "netbsd",
-                target_os = "dragonfly")) {
+    if cfg!(any(
+        target_os = "freebsd",
+        target_os = "openbsd",
+        target_os = "netbsd",
+        target_os = "dragonfly"
+    )) {
         println!("cargo:rustc-link-search=/usr/local/lib");
     }
 
@@ -22,7 +23,6 @@ fn main() {
     // We also ensure that the DLLs have been copied to the project root (or SDL_DLLS_RUN_DIR env var dir)
     // so that cargo run can find them.
     if cfg!(target_family = "windows") {
-
         // Assuming cargo always sets this environment variable!
         let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
@@ -38,20 +38,23 @@ fn main() {
         let is_mingw = cfg!(target_env = "gnu");
 
         let select_libs_dir = |base_dir| {
-            let dir = format!("{}/{}/{}/{}",
-                              win_sdl_libs_dir,
-                              base_dir,
-                              if is_mingw { "mingw" } else { "msvc" },
-                              if is_x64 { "x64" } else { "x32" });
+            let dir = format!(
+                "{}/{}/{}/{}",
+                win_sdl_libs_dir,
+                base_dir,
+                if is_mingw { "mingw" } else { "msvc" },
+                if is_x64 { "x64" } else { "x32" }
+            );
             dir
         };
 
-        let machine_lib_dirs = [select_libs_dir("sdl2"),
-                                select_libs_dir("sdl2-image"),
-                                select_libs_dir("sdl2-ttf")];
+        let machine_lib_dirs = [
+            select_libs_dir("sdl2"),
+            select_libs_dir("sdl2-image"),
+            select_libs_dir("sdl2-ttf"),
+        ];
 
         for dir in &machine_lib_dirs {
-
             println!("cargo:rustc-flags=-L {}", dir);
 
             // Copy sdl2 related DLLs to win_sdl_dlls_dir so `cargo run` succeeds.
@@ -59,7 +62,6 @@ fn main() {
                 let entry = entry.unwrap();
 
                 if is_dll_file(&entry) {
-
                     let src_file_path: &Path = entry.path();
                     let src_file_name: &OsStr = entry.file_name();
                     let target_dir: &String = &win_sdl_dlls_dir;
@@ -68,14 +70,16 @@ fn main() {
                         target_dir_path.join(src_file_name).into_os_string();
                     let target_file_path: &Path = Path::new(&target_file_str);
 
-                    if !target_file_path.exists() ||
-                       are_different_file_contents(&entry, target_file_path) {
-
-                        copy(src_file_path, target_file_path)
-                            .expect(format!("Failed to copy windows os dll from {} to {}",
-                                            src_file_path.display(),
-                                            target_file_path.display())
-                                            .as_str());
+                    if !target_file_path.exists()
+                        || are_different_file_contents(&entry, target_file_path)
+                    {
+                        copy(src_file_path, target_file_path).unwrap_or_else(|_| {
+                            panic!(
+                                "Failed to copy windows os dll from {} to {}",
+                                src_file_path.display(),
+                                target_file_path.display()
+                            )
+                        });
                     }
                 }
             }
@@ -84,7 +88,6 @@ fn main() {
 }
 
 fn is_dll_file(entry: &DirEntry) -> bool {
-
     if entry.file_type().is_file() {
         if let Some(osstr_ext) = entry.path().extension() {
             if let Some(ext) = osstr_ext.to_str() {
@@ -101,13 +104,7 @@ fn are_different_file_contents(entry: &DirEntry, file_path: &Path) -> bool {
     let file_meta_r = file_path.metadata();
 
     if let (Ok(entry_meta), Ok(file_meta)) = (entry_meta_r, file_meta_r) {
-
-        if entry_meta.is_file() && file_meta.is_file() && entry_meta.len() == file_meta.len() {
-            false
-        } else {
-            true
-        }
-
+        !(entry_meta.is_file() && file_meta.is_file() && entry_meta.len() == file_meta.len())
     } else {
         // When we cannot read the metadata then default to assuming
         // different files.

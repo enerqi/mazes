@@ -27,7 +27,7 @@ features = ["small_rng"]
 
 [dependencies.sdl2]
 # 0.32, 0.33 require later sdl2 binaries
-version = "^0.31.0"
+version = "^0.33"
 default-features = false
 features = ["image", "ttf"]
 
