@@ -9,7 +9,7 @@ pushd SDL2-* && ./configure && make && sudo make install && popd
 wget -q https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.tar.gz
 wget -q https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.tar.gz
 wget -q https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz
-wget -q -O SDL2_gfx-1.0.1.tar.gz https://sourceforge.net/projects/sdl2gfx/files/SDL2_gfx-1.0.4.tar.gz/download
+wget -q -O SDL2_gfx-1.0.4.tar.gz https://sourceforge.net/projects/sdl2gfx/files/SDL2_gfx-1.0.4.tar.gz/download
 tar xzf SDL2_ttf-*.tar.gz
 tar xzf SDL2_image-*.tar.gz
 tar xzf SDL2_mixer-*.tar.gz
