@@ -7,7 +7,7 @@ addons:
     update: true
     packages:
       # kcov compilation
-      - libgl1-mesa-glx
+      - libgl1-mesa-dev
       - libcurl4-openssl-dev
       - libelf-dev
       - libdw-dev
