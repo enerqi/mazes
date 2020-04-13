@@ -1,7 +1,6 @@
-#![windows_subsystem(windows)]  // Do not display a console when running a windowed application
+#![windows_subsystem = "windows"] // Do not display a console when running a windowed application
 
 use docopt::Docopt;
-use serde_derive::Deserialize;
 use mazes::{
     cells::{Cartesian2DCoordinate, Cell, SquareCell},
     generators,
@@ -12,17 +11,10 @@ use mazes::{
     grid_iterators::RectGridIterators,
     grid_traits::GridDisplay,
     masks::BinaryMask2D,
-    pathing,
-    renderers,
-    units,
+    pathing, renderers, units,
 };
-use std::{
-    io,
-    io::prelude::*,
-    fs::File,
-    path::Path,
-    rc::Rc
-};
+use serde_derive::Deserialize;
+use std::{fs::File, io, io::prelude::*, path::Path, rc::Rc};
 
 const USAGE: &str = "Mazes
 
@@ -105,7 +97,6 @@ mod errors {
 use crate::errors::*;
 
 fn main() -> Result<()> {
-
     let args: MazeArgs = Docopt::new(USAGE).and_then(|d| d.deserialize())?;
 
     let large_grid_cell_count = 25 * 25;
@@ -118,16 +109,20 @@ fn main() -> Result<()> {
     let any_render_option = args.cmd_text || args.cmd_image;
 
     // Do whatever defaults we want if not given a specific 'render' command
-    let do_image_render = !args.cmd_render || args.cmd_image ||
-                          (!any_render_option && grid_size >= large_grid_cell_count);
-    let do_text_render = args.cmd_render &&
-                         (args.cmd_text ||
-                          (!any_render_option && grid_size < large_grid_cell_count));
+    let do_image_render = !args.cmd_render
+        || args.cmd_image
+        || (!any_render_option && grid_size >= large_grid_cell_count);
+    let do_text_render = args.cmd_render
+        && (args.cmd_text || (!any_render_option && grid_size < large_grid_cell_count));
 
     let mut maze_grid = Grid::<u32, SquareCell, RectGridIterators>::new(
-        Rc::new(RectGridDimensions::new(units::RowLength(width), units::ColumnLength(height))),
+        Rc::new(RectGridDimensions::new(
+            units::RowLength(width),
+            units::ColumnLength(height),
+        )),
         Box::new(RectGridCoordinates),
-        RectGridIterators);
+        RectGridIterators,
+    );
 
     let mask = if !args.flag_mask_file.is_empty() {
         Some(load_binary_mask(&args.flag_mask_file)?)
@@ -138,26 +133,24 @@ fn main() -> Result<()> {
     generate_maze_on_grid(&mut maze_grid, &args, mask.as_ref());
 
     if let Some(wall_count) = args.flag_block_passages {
-
         generators::rebuild_random_walls(&mut maze_grid, wall_count);
     }
 
     if !args.flag_save_edges.is_empty() {
-
         save_maze_graph(&maze_grid, &args.flag_save_edges)?;
     }
 
     let longest_path = longest_path_from_arg_constraints(&args, &maze_grid, mask.as_ref())?;
 
     if do_text_render {
-
         set_maze_griddisplay(&mut maze_grid, &args, &longest_path)?;
 
         if args.flag_text_out.is_empty() {
             println!("{}", maze_grid);
         } else {
-            write_text_to_file(&format!("{}", maze_grid), &args.flag_text_out)
-                .chain_err(|| format!("Failed to write maze to text file {}", args.flag_text_out))?;
+            write_text_to_file(&format!("{}", maze_grid), &args.flag_text_out).chain_err(|| {
+                format!("Failed to write maze to text file {}", args.flag_text_out)
+            })?;
         }
     }
 
@@ -172,20 +165,29 @@ fn main() -> Result<()> {
         let start_opt = get_start_point(&args, &longest_path);
         let end_opt = get_end_point(&args, &longest_path);
 
-        let distances = if args.flag_colour_distances || args.flag_mark_start_end ||
-                           args.flag_show_path {
+        let distances = if args.flag_colour_distances
+            || args.flag_mark_start_end
+            || args.flag_show_path
+        {
             let (start_x, start_y) = start_opt.unwrap();
-            Some(pathing::Distances::<SquareCell, u32>::for_grid(&maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
-                    .ok_or("Provided invalid start coordinate from which to show path distances.")?)
+            Some(
+                pathing::Distances::<SquareCell, u32>::for_grid(
+                    &maze_grid,
+                    Cartesian2DCoordinate::new(start_x, start_y),
+                )
+                .ok_or("Provided invalid start coordinate from which to show path distances.")?,
+            )
         } else {
             None
         };
 
         let path_opt = if args.flag_show_path {
             let (end_x, end_y) = end_opt.unwrap();
-            pathing::shortest_path(&maze_grid,
-                                   distances.as_ref().unwrap(),
-                                   Cartesian2DCoordinate::new(end_x, end_y))
+            pathing::shortest_path(
+                &maze_grid,
+                distances.as_ref().unwrap(),
+                Cartesian2DCoordinate::new(end_x, end_y),
+            )
         } else {
             None
         };
@@ -207,10 +209,11 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
-                         maze_args: &MazeArgs,
-                         mask: Option<&BinaryMask2D>) {
-
+fn generate_maze_on_grid(
+    mut maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
+    maze_args: &MazeArgs,
+    mask: Option<&BinaryMask2D>,
+) {
     if maze_args.cmd_render {
         if maze_args.cmd_binary {
             generators::binary_tree(&mut maze_grid);
@@ -238,52 +241,55 @@ fn generate_maze_on_grid(mut maze_grid: &mut Grid<u32, SquareCell, RectGridItera
 /// Default to finding the start and end point of the longest path in the maze if required to show a path
 /// or asked to find the point furthest away from a start point
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
-fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
-                        maze_args: &MazeArgs,
-                        longest_path: &[Cartesian2DCoordinate])
-                        -> Result<()> {
-
+fn set_maze_griddisplay(
+    maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>,
+    maze_args: &MazeArgs,
+    longest_path: &[Cartesian2DCoordinate],
+) -> Result<()> {
     let start_opt = get_start_point(maze_args, longest_path);
     let end_opt = get_end_point(maze_args, longest_path);
 
     if maze_args.flag_show_distances || maze_args.flag_show_path {
-
         let (start_x, start_y) = start_opt.unwrap();
-        let distances = Rc::new(pathing::Distances::<SquareCell, u32>::for_grid(maze_grid, Cartesian2DCoordinate::new(start_x, start_y))
-                .ok_or("Provided invalid start coordinate from which to show path distances.")?);
+        let distances = Rc::new(
+            pathing::Distances::<SquareCell, u32>::for_grid(
+                maze_grid,
+                Cartesian2DCoordinate::new(start_x, start_y),
+            )
+            .ok_or("Provided invalid start coordinate from which to show path distances.")?,
+        );
 
         if maze_args.flag_show_distances {
-
             // Ignore any endpoint or furthest point request (docopt cannot nest these mutual exclusions?)
             // Show the distances to everywhere else
-            maze_grid.set_grid_display(Some(distances.clone() as Rc<GridDisplay<SquareCell>>));
-
+            maze_grid.set_grid_display(Some(distances as Rc<dyn GridDisplay<SquareCell>>));
         } else if maze_args.flag_show_path {
-
             // We need a start and an end
             let (end_x, end_y) = end_opt.unwrap();
 
             // Given a start and end point - show the shortest path between these two points
-            let path_opt = pathing::shortest_path(maze_grid,
-                                                  &distances,
-                                                  Cartesian2DCoordinate::new(end_x, end_y));
+            let path_opt = pathing::shortest_path(
+                maze_grid,
+                &distances,
+                Cartesian2DCoordinate::new(end_x, end_y),
+            );
 
             if let Some(path) = path_opt {
                 let display_path = Rc::new(PathDisplay::new(&path));
-                maze_grid.set_grid_display(Some(display_path as Rc<GridDisplay<SquareCell>>));
+                maze_grid.set_grid_display(Some(display_path as Rc<dyn GridDisplay<SquareCell>>));
             } else {
                 // Somehow there is no route, maze generation failed to make a perfect maze
-                let start_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x,
-                                                                                     start_y));
+                let start_points =
+                    as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y));
                 let end_points = as_coordinate_smallvec(Cartesian2DCoordinate::new(end_x, end_y));
-                let display_start_end_points = Rc::new(StartEndPointsDisplay::new(start_points,
-                                                                                  end_points));
-                maze_grid.set_grid_display(Some(display_start_end_points as
-                                                Rc<GridDisplay<SquareCell>>));
+                let display_start_end_points =
+                    Rc::new(StartEndPointsDisplay::new(start_points, end_points));
+                maze_grid.set_grid_display(Some(
+                    display_start_end_points as Rc<dyn GridDisplay<SquareCell>>,
+                ));
             }
         }
     } else {
-
         // Show the start and end points that exist.
         let start_points = if let Some((start_x, start_y)) = start_opt {
             as_coordinate_smallvec(Cartesian2DCoordinate::new(start_x, start_y))
@@ -295,23 +301,27 @@ fn set_maze_griddisplay(maze_grid: &mut Grid<u32, SquareCell, RectGridIterators>
         } else {
             <SquareCell as Cell>::CoordinateSmallVec::new()
         };
-        let display_start_end_points = Rc::new(StartEndPointsDisplay::new(start_points,
-                                                                          end_points));
-        maze_grid.set_grid_display(Some(display_start_end_points as Rc<GridDisplay<SquareCell>>));
+        let display_start_end_points =
+            Rc::new(StartEndPointsDisplay::new(start_points, end_points));
+        maze_grid.set_grid_display(Some(
+            display_start_end_points as Rc<dyn GridDisplay<SquareCell>>,
+        ));
     }
 
     Ok(())
 }
 
-fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
-                                     maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
-                                     mask: Option<&BinaryMask2D>)
-                                     -> Result<Vec<Cartesian2DCoordinate>> {
-
-    let single_point: Option<(u32, u32)> = match (maze_args.flag_start_point_x,
-                                                  maze_args.flag_start_point_y,
-                                                  maze_args.flag_end_point_x,
-                                                  maze_args.flag_end_point_y) {
+fn longest_path_from_arg_constraints(
+    maze_args: &MazeArgs,
+    maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
+    mask: Option<&BinaryMask2D>,
+) -> Result<Vec<Cartesian2DCoordinate>> {
+    let single_point: Option<(u32, u32)> = match (
+        maze_args.flag_start_point_x,
+        maze_args.flag_start_point_y,
+        maze_args.flag_end_point_x,
+        maze_args.flag_end_point_y,
+    ) {
         (Some(_), Some(_), Some(_), Some(_)) => None,
         (Some(start_x), Some(start_y), _, _) => Some((start_x, start_y)),
         (_, _, Some(end_x), Some(end_y)) => Some((end_x, end_y)),
@@ -319,45 +329,49 @@ fn longest_path_from_arg_constraints(maze_args: &MazeArgs,
     };
 
     if let Some((x, y)) = single_point {
-        let distances = pathing::Distances::<SquareCell, u32>::for_grid(maze_grid,
-                                                                   Cartesian2DCoordinate::new(x,
-                                                                                              y))
-            .ok_or("Provided invalid start coordinate.")?;
+        let distances = pathing::Distances::<SquareCell, u32>::for_grid(
+            maze_grid,
+            Cartesian2DCoordinate::new(x, y),
+        )
+        .ok_or("Provided invalid start coordinate.")?;
         let furthest_points = distances.furthest_points_on_grid();
         let end_coord = furthest_points[0];
         Ok(pathing::shortest_path(maze_grid, &distances, end_coord).unwrap_or_else(Vec::new))
     } else if let (Some(start_x), Some(start_y), Some(end_x), Some(end_y)) =
         // Fully defined start and end, so we can only find the path for it.
-       (maze_args.flag_start_point_x,
+        (
+        maze_args.flag_start_point_x,
         maze_args.flag_start_point_y,
         maze_args.flag_end_point_x,
-        maze_args.flag_end_point_y) {
-
-        let distances = pathing::Distances::<SquareCell,
-                                         u32>::for_grid(maze_grid,
-                                                   Cartesian2DCoordinate::new(start_x,
-                                                                              start_y))
+        maze_args.flag_end_point_y,
+    ) {
+        let distances = pathing::Distances::<SquareCell, u32>::for_grid(
+            maze_grid,
+            Cartesian2DCoordinate::new(start_x, start_y),
+        )
         .ok_or("Provided invalid start coordinate.")?;
         let end_coord = Cartesian2DCoordinate::new(end_x, end_y);
         Ok(pathing::shortest_path(maze_grid, &distances, end_coord).unwrap_or_else(Vec::new))
     } else {
         // No points given, just find the actual longest path
-        Ok(pathing::dijkstra_longest_path::<u32, u32, SquareCell, RectGridIterators>(maze_grid,
-                                                                                  mask)
-            .unwrap_or_else(Vec::new))
+        Ok(
+            pathing::dijkstra_longest_path::<u32, u32, SquareCell, RectGridIterators>(
+                maze_grid, mask,
+            )
+            .unwrap_or_else(Vec::new),
+        )
     }
 }
 
-fn get_start_point(maze_args: &MazeArgs,
-                   longest_path: &[Cartesian2DCoordinate])
-                   -> Option<(u32, u32)> {
-
+fn get_start_point(
+    maze_args: &MazeArgs,
+    longest_path: &[Cartesian2DCoordinate],
+) -> Option<(u32, u32)> {
     if let (Some(start_x), Some(start_y)) =
-        (maze_args.flag_start_point_x, maze_args.flag_start_point_y) {
+        (maze_args.flag_start_point_x, maze_args.flag_start_point_y)
+    {
         Some((start_x, start_y))
-
     } else if maze_arg_requires_start_and_end_point(maze_args) {
-
         // We do not have a start so make one up
         let start = longest_path.first().unwrap();
         Some((start.x, start.y))
@@ -365,15 +379,13 @@ fn get_start_point(maze_args: &MazeArgs,
         None
     }
 }
-fn get_end_point(maze_args: &MazeArgs,
-                 longest_path: &[Cartesian2DCoordinate])
-                 -> Option<(u32, u32)> {
-
+fn get_end_point(
+    maze_args: &MazeArgs,
+    longest_path: &[Cartesian2DCoordinate],
+) -> Option<(u32, u32)> {
     if let (Some(end_x), Some(end_y)) = (maze_args.flag_end_point_x, maze_args.flag_end_point_y) {
         Some((end_x, end_y))
-
     } else if maze_arg_requires_start_and_end_point(maze_args) {
-
         // We do not have an end but we need to make one up
         let end = longest_path.last().unwrap();
         Some((end.x, end.y))
@@ -383,12 +395,16 @@ fn get_end_point(maze_args: &MazeArgs,
 }
 
 fn maze_arg_requires_start_and_end_point(maze_args: &MazeArgs) -> bool {
-    maze_args.flag_furthest_end_point || maze_args.flag_show_distances ||
-    maze_args.flag_show_path || maze_args.flag_colour_distances || maze_args.flag_mark_start_end
+    maze_args.flag_furthest_end_point
+        || maze_args.flag_show_distances
+        || maze_args.flag_show_path
+        || maze_args.flag_colour_distances
+        || maze_args.flag_mark_start_end
 }
 
-fn as_coordinate_smallvec(coord: Cartesian2DCoordinate)
-                          -> <SquareCell as Cell>::CoordinateSmallVec {
+fn as_coordinate_smallvec(
+    coord: Cartesian2DCoordinate,
+) -> <SquareCell as Cell>::CoordinateSmallVec {
     [coord]
         .iter()
         .cloned()
@@ -406,10 +422,10 @@ fn write_text_to_file(data: &str, file_name: &str) -> io::Result<()> {
     Ok(())
 }
 
-fn save_maze_graph(maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
-                   file_path: &str)
-                   -> Result<()> {
-
+fn save_maze_graph(
+    maze_grid: &Grid<u32, SquareCell, RectGridIterators>,
+    file_path: &str,
+) -> Result<()> {
     let mut graph_data = String::new();
     let vertices_count = maze_grid.size();
     let edges_count = maze_grid.links_count();

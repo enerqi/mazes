@@ -1,7 +1,7 @@
 use fnv::FnvHasher;
 use std::{
     collections::{HashMap, HashSet},
-    hash::{BuildHasherDefault, Hash}
+    hash::{BuildHasherDefault, Hash},
 };
 
 pub type FnvHashSet<T> = HashSet<T, BuildHasherDefault<FnvHasher>>;

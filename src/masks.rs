@@ -2,7 +2,7 @@ use bit_set::BitSet;
 
 use crate::{
     cells::{Cartesian2DCoordinate, Coordinate},
-    units::{ColumnIndex, Height, RowIndex, Width}
+    units::{ColumnIndex, Height, RowIndex, Width},
 };
 use image::{DynamicImage, Luma};
 
@@ -15,16 +15,14 @@ pub struct BinaryMask2D {
 
 impl BinaryMask2D {
     pub fn from_image(data_image: &DynamicImage) -> BinaryMask2D {
-
         let gray_scale_image = data_image.to_luma();
         let (width, height) = gray_scale_image.dimensions();
         let mut mask = BitSet::with_capacity((width * height) as usize);
 
         for x in 0..gray_scale_image.width() {
             for y in 0..gray_scale_image.height() {
-
                 let pix: &Luma<u8> = gray_scale_image.get_pixel(x, y);
-                let gray_scale_value = pix.data[0];
+                let gray_scale_value = (pix.0)[0]; //.data[0];
                 let off = gray_scale_value < 128;
 
                 if off {
@@ -44,7 +42,6 @@ impl BinaryMask2D {
     ///
     /// A coordinate is not masked if it is outside the bounds of masks 2d space.
     pub fn is_masked<CoordT: Coordinate>(&self, coord: CoordT) -> bool {
-
         let mask_coordinate = coord.as_cartesian_2d();
 
         if mask_coordinate.x < self.width && mask_coordinate.y < self.height {
@@ -59,7 +56,6 @@ impl BinaryMask2D {
     ///
     /// All cells in the 2d space outside of the masks' own width and height are counted as unmasked.
     pub fn count_unmasked_within_dimensions(&self, width: Width, height: Height) -> usize {
-
         let mut count = 0;
         for x in 0..(width.0) {
             for y in 0..(height.0) {
@@ -74,7 +70,6 @@ impl BinaryMask2D {
     }
 
     pub fn first_unmasked_coordinate<CoordT: Coordinate>(&self) -> Option<CoordT> {
-
         // A bit in the set means masked off
         // The bitset iterator returns indices of masked values, so we cannot use that
         // (A BitVec would be more convenient for that purpose, and faster as bitset::contains

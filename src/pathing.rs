@@ -1,5 +1,3 @@
-
-
 // blah blah blah
 // - Todo cell content printing
 // def content_of(Cartesian2DCoordinate) for printing floodfill algorithm etc: ascii base36 letter (or base 64 maybe).
@@ -28,11 +26,10 @@
 // - Weak (requires downgrading an RC<T>) pointer or RC<T>
 //   x requires heap allocating the graph, though that's much data - most of it is implemented as Vectors anyway.
 
-
 use crate::{
     cells::{Cell, Coordinate},
-    grid_traits::GridIterators,
     grid::{Grid, IndexType},
+    grid_traits::GridIterators,
     masks::BinaryMask2D,
     units::{ColumnIndex, RowIndex},
     utils,
@@ -45,19 +42,21 @@ use smallvec::SmallVec;
 use std::{
     fmt::{Debug, Display, LowerHex},
     marker::PhantomData,
-    ops::Add
+    ops::Add,
 };
-
 
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
 // Note generic parameter type aliases are not in the langauge.
 // `type X = Y;` only works with concrete types.
-pub trait MaxDistance
-    : Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord
-    {
+pub trait MaxDistance:
+    Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord
+{
 }
-impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord> MaxDistance for T {}
-
+impl<
+        T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord,
+    > MaxDistance for T
+{
+}
 
 #[derive(Debug, Clone)]
 pub struct Distances<CellT: Cell, MaxDistanceT = u32> {
@@ -68,16 +67,18 @@ pub struct Distances<CellT: Cell, MaxDistanceT = u32> {
 }
 
 impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
-    where CellT: Cell,
-          MaxDistanceT: MaxDistance
+where
+    CellT: Cell,
+    MaxDistanceT: MaxDistance,
 {
-    pub fn for_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
-                                     start_coordinate: CellT::Coord)
-                                     -> Option<Distances<CellT, MaxDistanceT>>
-        where GridIndexType: IndexType,
-              Iters: GridIterators<CellT>
+    pub fn for_grid<GridIndexType, Iters>(
+        grid: &Grid<GridIndexType, CellT, Iters>,
+        start_coordinate: CellT::Coord,
+    ) -> Option<Distances<CellT, MaxDistanceT>>
+    where
+        GridIndexType: IndexType,
+        Iters: GridIterators<CellT>,
     {
-
         if !grid.is_valid_coordinate(start_coordinate) {
             return None;
         }
@@ -96,26 +97,25 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         // already been processed - acts as a visited set aswell as a storer of the floodfill distances.
         let mut frontier = vec![start_coordinate];
         while !frontier.is_empty() {
-
             let mut new_frontier = vec![];
             for cell_coord in &frontier {
-
                 // All cells except the start cell are by default infinity distance from
                 // the start until we process them, which is represented as Option::None when accessing the map.
-                let distance_to_cell: MaxDistanceT =
-                    *distances.entry(*cell_coord).or_insert_with(Bounded::max_value);
+                let distance_to_cell: MaxDistanceT = *distances
+                    .entry(*cell_coord)
+                    .or_insert_with(Bounded::max_value);
                 if distance_to_cell > max {
                     max = distance_to_cell;
                 }
 
-                let links: CellT::CoordinateSmallVec =
-                    grid.links(*cell_coord).expect("Source cell has an invalid cell coordinate.");
+                let links: CellT::CoordinateSmallVec = grid
+                    .links(*cell_coord)
+                    .expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
-
-                    let distance_to_link: MaxDistanceT =
-                        *distances.entry(*link_coordinate).or_insert_with(Bounded::max_value);
+                    let distance_to_link: MaxDistanceT = *distances
+                        .entry(*link_coordinate)
+                        .or_insert_with(Bounded::max_value);
                     if distance_to_link == Bounded::max_value() {
-
                         distances.insert(*link_coordinate, distance_to_cell + One::one());
                         new_frontier.push(*link_coordinate);
                     }
@@ -125,11 +125,11 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
         }
 
         Some(Distances {
-                 start_coordinate,
-                 distances,
-                 max_distance: max,
-                 cell_type: PhantomData,
-             })
+            start_coordinate,
+            distances,
+            max_distance: max,
+            cell_type: PhantomData,
+        })
     }
 
     #[inline]
@@ -165,15 +165,17 @@ impl<CellT, MaxDistanceT> Distances<CellT, MaxDistanceT>
     }
 }
 
-pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<GridIndexType, CellT, Iters>,
-                                                         distances_from_start: &Distances<CellT, MaxDistanceT>,
-                                                         end_point: CellT::Coord) -> Option<Vec<CellT::Coord>>
-    where GridIndexType: IndexType,
-          MaxDistanceT: MaxDistance,
-          CellT: Cell,
-          Iters: GridIterators<CellT>
+pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(
+    grid: &Grid<GridIndexType, CellT, Iters>,
+    distances_from_start: &Distances<CellT, MaxDistanceT>,
+    end_point: CellT::Coord,
+) -> Option<Vec<CellT::Coord>>
+where
+    GridIndexType: IndexType,
+    MaxDistanceT: MaxDistance,
+    CellT: Cell,
+    Iters: GridIterators<CellT>,
 {
-
     // The end point is not reachable from start?
     distances_from_start.distance_from_start_to(end_point)?;
 
@@ -182,42 +184,40 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
     let mut current_coord = end_point;
 
     while current_coord != start {
+        let current_distance_to_start = distances_from_start
+            .distance_from_start_to(current_coord)
+            .expect("Coordinate invalid for distances_from_start data.");
 
-        let current_distance_to_start =
-            distances_from_start
-                .distance_from_start_to(current_coord)
-                .expect("Coordinate invalid for distances_from_start data.");
-
-        let linked_neighbours = grid.neighbours(current_coord)
+        let linked_neighbours = grid
+            .neighbours(current_coord)
             .iter()
             .cloned()
             .filter(|neighbour_coord| grid.is_linked(*neighbour_coord, current_coord))
             .collect::<CellT::CoordinateSmallVec>();
-        let neighbour_distances =
-            &linked_neighbours
-                 .iter()
-                 .map(|coord| {
-                          (*coord,
-                           distances_from_start
-                               .distance_from_start_to(*coord)
-                               .expect("Coordinate invalid for distances_from_start data."))
-                      })
-                 .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
+        let neighbour_distances = &linked_neighbours
+            .iter()
+            .map(|coord| {
+                (
+                    *coord,
+                    distances_from_start
+                        .distance_from_start_to(*coord)
+                        .expect("Coordinate invalid for distances_from_start data."),
+                )
+            })
+            .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
         let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> =
-            &neighbour_distances
-                 .iter()
-                 .cloned()
-                 .fold1(|closest_accumulator: (CellT::Coord, MaxDistanceT),
-                         closest_candidate: (CellT::Coord, MaxDistanceT)| {
-                            if closest_candidate.1 < closest_accumulator.1 {
-                                closest_candidate
-                            } else {
-                                closest_accumulator
-                            }
-                        });
+            &neighbour_distances.iter().cloned().fold1(
+                |closest_accumulator: (CellT::Coord, MaxDistanceT),
+                 closest_candidate: (CellT::Coord, MaxDistanceT)| {
+                    if closest_candidate.1 < closest_accumulator.1 {
+                        closest_candidate
+                    } else {
+                        closest_accumulator
+                    }
+                },
+            );
 
         if let Some((closer_coord, closer_distance)) = *closest_to_start {
-
             if closer_distance == current_distance_to_start {
                 // We have not got any closer to the final goal, so there is no path there.
                 return None;
@@ -225,12 +225,10 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
 
             current_coord = closer_coord;
             path.push(current_coord);
-
         } else {
             // There are no linked neighbours - this input data is broken.
             return None;
         }
-
     }
 
     path.reverse();
@@ -239,26 +237,30 @@ pub fn shortest_path<GridIndexType, MaxDistanceT, CellT, Iters>(grid: &Grid<Grid
 
 /// Works only as long as we are looking at a perfect maze, otherwise you get back some arbitrary path back.
 /// If the mask creates disconnected subgraphs it may not be the longest path.
-pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
-    (grid: &Grid<GridIndexType, CellT, Iters>,
-     mask: Option<&BinaryMask2D>)
-     -> Option<Vec<CellT::Coord>>
-    where GridIndexType: IndexType,
-          MaxDistanceT: MaxDistance,
-          CellT: Cell,
-          Iters: GridIterators<CellT>
+pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>(
+    grid: &Grid<GridIndexType, CellT, Iters>,
+    mask: Option<&BinaryMask2D>,
+) -> Option<Vec<CellT::Coord>>
+where
+    GridIndexType: IndexType,
+    MaxDistanceT: MaxDistance,
+    CellT: Cell,
+    Iters: GridIterators<CellT>,
 {
     // Distances to everywhere from an arbitrary start coordinate
     let arbitrary_start_point = if let Some(m) = mask {
         m.first_unmasked_coordinate()
     } else {
-        Some(CellT::Coord::from_row_column_indices(ColumnIndex(0), RowIndex(0)))
+        Some(CellT::Coord::from_row_column_indices(
+            ColumnIndex(0),
+            RowIndex(0),
+        ))
     };
 
     arbitrary_start_point?;
 
-    let first_distances = Distances::<CellT, MaxDistanceT>::for_grid(grid,
-                                                                arbitrary_start_point.unwrap())
+    let first_distances =
+        Distances::<CellT, MaxDistanceT>::for_grid(grid, arbitrary_start_point.unwrap())
             .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
@@ -271,19 +273,16 @@ pub fn dijkstra_longest_path<GridIndexType, MaxDistanceT, CellT, Iters>
     shortest_path(grid, &distances_from_start, end_point)
 }
 
-
 #[cfg(test)]
 mod tests {
 
-
     use super::*;
     use crate::cells::{Cartesian2DCoordinate, Cell, SquareCell};
-    use crate::grids::{SmallRectangularGrid, small_rect_grid};
+    use crate::grids::{small_rect_grid, SmallRectangularGrid};
 
+    use crate::units;
     use quickcheck::quickcheck;
     use std::u32;
-    use crate::units;
-
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
         small_rect_grid(units::RowLength(w), units::ColumnLength(h))
@@ -292,9 +291,10 @@ mod tests {
 
     /// Distances between cells in a rectangular grid
     type SmallDistances = Distances<SquareCell, u8>;
-    fn small_distances(g: &SmallRectangularGrid,
-                       coord: <SquareCell as Cell>::Coord)
-                       -> Option<SmallDistances> {
+    fn small_distances(
+        g: &SmallRectangularGrid,
+        coord: <SquareCell as Cell>::Coord,
+    ) -> Option<SmallDistances> {
         SmallDistances::for_grid(g, coord)
     }
 
@@ -340,7 +340,10 @@ mod tests {
         let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
         let distances = small_distances(&g, start_coordinate).unwrap();
-        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE), None);
+        assert_eq!(
+            distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
+            None
+        );
     }
 
     #[test]
@@ -384,7 +387,6 @@ mod tests {
 
     #[test]
     fn quickcheck_experiment() {
-
         fn p(_: Vec<isize>) -> bool {
             true
         }

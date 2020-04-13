@@ -9,7 +9,6 @@ pub struct SdlSetup {
 }
 
 pub fn init() -> SdlSetup {
-
     let sdl_context: sdl2::Sdl = sdl2::init().unwrap();
     let video_subsystem: sdl2::VideoSubsystem = sdl_context.video().unwrap();
     let timer_subsystem = sdl_context.timer().unwrap();
