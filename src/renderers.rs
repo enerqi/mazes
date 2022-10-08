@@ -365,7 +365,7 @@ fn draw_maze<GridIndexType, Iters>(
                 let path_line_point_1 = last_cell_draw_pos;
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
-                path_draw_buffer.extend(&[Point::from(path_line_point_1), Point::from(path_line_point_2)]);
+                path_draw_buffer.extend([Point::from(path_line_point_1), Point::from(path_line_point_2)]);
 
                 last_cell_draw_pos = path_line_point_2;
             }
