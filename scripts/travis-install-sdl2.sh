@@ -3,12 +3,12 @@
 
 set -xueo pipefail
 
-wget https://www.libsdl.org/release/SDL2-2.0.12.tar.gz -O sdl2.tar.gz
+wget https://www.libsdl.org/release/SDL2-2.24.0.tar.gz -O sdl2.tar.gz
 tar xzf sdl2.tar.gz
 pushd SDL2-* && ./configure && make && sudo make install && popd
-wget -q https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.tar.gz
-wget -q https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.5.tar.gz
-wget -q https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz
+wget -q https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.20.1.tar.gz
+wget -q https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.6.2.tar.gz
+wget -q https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.6.2.tar.gz
 wget -q -O SDL2_gfx-1.0.4.tar.gz https://sourceforge.net/projects/sdl2gfx/files/SDL2_gfx-1.0.4.tar.gz/download
 tar xzf SDL2_ttf-*.tar.gz
 tar xzf SDL2_image-*.tar.gz
