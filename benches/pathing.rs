@@ -1,8 +1,4 @@
-use criterion::{
-    Criterion,
-    criterion_group,
-    criterion_main
-};
+use criterion::{criterion_group, criterion_main, Criterion};
 use mazes::cells::{Cartesian2DCoordinate, SquareCell};
 use mazes::generators;
 use mazes::grids::large_rect_grid;
@@ -41,9 +37,5 @@ fn bench_shortest_path(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches,
-    bench_distances,
-    bench_furthest_points,
-    bench_shortest_path
-);
+criterion_group!(benches, bench_distances, bench_furthest_points, bench_shortest_path);
 criterion_main!(benches);

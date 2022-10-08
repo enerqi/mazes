@@ -38,9 +38,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> fmt::De
     }
 }
 
-impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
-    Grid<GridIndexType, CellT, Iters>
-{
+impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<GridIndexType, CellT, Iters> {
     #[allow(clippy::needless_pass_by_value)] // Rc<GridDimensions>
     pub fn new(
         dimensions: Rc<dyn GridDimensions>,
@@ -117,8 +115,8 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
     }
 
     #[inline]
-    pub fn random_cell(&self, mut rng: &mut SmallRng) -> CellT::Coord {
-        self.coordinates.random_cell(&mut rng, &self.dimensions)
+    pub fn random_cell(&self, rng: &mut SmallRng) -> CellT::Coord {
+        self.coordinates.random_cell(rng, &self.dimensions)
     }
 
     /// Link two cells
@@ -167,9 +165,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
             let linked_cells = self
                 .graph
                 .neighbors(graph_node_index) // graph neighbors is the same as our grid linked cells
-                .map(|node_index| {
-                    CellT::Coord::from_row_major_index(node_index.index(), self.dimensions())
-                })
+                .map(|node_index| CellT::Coord::from_row_major_index(node_index.index(), self.dimensions()))
                 .collect();
             Some(linked_cells)
         } else {
@@ -180,25 +176,22 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
     /// Cell nodes that are to the North, South, East or West of a particular node, but not
     /// necessarily linked by a passage.
     pub fn neighbours(&self, coord: CellT::Coord) -> CellT::CoordinateSmallVec {
-        let all_dirs: CellT::DirectionSmallVec =
-            CellT::offset_directions(Some(coord), self.dimensions());
-        (&all_dirs)
+        let all_dirs: CellT::DirectionSmallVec = CellT::offset_directions(Some(coord), self.dimensions());
+        all_dirs
             .iter()
             .cloned()
             .map(|dir: CellT::Direction| CellT::offset_coordinate(coord, dir, self.dimensions()))
-            .filter_map(
-                |adjacent_coord_opt: Option<CellT::Coord>| -> Option<CellT::Coord> {
-                    if let Some(adjacent_coord) = adjacent_coord_opt {
-                        if self.is_valid_coordinate(adjacent_coord) {
-                            adjacent_coord_opt
-                        } else {
-                            None
-                        }
+            .filter_map(|adjacent_coord_opt: Option<CellT::Coord>| -> Option<CellT::Coord> {
+                if let Some(adjacent_coord) = adjacent_coord_opt {
+                    if self.is_valid_coordinate(adjacent_coord) {
+                        adjacent_coord_opt
                     } else {
                         None
                     }
-                },
-            )
+                } else {
+                    None
+                }
+            })
             .collect::<CellT::CoordinateSmallVec>()
     }
 
@@ -212,11 +205,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
             .collect()
     }
 
-    pub fn neighbour_at_direction(
-        &self,
-        coord: CellT::Coord,
-        direction: CellT::Direction,
-    ) -> Option<CellT::Coord> {
+    pub fn neighbour_at_direction(&self, coord: CellT::Coord, direction: CellT::Direction) -> Option<CellT::Coord> {
         let neighbour_coord_opt = CellT::offset_coordinate(coord, direction, self.dimensions());
 
         neighbour_coord_opt.and_then(|neighbour_coord: CellT::Coord| {
@@ -241,17 +230,14 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
 
     pub fn is_neighbour_linked(&self, coord: CellT::Coord, direction: CellT::Direction) -> bool {
         self.neighbour_at_direction(coord, direction)
-            .map_or(false, |neighbour_coord| {
-                self.is_linked(coord, neighbour_coord)
-            })
+            .map_or(false, |neighbour_coord| self.is_linked(coord, neighbour_coord))
     }
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
     /// Returns None if the grid coordinate is invalid.
     #[inline]
     pub fn grid_coordinate_to_index(&self, coord: CellT::Coord) -> Option<usize> {
-        self.coordinates
-            .grid_coordinate_to_index(coord, &self.dimensions)
+        self.coordinates.grid_coordinate_to_index(coord, &self.dimensions)
     }
 
     #[inline]
@@ -280,8 +266,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
     /// Is the grid coordinate valid for this grid - within the grid's dimensions
     #[inline]
     pub fn is_valid_coordinate(&self, coord: CellT::Coord) -> bool {
-        self.coordinates
-            .is_valid_coordinate(coord, &self.dimensions)
+        self.coordinates.is_valid_coordinate(coord, &self.dimensions)
     }
 
     #[allow(dead_code)] // for now
@@ -293,10 +278,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>>
     /// Convert a grid coordinate into petgraph nodeindex
     /// Returns None if the grid coordinate is invalid (out of the grid's dimensions).
     #[inline]
-    fn grid_coordinate_graph_index(
-        &self,
-        coord: CellT::Coord,
-    ) -> Option<graph::NodeIndex<GridIndexType>> {
+    fn grid_coordinate_graph_index(&self, coord: CellT::Coord) -> Option<graph::NodeIndex<GridIndexType>> {
         let grid_index_raw_opt = self.grid_coordinate_to_index(coord);
         grid_index_raw_opt.map(graph::NodeIndex::<GridIndexType>::new)
     }
@@ -313,10 +295,8 @@ impl<CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'_, CellT, Gr
 
     fn next(&mut self) -> Option<Self::Item> {
         self.graph_edge_iter.next().map(|edge| {
-            let src_cell_coord =
-                CellT::Coord::from_row_major_index(edge.source().index(), self.dimensions);
-            let dst_cell_coord =
-                CellT::Coord::from_row_major_index(edge.target().index(), self.dimensions);
+            let src_cell_coord = CellT::Coord::from_row_major_index(edge.source().index(), self.dimensions);
+            let dst_cell_coord = CellT::Coord::from_row_major_index(edge.target().index(), self.dimensions);
             (src_cell_coord, dst_cell_coord)
         })
     }
@@ -325,10 +305,7 @@ impl<CellT: Cell, GridIndexType: IndexType> Iterator for LinksIter<'_, CellT, Gr
         self.graph_edge_iter.size_hint()
     }
 }
-impl<CellT: Cell, GridIndexType: IndexType> ExactSizeIterator
-    for LinksIter<'_, CellT, GridIndexType>
-{
-} // default impl using size_hint()
+impl<CellT: Cell, GridIndexType: IndexType> ExactSizeIterator for LinksIter<'_, CellT, GridIndexType> {} // default impl using size_hint()
 
 impl<CellT: Cell, GridIndexType: IndexType> fmt::Debug for LinksIter<'_, CellT, GridIndexType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -364,8 +341,7 @@ mod tests {
     use std::u32;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(RowLength(w), ColumnLength(h))
-            .expect("grid dimensions too large for small grid")
+        small_rect_grid(RowLength(w), ColumnLength(h)).expect("grid dimensions too large for small grid")
     }
 
     // Compare a smallvec to e.g. a vec! or &[T].
@@ -383,8 +359,7 @@ mod tests {
         let g = small_grid(10, 10);
 
         let check_expected_neighbours = |coord, expected_neighbours: &[Cartesian2DCoordinate]| {
-            let node_indices: Vec<Cartesian2DCoordinate> =
-                g.neighbours(coord).iter().cloned().sorted().collect();
+            let node_indices: Vec<Cartesian2DCoordinate> = g.neighbours(coord).iter().cloned().sorted().collect();
             let expected_indices: Vec<Cartesian2DCoordinate> =
                 expected_neighbours.into_iter().cloned().sorted().collect();
             assert_eq!(node_indices, expected_indices);
@@ -412,19 +387,14 @@ mod tests {
         let g = small_grid(2, 2);
         let gc = |x, y| Cartesian2DCoordinate::new(x, y);
 
-        let check_neighbours =
-            |coord, dirs: &[CompassPrimary], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
-                let neighbour_options = g.neighbours_at_directions(coord, dirs);
-                assert_eq!(&*neighbour_options, neighbour_opts);
-            };
+        let check_neighbours = |coord, dirs: &[CompassPrimary], neighbour_opts: &[Option<Cartesian2DCoordinate>]| {
+            let neighbour_options = g.neighbours_at_directions(coord, dirs);
+            assert_eq!(&*neighbour_options, neighbour_opts);
+        };
         check_neighbours(gc(0, 0), &[], &[]);
         check_neighbours(gc(0, 0), &[CompassPrimary::North], &[None]);
         check_neighbours(gc(0, 0), &[CompassPrimary::West], &[None]);
-        check_neighbours(
-            gc(0, 0),
-            &[CompassPrimary::West, CompassPrimary::North],
-            &[None, None],
-        );
+        check_neighbours(gc(0, 0), &[CompassPrimary::West, CompassPrimary::North], &[None, None]);
         check_neighbours(
             gc(0, 0),
             &[CompassPrimary::East, CompassPrimary::South],
@@ -434,11 +404,7 @@ mod tests {
         check_neighbours(gc(1, 1), &[], &[]);
         check_neighbours(gc(1, 1), &[CompassPrimary::South], &[None]);
         check_neighbours(gc(1, 1), &[CompassPrimary::East], &[None]);
-        check_neighbours(
-            gc(1, 1),
-            &[CompassPrimary::South, CompassPrimary::East],
-            &[None, None],
-        );
+        check_neighbours(gc(1, 1), &[CompassPrimary::South, CompassPrimary::East], &[None, None]);
         check_neighbours(
             gc(1, 1),
             &[CompassPrimary::West, CompassPrimary::North],
@@ -535,14 +501,8 @@ mod tests {
         assert_eq!(
             g.iter_row().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
             &[
-                &[
-                    Cartesian2DCoordinate::new(0, 0),
-                    Cartesian2DCoordinate::new(1, 0)
-                ],
-                &[
-                    Cartesian2DCoordinate::new(0, 1),
-                    Cartesian2DCoordinate::new(1, 1)
-                ]
+                &[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(1, 0)],
+                &[Cartesian2DCoordinate::new(0, 1), Cartesian2DCoordinate::new(1, 1)]
             ]
         );
     }
@@ -553,14 +513,8 @@ mod tests {
         assert_eq!(
             g.iter_column().collect::<Vec<Vec<Cartesian2DCoordinate>>>(),
             &[
-                &[
-                    Cartesian2DCoordinate::new(0, 0),
-                    Cartesian2DCoordinate::new(0, 1)
-                ],
-                &[
-                    Cartesian2DCoordinate::new(1, 0),
-                    Cartesian2DCoordinate::new(1, 1)
-                ]
+                &[Cartesian2DCoordinate::new(0, 0), Cartesian2DCoordinate::new(0, 1)],
+                &[Cartesian2DCoordinate::new(1, 0), Cartesian2DCoordinate::new(1, 1)]
             ]
         );
     }
@@ -603,9 +557,7 @@ mod tests {
         ];
 
         let directional_links_check =
-            |grid: &SmallRectangularGrid,
-             coord: Cartesian2DCoordinate,
-             expected_dirs_linked: &[CompassPrimary]| {
+            |grid: &SmallRectangularGrid, coord: Cartesian2DCoordinate, expected_dirs_linked: &[CompassPrimary]| {
                 let expected_complement: SmallVec<[CompassPrimary; 4]> = all_dirs
                     .iter()
                     .cloned()

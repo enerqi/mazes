@@ -1,44 +1,45 @@
-use criterion::{
-    Criterion,
-    criterion_group,
-    criterion_main
-};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 use mazes::{
     cells::{Cartesian2DCoordinate, Coordinate},
     grids::{large_rect_grid, medium_rect_grid, small_rect_grid},
-    units::{ColumnLength, RowLength}
+    units::{ColumnLength, RowLength},
 };
 
-
 fn bench_maze_11_u8(c: &mut Criterion) {
-
-    c.bench_function("maze 11 u8", |b| b.iter(|| small_rect_grid(RowLength(11), ColumnLength(11)).unwrap()));
+    c.bench_function("maze 11 u8", |b| {
+        b.iter(|| small_rect_grid(RowLength(11), ColumnLength(11)).unwrap())
+    });
 }
 
 fn bench_maze_11_u16(c: &mut Criterion) {
-
-    c.bench_function("maze 11 u16", |b| b.iter(|| medium_rect_grid(RowLength(11), ColumnLength(11)).unwrap()));
+    c.bench_function("maze 11 u16", |b| {
+        b.iter(|| medium_rect_grid(RowLength(11), ColumnLength(11)).unwrap())
+    });
 }
 
 fn bench_maze_11_u32(c: &mut Criterion) {
-
-    c.bench_function("maze 11 u32", |b| b.iter(|| large_rect_grid(RowLength(11), ColumnLength(11)).unwrap()));
+    c.bench_function("maze 11 u32", |b| {
+        b.iter(|| large_rect_grid(RowLength(11), ColumnLength(11)).unwrap())
+    });
 }
 
 fn bench_maze_128_u16(c: &mut Criterion) {
-
-    c.bench_function("maze 128 u16", |b| b.iter(|| medium_rect_grid(RowLength(128), ColumnLength(128)).unwrap()));
+    c.bench_function("maze 128 u16", |b| {
+        b.iter(|| medium_rect_grid(RowLength(128), ColumnLength(128)).unwrap())
+    });
 }
 
 fn bench_maze_128_u32(c: &mut Criterion) {
-
-    c.bench_function("maze 128 u32", |b| b.iter(|| large_rect_grid(RowLength(128), ColumnLength(128)).unwrap()));
+    c.bench_function("maze 128 u32", |b| {
+        b.iter(|| large_rect_grid(RowLength(128), ColumnLength(128)).unwrap())
+    });
 }
 
 fn bench_maze_500(c: &mut Criterion) {
-
-    c.bench_function("maze 500", |b| b.iter(|| large_rect_grid(RowLength(500), ColumnLength(500)).unwrap()));
+    c.bench_function("maze 500", |b| {
+        b.iter(|| large_rect_grid(RowLength(500), ColumnLength(500)).unwrap())
+    });
 }
 
 fn bench_index_to_gridcoordinate(c: &mut Criterion) {
@@ -65,7 +66,8 @@ fn bench_neighbours_middle_of_grid(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches,
+criterion_group!(
+    benches,
     bench_maze_11_u8,
     bench_maze_11_u16,
     bench_maze_11_u32,

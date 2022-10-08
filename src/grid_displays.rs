@@ -4,19 +4,16 @@ use crate::{
     grid_traits::{GridDisplay, GridIterators},
     pathing::{Distances, MaxDistance},
     units::{ColumnsCount, RowsCount},
-    utils::FnvHashSet
+    utils::FnvHashSet,
 };
-use std::{
-    fmt,
-    marker::PhantomData
-};
+use std::{fmt, marker::PhantomData};
 
 impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
-    where CellT: Cell,
-          MaxDistanceT: MaxDistance
+where
+    CellT: Cell,
+    MaxDistanceT: MaxDistance,
 {
     fn render_cell_body(&self, coord: CellT::Coord) -> String {
-
         // In case Distances is used with a different grid check for Vec access being in bounds.
         // N.B.
         // Keeping a reference to the grid that was processed is possible, but the circular nature of distances to Grid
@@ -40,14 +37,15 @@ impl<CellT, MaxDistanceT> GridDisplay<CellT> for Distances<CellT, MaxDistanceT>
     }
 }
 
-
 #[derive(Debug)]
 pub struct PathDisplay<CellT: Cell> {
     on_path_coordinates: FnvHashSet<CellT::Coord>,
 }
 impl<CellT: Cell> PathDisplay<CellT> {
     pub fn new(path: &[CellT::Coord]) -> Self {
-        PathDisplay { on_path_coordinates: path.iter().cloned().collect() }
+        PathDisplay {
+            on_path_coordinates: path.iter().cloned().collect(),
+        }
     }
 }
 impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
@@ -60,7 +58,6 @@ impl<CellT: Cell> GridDisplay<CellT> for PathDisplay<CellT> {
     }
 }
 
-
 #[derive(Debug)]
 pub struct StartEndPointsDisplay<CellT: Cell> {
     start_coordinates: CellT::CoordinateSmallVec,
@@ -68,9 +65,7 @@ pub struct StartEndPointsDisplay<CellT: Cell> {
     cell_type: PhantomData<CellT>,
 }
 impl<CellT: Cell> StartEndPointsDisplay<CellT> {
-    pub fn new(starts: CellT::CoordinateSmallVec,
-               ends: CellT::CoordinateSmallVec)
-               -> StartEndPointsDisplay<CellT> {
+    pub fn new(starts: CellT::CoordinateSmallVec, ends: CellT::CoordinateSmallVec) -> StartEndPointsDisplay<CellT> {
         StartEndPointsDisplay {
             start_coordinates: starts,
             end_coordinates: ends,
@@ -80,28 +75,23 @@ impl<CellT: Cell> StartEndPointsDisplay<CellT> {
 }
 impl<CellT: Cell> GridDisplay<CellT> for StartEndPointsDisplay<CellT> {
     fn render_cell_body(&self, coord: CellT::Coord) -> String {
-
-        let contains_coordinate =
-            |coordinates: &CellT::CoordinateSmallVec| coordinates.iter().any(|&c| c == coord);
+        let contains_coordinate = |coordinates: &CellT::CoordinateSmallVec| coordinates.iter().any(|&c| c == coord);
 
         if contains_coordinate(&self.start_coordinates) {
             String::from(" S ")
-
         } else if contains_coordinate(&self.end_coordinates) {
-
             String::from(" E ")
-
         } else {
             String::from("   ")
         }
     }
 }
 
-
 // Todo - displaying other grid types, e.g. impl<GridIndexType: IndexType> fmt::Display for Grid<GridIndexType, HexCell>
 impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iters>
-    where GridIndexType: IndexType,
-          Iters: GridIterators<SquareCell>
+where
+    GridIndexType: IndexType,
+    Iters: GridIterators<SquareCell>,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         const WALL_L: &str = "╴";
@@ -126,8 +116,7 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
         let RowsCount(rows_count) = self.rows();
 
         // Start by special case rendering the text for the north most boundary
-        let first_grid_row: &Vec<Cartesian2DCoordinate> =
-            &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
+        let first_grid_row: &Vec<Cartesian2DCoordinate> = &self.iter_row().take(1).collect::<Vec<Vec<_>>>()[0];
         let mut output = String::from(WALL_RD);
         for (index, coord) in first_grid_row.iter().enumerate() {
             output.push_str(WALL_LR_3);
@@ -143,10 +132,9 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
                 }
             }
         }
-        output.push_str("\n");
+        output.push('\n');
 
         for (index_row, row) in self.iter_row().enumerate() {
-
             let is_last_row = index_row == (rows_count - 1);
 
             // Starts of by special case rendering the west most boundary of the row
@@ -155,15 +143,15 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
             let mut row_bottom_section_render = String::from("");
 
             for (index_column, cell_coord) in row.into_iter().enumerate() {
-
                 let render_cell_side = |direction, passage_clear_text, blocking_wall_text| {
                     self.neighbour_at_direction(cell_coord, direction)
-                        .map_or(blocking_wall_text,
-                                |neighbour_coord| if self.is_linked(cell_coord, neighbour_coord) {
-                                    passage_clear_text
-                                } else {
-                                    blocking_wall_text
-                                })
+                        .map_or(blocking_wall_text, |neighbour_coord| {
+                            if self.is_linked(cell_coord, neighbour_coord) {
+                                passage_clear_text
+                            } else {
+                                blocking_wall_text
+                            }
+                        })
                 };
                 let is_first_column = index_column == 0;
                 let is_last_column = index_column == (columns_count - 1);
@@ -177,8 +165,7 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
 
                 // Cell Body
                 if let Some(ref displayer) = *self.grid_display() {
-                    row_middle_section_render
-                        .push_str(displayer.render_cell_body(cell_coord).as_str());
+                    row_middle_section_render.push_str(displayer.render_cell_body(cell_coord).as_str());
                 } else {
                     row_middle_section_render.push_str(default_cell_body.as_str());
                 }
@@ -193,33 +180,44 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
                     } else {
                         String::from(WALL_RUD)
                     };
-
                 }
                 let south_boundary = render_cell_side(CompassPrimary::South, "   ", WALL_LR_3);
                 row_bottom_section_render.push_str(south_boundary);
 
                 let corner = match (is_last_row, is_last_column) {
                     (true, true) => WALL_LU,
-                    (true, false) => if east_open { WALL_LR } else { WALL_LRU },
-                    (false, true) => if south_open { WALL_UD } else { WALL_LUD },
+                    (true, false) => {
+                        if east_open {
+                            WALL_LR
+                        } else {
+                            WALL_LRU
+                        }
+                    }
+                    (false, true) => {
+                        if south_open {
+                            WALL_UD
+                        } else {
+                            WALL_LUD
+                        }
+                    }
                     (false, false) => {
-                        let access_se_from_east =
-                            self.neighbour_at_direction(cell_coord, CompassPrimary::East)
-                                .map_or(false,
-                                        |c| self.is_neighbour_linked(c, CompassPrimary::South));
-                        let access_se_from_south =
-                            self.neighbour_at_direction(cell_coord, CompassPrimary::South)
-                                .map_or(false,
-                                        |c| self.is_neighbour_linked(c, CompassPrimary::East));
+                        let access_se_from_east = self
+                            .neighbour_at_direction(cell_coord, CompassPrimary::East)
+                            .map_or(false, |c| self.is_neighbour_linked(c, CompassPrimary::South));
+                        let access_se_from_south = self
+                            .neighbour_at_direction(cell_coord, CompassPrimary::South)
+                            .map_or(false, |c| self.is_neighbour_linked(c, CompassPrimary::East));
                         let show_right_section = !access_se_from_east;
                         let show_down_section = !access_se_from_south;
                         let show_up_section = !east_open;
                         let show_left_section = !south_open;
 
-                        match (show_left_section,
-                               show_right_section,
-                               show_up_section,
-                               show_down_section) {
+                        match (
+                            show_left_section,
+                            show_right_section,
+                            show_up_section,
+                            show_down_section,
+                        ) {
                             (true, true, true, true) => WALL_LRUD,
                             (true, true, true, false) => WALL_LRU,
                             (true, true, false, true) => WALL_LRD,
@@ -244,9 +242,9 @@ impl<GridIndexType, Iters> fmt::Display for Grid<GridIndexType, SquareCell, Iter
             }
 
             output.push_str(row_middle_section_render.as_ref());
-            output.push_str("\n");
+            output.push('\n');
             output.push_str(row_bottom_section_render.as_ref());
-            output.push_str("\n");
+            output.push('\n');
         }
 
         write!(f, "{}", output)

@@ -80,10 +80,7 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.mark_start_end = on;
         self
     }
-    pub fn start(
-        mut self,
-        start: Option<Cartesian2DCoordinate>,
-    ) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn start(mut self, start: Option<Cartesian2DCoordinate>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.start = start;
         self
     }
@@ -102,24 +99,15 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
         self.options.distances = distances;
         self
     }
-    pub fn output_file(
-        mut self,
-        output_file: Option<&'path Path>,
-    ) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn output_file(mut self, output_file: Option<&'path Path>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.output_file = output_file;
         self
     }
-    pub fn path(
-        mut self,
-        path: Option<Vec<Cartesian2DCoordinate>>,
-    ) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn path(mut self, path: Option<Vec<Cartesian2DCoordinate>>) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.path = path;
         self
     }
-    pub fn cell_side_pixels_length(
-        mut self,
-        cell_side_pixels_length: u8,
-    ) -> RenderOptionsBuilder<'path, 'dist> {
+    pub fn cell_side_pixels_length(mut self, cell_side_pixels_length: u8) -> RenderOptionsBuilder<'path, 'dist> {
         self.options.cell_side_pixels_length = cell_side_pixels_length;
         self
     }
@@ -128,10 +116,8 @@ impl<'path, 'dist> RenderOptionsBuilder<'path, 'dist> {
     }
 }
 
-pub fn render_square_grid<GridIndexType, Iters>(
-    grid: &Grid<GridIndexType, SquareCell, Iters>,
-    options: &RenderOptions,
-) where
+pub fn render_square_grid<GridIndexType, Iters>(grid: &Grid<GridIndexType, SquareCell, Iters>, options: &RenderOptions)
+where
     GridIndexType: IndexType,
     Iters: GridIterators<SquareCell>,
 {
@@ -157,10 +143,8 @@ pub fn render_square_grid<GridIndexType, Iters>(
     //   that the renderer uses.
     // After rendering to the surface, we can create texture from surface and use a new 2nd renderer to
     // display to a window
-    let software_surface =
-        Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
-    let mut surface_canvas =
-        Canvas::from_surface(software_surface).expect("Software renderer creation failed.");
+    let software_surface = Surface::new(image_w, image_h, PixelFormatEnum::RGB888).expect("Surface creation failed.");
+    let mut surface_canvas = Canvas::from_surface(software_surface).expect("Software renderer creation failed.");
 
     // Sets a device independent resolution for rendering.
     // SDL scales to the actual window size, which may change if we allow resizing and is also
@@ -181,9 +165,7 @@ pub fn render_square_grid<GridIndexType, Iters>(
     let maze_surface: Surface = surface_canvas.into_surface();
 
     if let Some(file_path) = options.output_file {
-        maze_surface
-            .save(file_path)
-            .expect("Failed to save surface");
+        maze_surface.save(file_path).expect("Failed to save surface");
     }
 
     if options.show_on_screen {
@@ -245,31 +227,18 @@ fn draw_maze<GridIndexType, Iters>(
         let (x1, y1, x2, y2) = calc_cell_screen_coordinates(cell);
 
         // special cases north and west to handle first row and column.
-        if grid
-            .neighbour_at_direction(cell, CompassPrimary::North)
-            .is_none()
-        {
-            canvas
-                .draw_line(Point::new(x1, y1), Point::new(x2, y1))
-                .unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::North).is_none() {
+            canvas.draw_line(Point::new(x1, y1), Point::new(x2, y1)).unwrap();
         }
-        if grid
-            .neighbour_at_direction(cell, CompassPrimary::West)
-            .is_none()
-        {
-            canvas
-                .draw_line(Point::new(x1, y1), Point::new(x1, y2))
-                .unwrap();
+        if grid.neighbour_at_direction(cell, CompassPrimary::West).is_none() {
+            canvas.draw_line(Point::new(x1, y1), Point::new(x1, y2)).unwrap();
         }
 
         // We don't want to draw unnecessary walls for cells that cannot be accessed, so if there are no links to a cell
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
             |c: Cartesian2DCoordinate, neighbour_direction: CompassPrimary| -> bool {
-                let cell_links_count_is_zero = |c| {
-                    grid.links(c)
-                        .map_or(false, |linked_cells| linked_cells.is_empty())
-                };
+                let cell_links_count_is_zero = |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
 
                 if cell_links_count_is_zero(c) {
                     grid.neighbour_at_direction(c, neighbour_direction)
@@ -285,20 +254,15 @@ fn draw_maze<GridIndexType, Iters>(
             && !are_links_count_of_valid_cells_zero(cell, CompassPrimary::South);
 
         if must_draw_east_wall {
-            canvas
-                .draw_line(Point::new(x2, y1), Point::new(x2, y2))
-                .unwrap();
+            canvas.draw_line(Point::new(x2, y1), Point::new(x2, y2)).unwrap();
         }
         if must_draw_south_wall {
-            canvas
-                .draw_line(Point::new(x1, y2), Point::new(x2, y2))
-                .unwrap();
+            canvas.draw_line(Point::new(x1, y2), Point::new(x2, y2)).unwrap();
         }
 
         let distance_to_cell = if let Some(dist) = options.distances {
             // The cell maybe unreachable
-            dist.distance_from_start_to(cell)
-                .unwrap_or(max_cell_distance)
+            dist.distance_from_start_to(cell).unwrap_or(max_cell_distance)
         } else {
             0
         };
@@ -369,14 +333,13 @@ fn draw_maze<GridIndexType, Iters>(
     }
 
     if let Some(ref path) = options.path {
-        let path_long_enough_to_show =
-            |path: &[Cartesian2DCoordinate], options: &RenderOptions| -> bool {
-                if options.mark_start_end {
-                    path.len() >= 4
-                } else {
-                    path.len() >= 2
-                }
-            };
+        let path_long_enough_to_show = |path: &[Cartesian2DCoordinate], options: &RenderOptions| -> bool {
+            if options.mark_start_end {
+                path.len() >= 4
+            } else {
+                path.len() >= 2
+            }
+        };
 
         if path_long_enough_to_show(path, options) {
             let calc_cell_centre_screen_coordinate = |cell| {
@@ -402,10 +365,7 @@ fn draw_maze<GridIndexType, Iters>(
                 let path_line_point_1 = last_cell_draw_pos;
                 let path_line_point_2 = calc_cell_centre_screen_coordinate(*cell);
 
-                path_draw_buffer.extend(&[
-                    Point::from(path_line_point_1),
-                    Point::from(path_line_point_2),
-                ]);
+                path_draw_buffer.extend(&[Point::from(path_line_point_1), Point::from(path_line_point_2)]);
 
                 last_cell_draw_pos = path_line_point_2;
             }
@@ -424,9 +384,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
     let window_w = cmp::min(display_w, maze_w + maze_image_padding);
     let window_h = cmp::min(display_h, maze_h + maze_image_padding);
 
-    let mut window_builder = sdl_setup
-        .video_subsystem
-        .window("Mazes", window_w, window_h);
+    let mut window_builder = sdl_setup.video_subsystem.window("Mazes", window_w, window_h);
     let window = window_builder
         .position_centered()
         .resizable()
@@ -442,9 +400,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
         .unwrap();
     let texture_creator = canvas.texture_creator();
 
-    let maze_texture = texture_creator
-        .create_texture_from_surface(maze_surface)
-        .unwrap();
+    let maze_texture = texture_creator.create_texture_from_surface(maze_surface).unwrap();
     let mut maze_target_rect = centre_rectangle(maze_w, maze_h, window_w, window_h);
 
     let mut events = sdl_setup.sdl_context.event_pump().unwrap();
@@ -460,8 +416,7 @@ fn show_maze_on_screen(maze_surface: Surface, sdl_setup: &SdlSetup) {
                     win_event: WindowEvent::Resized(new_width, new_height),
                     ..
                 } => {
-                    maze_target_rect =
-                        centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
+                    maze_target_rect = centre_rectangle(maze_w, maze_h, new_width as u32, new_height as u32);
                 }
                 _ => continue,
                 // todo allow resolution > display size?
@@ -488,8 +443,7 @@ where
     Iters: GridIterators<CellT>,
 {
     let cell_size_pixels = options.cell_side_pixels_length as usize;
-    let img_width =
-        cell_size_pixels as u32 * grid.row_length().expect("row length invalid").0 as u32;
+    let img_width = cell_size_pixels as u32 * grid.row_length().expect("row length invalid").0 as u32;
     let img_height = cell_size_pixels as u32 * grid.column_length().0 as u32;
 
     (img_width + 1, img_height + 1)
@@ -556,12 +510,7 @@ fn rainbow_colour(cycle_complete_percent: f32) -> Color {
 /// `rect_height` - height of some rectangle to centre.
 /// `parent_rect_width` - width of the parent rectangle within which we centre a rectangle.
 /// `parent_rect_height` - height of the parent rectangle within which we centre a rectangle.
-fn centre_rectangle(
-    rect_width: u32,
-    rect_height: u32,
-    parent_rect_width: u32,
-    parent_rect_height: u32,
-) -> Rect {
+fn centre_rectangle(rect_width: u32, rect_height: u32, parent_rect_width: u32, parent_rect_height: u32) -> Rect {
     let rect_width_f = rect_width as f32;
     let rect_height_f = rect_height as f32;
     let parent_rect_width_f = parent_rect_width as f32;

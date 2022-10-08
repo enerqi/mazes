@@ -12,11 +12,11 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 
 ## Build Requirements
 
-- Install Rust 1.30+ (Rust 2018 edition).
+- Install Rust 1.56+ (Rust 2021 edition).
 
 On unix/posix family systems install the C libraries:
 
-- libsdl2-dev  >= 2.0.5
+- libsdl2-dev >= 2.1.4
 - libsdl2-ttf-dev
 - libsdl2-image-dev
 

@@ -5,41 +5,35 @@ authors = ["enerqi <enerqi@enerqi>"]
 repository = "https://github.com/enerqi/mazes.git"
 homepage = "https://github.com/enerqi/mazes.git"
 license = "MIT/Apache-2.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 bit-set = "^0.5"
 docopt = "^1.0.0"
 error-chain = "^0.12"
 fnv = "^1.0.2"
-image = "^0.23"
-itertools = "^0.9"
+image = "^0.24"
+itertools = "^0.10"
 lazy_static = "^1.1.0"
-num = "^0.2"
-petgraph = "^0.5"
+num = "^0.4"
+petgraph = "^0.6"
+rand = {version="^0.8", features=["small_rng"]}
+sdl2 = {version="^0.35", default-features = false, features = ["image", "ttf"]}
 serde = "^1.0"
 serde_derive = "^1.0"
 smallvec = "^1.3"
 
-[dependencies.rand]
-version = "^0.7"
-features = ["small_rng"]
-
-[dependencies.sdl2]
-# 0.32, 0.33 require later sdl2 binaries
-version = "^0.33"
-default-features = false
-features = ["image", "ttf"]
-
 [dev-dependencies]
-criterion = "^0.3"
-quickcheck = "^0.9"
+criterion = "^0.4"
+quickcheck = "^1.0"
 
 [build-dependencies]
 walkdir = "^2.3"
 
 [profile.release]
 debug = true
+lto = true
+codegen-units = 1
 
 [profile.bench]
 debug = true

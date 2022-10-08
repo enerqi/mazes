@@ -1,24 +1,16 @@
-use criterion::{
-    Criterion,
-    criterion_group,
-    criterion_main
-};
+use criterion::{criterion_group, criterion_main, Criterion};
 use image::DynamicImage;
 use mazes::cells::Cartesian2DCoordinate;
 use mazes::masks::BinaryMask2D;
 use mazes::units::{Height, Width};
 use std::path::Path;
 
-
 const MASK_IMAGE_PATH: &str = "resources/mask-60x60.png";
 const FULLMASK_IMAGE_PATH: &str = "resources/mask-all-60x60.png";
 
-
 fn open_test_image(file_path_str: &str) -> DynamicImage {
-    let img =
-        image::open(&Path::new(file_path_str))
-            .expect(format!("Unable to open and read test mask image file {}", file_path_str)
-                        .as_ref());
+    let img = image::open(&Path::new(file_path_str))
+        .expect(format!("Unable to open and read test mask image file {}", file_path_str).as_ref());
     img
 }
 
@@ -31,7 +23,6 @@ fn load_everything_masked_mask() -> BinaryMask2D {
     let img = open_test_image(FULLMASK_IMAGE_PATH);
     BinaryMask2D::from_image(&img)
 }
-
 
 fn bench_from_image_60_x_60(c: &mut Criterion) {
     c.bench_function("from_image_60_x_60", |b| {
@@ -68,7 +59,8 @@ fn bench_first_unmasked_coordinate_with_full_mask(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches,
+criterion_group!(
+    benches,
     bench_from_image_60_x_60,
     bench_is_masked,
     bench_count_unmasked_within_dimensions,

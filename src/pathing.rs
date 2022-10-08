@@ -1,7 +1,5 @@
-// blah blah blah
-// - Todo cell content printing
-// def content_of(Cartesian2DCoordinate) for printing floodfill algorithm etc: ascii base36 letter (or base 64 maybe).
-// Grid trait?
+// blah blah blah - Todo cell content printing def content_of(Cartesian2DCoordinate) for printing floodfill algorithm
+// etc: ascii base36 letter (or base 64 maybe). Grid trait?
 
 // Dijkstra's Algorithm
 // For *each* cell we can generate floodfill data (matrix of steps to each other cell - hashtable really).
@@ -36,7 +34,6 @@ use crate::{
     utils::FnvHashMap,
 };
 
-use itertools::Itertools;
 use num::traits::{Bounded, One, Unsigned, Zero};
 use smallvec::SmallVec;
 use std::{
@@ -48,15 +45,8 @@ use std::{
 // Trait (hack) used purely as a generic type parameter alias because it looks ugly to type this out each time
 // Note generic parameter type aliases are not in the langauge.
 // `type X = Y;` only works with concrete types.
-pub trait MaxDistance:
-    Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord
-{
-}
-impl<
-        T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord,
-    > MaxDistance for T
-{
-}
+pub trait MaxDistance: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord {}
+impl<T: Zero + One + Bounded + Unsigned + Add + Debug + Clone + Copy + Display + LowerHex + Ord> MaxDistance for T {}
 
 #[derive(Debug, Clone)]
 pub struct Distances<CellT: Cell, MaxDistanceT = u32> {
@@ -101,9 +91,7 @@ where
             for cell_coord in &frontier {
                 // All cells except the start cell are by default infinity distance from
                 // the start until we process them, which is represented as Option::None when accessing the map.
-                let distance_to_cell: MaxDistanceT = *distances
-                    .entry(*cell_coord)
-                    .or_insert_with(Bounded::max_value);
+                let distance_to_cell: MaxDistanceT = *distances.entry(*cell_coord).or_insert_with(Bounded::max_value);
                 if distance_to_cell > max {
                     max = distance_to_cell;
                 }
@@ -112,9 +100,8 @@ where
                     .links(*cell_coord)
                     .expect("Source cell has an invalid cell coordinate.");
                 for link_coordinate in &*links {
-                    let distance_to_link: MaxDistanceT = *distances
-                        .entry(*link_coordinate)
-                        .or_insert_with(Bounded::max_value);
+                    let distance_to_link: MaxDistanceT =
+                        *distances.entry(*link_coordinate).or_insert_with(Bounded::max_value);
                     if distance_to_link == Bounded::max_value() {
                         distances.insert(*link_coordinate, distance_to_cell + One::one());
                         new_frontier.push(*link_coordinate);
@@ -205,17 +192,15 @@ where
                 )
             })
             .collect::<SmallVec<[(CellT::Coord, MaxDistanceT); 8]>>();
-        let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> =
-            &neighbour_distances.iter().cloned().fold1(
-                |closest_accumulator: (CellT::Coord, MaxDistanceT),
-                 closest_candidate: (CellT::Coord, MaxDistanceT)| {
-                    if closest_candidate.1 < closest_accumulator.1 {
-                        closest_candidate
-                    } else {
-                        closest_accumulator
-                    }
-                },
-            );
+        let closest_to_start: &Option<(CellT::Coord, MaxDistanceT)> = &neighbour_distances.iter().cloned().reduce(
+            |closest_accumulator: (CellT::Coord, MaxDistanceT), closest_candidate: (CellT::Coord, MaxDistanceT)| {
+                if closest_candidate.1 < closest_accumulator.1 {
+                    closest_candidate
+                } else {
+                    closest_accumulator
+                }
+            },
+        );
 
         if let Some((closer_coord, closer_distance)) = *closest_to_start {
             if closer_distance == current_distance_to_start {
@@ -251,23 +236,18 @@ where
     let arbitrary_start_point = if let Some(m) = mask {
         m.first_unmasked_coordinate()
     } else {
-        Some(CellT::Coord::from_row_column_indices(
-            ColumnIndex(0),
-            RowIndex(0),
-        ))
+        Some(CellT::Coord::from_row_column_indices(ColumnIndex(0), RowIndex(0)))
     };
 
     arbitrary_start_point?;
 
-    let first_distances =
-        Distances::<CellT, MaxDistanceT>::for_grid(grid, arbitrary_start_point.unwrap())
-            .expect("Invalid start coordinate.");
+    let first_distances = Distances::<CellT, MaxDistanceT>::for_grid(grid, arbitrary_start_point.unwrap())
+        .expect("Invalid start coordinate.");
 
     // The start of the longest path is just the point furthest away from an arbitrary initial point
     let long_path_start_coordinate = first_distances.furthest_points_on_grid()[0];
 
-    let distances_from_start =
-        Distances::<CellT, MaxDistanceT>::for_grid(grid, long_path_start_coordinate).unwrap();
+    let distances_from_start = Distances::<CellT, MaxDistanceT>::for_grid(grid, long_path_start_coordinate).unwrap();
     let end_point = distances_from_start.furthest_points_on_grid()[0];
 
     shortest_path(grid, &distances_from_start, end_point)
@@ -285,16 +265,12 @@ mod tests {
     use std::u32;
 
     fn small_grid(w: usize, h: usize) -> SmallRectangularGrid {
-        small_rect_grid(units::RowLength(w), units::ColumnLength(h))
-            .expect("grid dimensions too large for small grid")
+        small_rect_grid(units::RowLength(w), units::ColumnLength(h)).expect("grid dimensions too large for small grid")
     }
 
     /// Distances between cells in a rectangular grid
     type SmallDistances = Distances<SquareCell, u8>;
-    fn small_distances(
-        g: &SmallRectangularGrid,
-        coord: <SquareCell as Cell>::Coord,
-    ) -> Option<SmallDistances> {
+    fn small_distances(g: &SmallRectangularGrid, coord: <SquareCell as Cell>::Coord) -> Option<SmallDistances> {
         SmallDistances::for_grid(g, coord)
     }
 
@@ -340,10 +316,7 @@ mod tests {
         let g = small_grid(3, 3);
         let start_coordinate = Cartesian2DCoordinate::new(0, 0);
         let distances = small_distances(&g, start_coordinate).unwrap();
-        assert_eq!(
-            distances.distance_from_start_to(OUT_OF_GRID_COORDINATE),
-            None
-        );
+        assert_eq!(distances.distance_from_start_to(OUT_OF_GRID_COORDINATE), None);
     }
 
     #[test]

@@ -1,8 +1,7 @@
 use crate::{
     grid_traits::GridDimensions,
-    units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength, RowsCount}
+    units::{ColumnIndex, ColumnLength, ColumnsCount, EdgesCount, NodesCount, RowIndex, RowLength, RowsCount},
 };
-use itertools::Itertools;
 use std::cmp;
 
 #[derive(Debug, Copy, Clone)]
@@ -15,7 +14,7 @@ impl RectGridDimensions {
     pub fn new(row_width: RowLength, column_height: ColumnLength) -> RectGridDimensions {
         RectGridDimensions {
             row_width,
-            column_height
+            column_height,
         }
     }
 }
@@ -48,8 +47,7 @@ impl GridDimensions for RectGridDimensions {
 
     fn graph_size(&self) -> (NodesCount, EdgesCount) {
         let cells_count = self.size();
-        let edges_count_hint = 4 * cells_count.0 -
-                               4 * cmp::max(self.row_width.0, self.column_height.0);
+        let edges_count_hint = 4 * cells_count.0 - 4 * cmp::max(self.row_width.0, self.column_height.0);
         (cells_count, EdgesCount(edges_count_hint))
     }
 
@@ -70,7 +68,6 @@ pub struct PolarGridDimensions {
 
 impl PolarGridDimensions {
     pub fn new(rows: RowsCount) -> PolarGridDimensions {
-
         let RowsCount(row_count) = rows;
         let mut cell_counts = Vec::with_capacity(row_count);
 
@@ -82,7 +79,6 @@ impl PolarGridDimensions {
         cell_counts[0] = 1;
 
         for y in 1..row_count {
-
             // radius of how far from centre the row inner boundary is
             let inner_radius = y as f32 * row_height;
 
@@ -116,7 +112,7 @@ impl PolarGridDimensions {
             .map(NodesCount)
             .collect();
 
-        let size = cell_counts.iter().cloned().fold1(|x, y| x + y).unwrap_or(0);
+        let size = cell_counts.iter().cloned().reduce(|x, y| x + y).unwrap_or(0);
 
         PolarGridDimensions {
             row_cell_counts: cell_counts,
@@ -159,8 +155,11 @@ impl GridDimensions for PolarGridDimensions {
 
     fn graph_size(&self) -> (NodesCount, EdgesCount) {
         let cells_count = self.size();
-        let edges_count_hint =
-            self.row_cell_counts.last().map(|&outer_row| outer_row * 2 * 4).unwrap_or(0);
+        let edges_count_hint = self
+            .row_cell_counts
+            .last()
+            .map(|&outer_row| outer_row * 2 * 4)
+            .unwrap_or(0);
         (cells_count, EdgesCount(edges_count_hint))
     }
 

@@ -1,8 +1,4 @@
-use criterion::{
-    Criterion,
-    criterion_group,
-    criterion_main
-};
+use criterion::{criterion_group, criterion_main, Criterion};
 
 use mazes::cells::{Cartesian2DCoordinate, SquareCell};
 use mazes::generators;
@@ -46,7 +42,5 @@ fn render_grid(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches,
-    render_grid
-);
+criterion_group!(benches, render_grid);
 criterion_main!(benches);

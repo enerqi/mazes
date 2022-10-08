@@ -29,15 +29,11 @@ pub trait Cell {
     //      IntoIterator<Item=T> is an associated type specialisation
     // Deref<Target=[Self::Coord]> gives access to the `iter` of slices.
     type CoordinateSmallVec: FromIterator<Self::Coord> + Deref<Target = [Self::Coord]>;
-    type CoordinateOptionSmallVec: FromIterator<Option<Self::Coord>>
-        + Deref<Target = [Option<Self::Coord>]>;
+    type CoordinateOptionSmallVec: FromIterator<Option<Self::Coord>> + Deref<Target = [Option<Self::Coord>]>;
     type DirectionSmallVec: FromIterator<Self::Direction> + Deref<Target = [Self::Direction]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(
-        coord: Option<Self::Coord>,
-        dimensions: &dyn GridDimensions,
-    ) -> Self::DirectionSmallVec;
+    fn offset_directions(coord: Option<Self::Coord>, dimensions: &dyn GridDimensions) -> Self::DirectionSmallVec;
 
     /// Creates a new `Coord` offset 1 cell away in the given direction.
     /// Returns None if the Coordinate is not representable.
@@ -47,11 +43,7 @@ pub trait Cell {
         dimensions: &dyn GridDimensions,
     ) -> Option<Self::Coord>;
 
-    fn rand_direction(
-        rng: &mut SmallRng,
-        dimensions: &dyn GridDimensions,
-        from: Self::Coord,
-    ) -> Self::Direction;
+    fn rand_direction(rng: &mut SmallRng, dimensions: &dyn GridDimensions, from: Self::Coord) -> Self::Direction;
     fn rand_roughly_vertical_direction(
         rng: &mut SmallRng,
         dimensions: &dyn GridDimensions,
@@ -94,10 +86,7 @@ impl Cell for SquareCell {
 
     type DirectionSmallVec = SmallVec<[CompassPrimary; 4]>;
 
-    fn offset_directions(
-        _: Option<Self::Coord>,
-        _: &dyn GridDimensions,
-    ) -> Self::DirectionSmallVec {
+    fn offset_directions(_: Option<Self::Coord>, _: &dyn GridDimensions) -> Self::DirectionSmallVec {
         [
             CompassPrimary::North,
             CompassPrimary::South,
@@ -109,11 +98,7 @@ impl Cell for SquareCell {
         .collect::<Self::DirectionSmallVec>()
     }
 
-    fn offset_coordinate(
-        coord: Self::Coord,
-        dir: Self::Direction,
-        _: &dyn GridDimensions,
-    ) -> Option<Self::Coord> {
+    fn offset_coordinate(coord: Self::Coord, dir: Self::Direction, _: &dyn GridDimensions) -> Option<Self::Coord> {
         let (x, y) = (coord.x, coord.y);
         match dir {
             CompassPrimary::North => {
@@ -135,11 +120,7 @@ impl Cell for SquareCell {
         }
     }
 
-    fn rand_direction(
-        rng: &mut SmallRng,
-        _: &dyn GridDimensions,
-        _: Self::Coord,
-    ) -> Self::Direction {
+    fn rand_direction(rng: &mut SmallRng, _: &dyn GridDimensions, _: Self::Coord) -> Self::Direction {
         const DIRS_COUNT: usize = 4;
         const DIRS: [CompassPrimary; DIRS_COUNT] = [
             CompassPrimary::North,
@@ -227,10 +208,7 @@ impl Cell for PolarCell {
     type DirectionSmallVec = SmallVec<[Self::Direction; 8]>;
 
     /// Creates a small vec of the possible directions away from this Cell.
-    fn offset_directions(
-        coord: Option<Self::Coord>,
-        dimensions: &dyn GridDimensions,
-    ) -> Self::DirectionSmallVec {
+    fn offset_directions(coord: Option<Self::Coord>, dimensions: &dyn GridDimensions) -> Self::DirectionSmallVec {
         let default_directions = || {
             [
                 ClockDirection::Clockwise,
@@ -337,11 +315,7 @@ impl Cell for PolarCell {
         }
     }
 
-    fn rand_direction(
-        rng: &mut SmallRng,
-        _: &dyn GridDimensions,
-        _: Self::Coord,
-    ) -> Self::Direction {
+    fn rand_direction(rng: &mut SmallRng, _: &dyn GridDimensions, _: Self::Coord) -> Self::Direction {
         const DIRS_COUNT: usize = 5;
         const DIRS: [ClockDirection; DIRS_COUNT] = [
             ClockDirection::Clockwise,

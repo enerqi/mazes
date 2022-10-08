@@ -53,10 +53,7 @@ impl<CellT: Cell> Iterator for RectGridCellIter<CellT> {
     type Item = CellT::Coord;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_cell_number < self.cells_count {
-            let coord = Self::Item::from_row_major_index(
-                self.current_cell_number,
-                self.dimensions.as_ref(),
-            );
+            let coord = Self::Item::from_row_major_index(self.current_cell_number, self.dimensions.as_ref());
             self.current_cell_number += 1;
             Some(coord)
         } else {
@@ -115,12 +112,7 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
             if self.current_index < count {
                 let RowLength(length) = self.row_length;
                 let coords = (0..length)
-                    .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(
-                            ColumnIndex(i),
-                            RowIndex(self.current_index),
-                        )
-                    })
+                    .map(|i: usize| CellT::Coord::from_row_column_indices(ColumnIndex(i), RowIndex(self.current_index)))
                     .collect();
                 self.current_index += 1;
                 Some(coords)
@@ -132,12 +124,7 @@ impl<CellT: Cell> Iterator for RectBatchIter<CellT> {
             if self.current_index < count {
                 let ColumnLength(length) = self.col_length;
                 let coords = (0..length)
-                    .map(|i: usize| {
-                        CellT::Coord::from_row_column_indices(
-                            ColumnIndex(self.current_index),
-                            RowIndex(i),
-                        )
-                    })
+                    .map(|i: usize| CellT::Coord::from_row_column_indices(ColumnIndex(self.current_index), RowIndex(i)))
                     .collect();
                 self.current_index += 1;
                 Some(coords)
@@ -179,6 +166,7 @@ impl<CellT: Cell> GridIterators<CellT> for PolarGridIterators {
     }
 }
 
+#[allow(dead_code)] // TODO: WIP, actually used in grid iterators
 #[derive(Debug, Copy, Clone)]
 pub struct PolarBatchIter<CellT> {
     iter_type: BatchIterType,

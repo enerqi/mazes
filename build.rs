@@ -66,13 +66,10 @@ fn main() {
                     let src_file_name: &OsStr = entry.file_name();
                     let target_dir: &String = &win_sdl_dlls_dir;
                     let target_dir_path: &Path = Path::new(target_dir);
-                    let target_file_str: OsString =
-                        target_dir_path.join(src_file_name).into_os_string();
+                    let target_file_str: OsString = target_dir_path.join(src_file_name).into_os_string();
                     let target_file_path: &Path = Path::new(&target_file_str);
 
-                    if !target_file_path.exists()
-                        || are_different_file_contents(&entry, target_file_path)
-                    {
+                    if !target_file_path.exists() || are_different_file_contents(&entry, target_file_path) {
                         copy(src_file_path, target_file_path).unwrap_or_else(|_| {
                             panic!(
                                 "Failed to copy windows os dll from {} to {}",

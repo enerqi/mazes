@@ -15,7 +15,7 @@ pub struct BinaryMask2D {
 
 impl BinaryMask2D {
     pub fn from_image(data_image: &DynamicImage) -> BinaryMask2D {
-        let gray_scale_image = data_image.to_luma();
+        let gray_scale_image = data_image.to_luma8();
         let (width, height) = gray_scale_image.dimensions();
         let mut mask = BitSet::with_capacity((width * height) as usize);
 
@@ -31,11 +31,7 @@ impl BinaryMask2D {
             }
         }
 
-        BinaryMask2D {
-            mask,
-            width,
-            height,
-        }
+        BinaryMask2D { mask, width, height }
     }
 
     /// Is the given coordinate masked out / turned off?
@@ -75,8 +71,7 @@ impl BinaryMask2D {
         // (A BitVec would be more convenient for that purpose, and faster as bitset::contains
         //  does a length check)
         let mask_size = self.width * self.height;
-        let index: Option<usize> =
-            (0..mask_size).position(|bit_index| !self.mask.contains(bit_index as usize));
+        let index: Option<usize> = (0..mask_size).position(|bit_index| !self.mask.contains(bit_index as usize));
 
         if let Some(i) = index {
             let x = i % self.width as usize;
