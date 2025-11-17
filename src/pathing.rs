@@ -258,7 +258,7 @@ mod tests {
 
     use super::*;
     use crate::cells::{Cartesian2DCoordinate, Cell, SquareCell};
-    use crate::grids::{small_rect_grid, SmallRectangularGrid};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use crate::units;
     use quickcheck::quickcheck;

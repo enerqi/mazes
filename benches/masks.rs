@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use image::DynamicImage;
 use mazes::cells::Cartesian2DCoordinate;
 use mazes::masks::BinaryMask2D;

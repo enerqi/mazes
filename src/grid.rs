@@ -5,7 +5,7 @@ use crate::{
 };
 
 pub use petgraph::graph::IndexType;
-use petgraph::{graph, Graph, Undirected};
+use petgraph::{Graph, Undirected, graph};
 use rand::rngs::SmallRng;
 use std::{fmt, marker::PhantomData, rc::Rc, slice};
 
@@ -147,13 +147,13 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         let a_index_opt = self.grid_coordinate_graph_index(a);
         let b_index_opt = self.grid_coordinate_graph_index(b);
 
-        if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt) {
-            if let Some(edge_index) = self.graph.find_edge(a_index, b_index) {
-                // This will invalidate the last edge index in the graph, which is fine as we
-                // are not storing them for any reason.
-                self.graph.remove_edge(edge_index);
-                return true;
-            }
+        if let (Some(a_index), Some(b_index)) = (a_index_opt, b_index_opt)
+            && let Some(edge_index) = self.graph.find_edge(a_index, b_index)
+        {
+            // This will invalidate the last edge index in the graph, which is fine as we
+            // are not storing them for any reason.
+            self.graph.remove_edge(edge_index);
+            return true;
         }
 
         false
@@ -333,10 +333,10 @@ mod tests {
 
     use super::*;
     use crate::cells::{Cartesian2DCoordinate, CompassPrimary};
-    use crate::grids::{small_rect_grid, SmallRectangularGrid};
+    use crate::grids::{SmallRectangularGrid, small_rect_grid};
 
     use itertools::Itertools; // a trait
-    use rand::{rngs::SmallRng, SeedableRng};
+    use rand::{SeedableRng, rngs::SmallRng};
     use smallvec::SmallVec;
     use std::u32;
 
@@ -349,7 +349,7 @@ mod tests {
     // The compiler often succeeds in automatically adding the correct & and derefs (*) but not here
     // - SmallVec does not implement IntoIterator, but you can deref it to [T] and take a slice
     macro_rules! assert_smallvec_eq {
-        ($x:expr, $y:expr) => {
+        ($x:expr_2021, $y:expr_2021) => {
             assert_eq!(&*$x, &*$y)
         };
     }
@@ -536,14 +536,14 @@ mod tests {
                 .collect()
         };
         macro_rules! links_sorted {
-            ($x:expr) => {
+            ($x:expr_2021) => {
                 sorted_links(&g, $x)
             };
         }
 
         // Testing that the order of the arguments to `is_linked` does not matter
         macro_rules! bi_check_linked {
-            ($x:expr, $y:expr) => {
+            ($x:expr_2021, $y:expr_2021) => {
                 g.is_linked($x, $y) && g.is_linked($y, $x)
             };
         }
@@ -571,7 +571,7 @@ mod tests {
                 }
             };
         macro_rules! check_directional_links {
-            ($coord:expr, $expected:expr) => {
+            ($coord:expr_2021, $expected:expr_2021) => {
                 directional_links_check(&g, $coord, &$expected)
             };
         }

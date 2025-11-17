@@ -9,7 +9,7 @@ use crate::{
     utils,
     utils::FnvHashSet,
 };
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use smallvec::SmallVec;
 use std::cmp;
 
@@ -322,11 +322,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(
             .cloned()
             .filter(|c| is_cell_in_visited_set(*c, visited_set, grid))
             .collect();
-        if vn.is_empty() {
-            None
-        } else {
-            Some(vn)
-        }
+        if vn.is_empty() { None } else { Some(vn) }
     };
 
     let are_all_neighbours_visited_or_masked =
@@ -440,11 +436,7 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(
                 .collect()
         };
 
-        if vn.is_empty() {
-            None
-        } else {
-            Some(vn)
-        }
+        if vn.is_empty() { None } else { Some(vn) }
     };
 
     while !dfs_stack.is_empty() {

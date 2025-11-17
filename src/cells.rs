@@ -3,7 +3,7 @@ use crate::{
     units::{ColumnIndex, RowIndex, RowLength},
 };
 
-use rand::{rngs::SmallRng, Rng};
+use rand::{Rng, rngs::SmallRng};
 use smallvec::SmallVec;
 use std::{
     convert::From,

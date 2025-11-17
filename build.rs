@@ -85,12 +85,11 @@ fn main() {
 }
 
 fn is_dll_file(entry: &DirEntry) -> bool {
-    if entry.file_type().is_file() {
-        if let Some(osstr_ext) = entry.path().extension() {
-            if let Some(ext) = osstr_ext.to_str() {
-                return ext == "dll";
-            }
-        }
+    if entry.file_type().is_file()
+        && let Some(osstr_ext) = entry.path().extension()
+        && let Some(ext) = osstr_ext.to_str()
+    {
+        return ext == "dll";
     }
 
     false

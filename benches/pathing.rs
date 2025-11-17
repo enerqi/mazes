@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use mazes::cells::{Cartesian2DCoordinate, SquareCell};
 use mazes::generators;
 use mazes::grids::large_rect_grid;

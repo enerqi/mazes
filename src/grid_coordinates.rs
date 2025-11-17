@@ -4,7 +4,7 @@ use crate::{
     units::{NodesCount, RowIndex, RowLength},
 };
 
-use rand::{rngs::SmallRng, Rng};
+use rand::{Rng, rngs::SmallRng};
 use std::rc::Rc;
 
 #[derive(Debug, Copy, Clone)]
