@@ -128,7 +128,7 @@ impl Cell for SquareCell {
             CompassPrimary::East,
             CompassPrimary::West,
         ];
-        let dir_index = rng.gen::<usize>() % DIRS_COUNT;
+        let dir_index = rng.random_range(..DIRS_COUNT);
         DIRS[dir_index]
     }
 
@@ -137,7 +137,7 @@ impl Cell for SquareCell {
         _: &dyn GridDimensions,
         _: Option<Self::Coord>,
     ) -> Self::Direction {
-        if rng.gen() {
+        if rng.random::<bool>() {
             CompassPrimary::North
         } else {
             CompassPrimary::South
@@ -148,7 +148,7 @@ impl Cell for SquareCell {
         _: &dyn GridDimensions,
         _: Option<Self::Coord>,
     ) -> Self::Direction {
-        if rng.gen() {
+        if rng.random::<bool>() {
             CompassPrimary::East
         } else {
             CompassPrimary::West
@@ -324,7 +324,7 @@ impl Cell for PolarCell {
             ClockDirection::Outward(0),
             ClockDirection::Outward(1),
         ]; // (1) not always valid
-        let dir_index = rng.gen::<usize>() % DIRS_COUNT;
+        let dir_index = rng.random_range(..DIRS_COUNT);
         DIRS[dir_index]
     }
 
@@ -333,7 +333,7 @@ impl Cell for PolarCell {
         _: &dyn GridDimensions,
         _: Option<Self::Coord>,
     ) -> Self::Direction {
-        if rng.gen() {
+        if rng.random::<bool>() {
             ClockDirection::Clockwise
         } else {
             ClockDirection::CounterClockwise
@@ -345,7 +345,7 @@ impl Cell for PolarCell {
         _: &dyn GridDimensions,
         _: Option<Self::Coord>,
     ) -> Self::Direction {
-        if rng.gen() {
+        if rng.random::<bool>() {
             ClockDirection::Inward
         } else {
             ClockDirection::Outward(0)

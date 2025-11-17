@@ -25,7 +25,7 @@ where
     CellT: Cell,
     Iters: GridIterators<CellT>,
 {
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
     let neighbours_to_check = [
         CellT::rand_roughly_vertical_direction(&mut rng, grid.dimensions(), None),
         CellT::rand_roughly_horizontal_direction(&mut rng, grid.dimensions(), None),
@@ -45,7 +45,7 @@ where
             let neighbours_count = neighbours.len();
             let link_coord = match neighbours_count {
                 1 => neighbours[0],
-                _ => neighbours[rng.gen::<usize>() % neighbours_count],
+                _ => neighbours[rng.random_range(..neighbours_count)],
             };
 
             grid.link(cell_coord, link_coord)
@@ -75,9 +75,9 @@ where
     GridIndexType: IndexType,
     Iters: GridIterators<SquareCell>,
 {
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
 
-    let runs_are_horizontal = rng.gen();
+    let runs_are_horizontal = rng.random::<bool>();
     let (next_in_run_direction, run_close_out_direction, batch_iter) = if runs_are_horizontal {
         (
             CompassPrimary::East,
@@ -103,10 +103,10 @@ where
             let at_close_out_direction_boundary =
                 grid.neighbour_at_direction(*coord, run_close_out_direction).is_none();
 
-            let should_close_out = at_run_end_boundary || (!at_close_out_direction_boundary && rng.gen()); // coin flip
+            let should_close_out = at_run_end_boundary || (!at_close_out_direction_boundary && rng.random::<bool>()); // coin flip
 
             if should_close_out {
-                let sample = rng.gen::<usize>() % run.len();
+                let sample = rng.random_range(..run.len());
                 let run_member = run[sample];
 
                 let close_out_dir = grid.neighbour_at_direction(*run_member, run_close_out_direction);
@@ -140,7 +140,7 @@ pub fn aldous_broder<GridIndexType, CellT, Iters>(
 {
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(grid, mask);
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
 
     let current_cell_opt = random_cell(grid, mask.map(|m| (m, unmasked_count)), &mut rng);
     if current_cell_opt.is_none() {
@@ -189,7 +189,7 @@ where
 {
     let unmasked_count = unmasked_cells_count(grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> = mask.map(|m| (m, unmasked_count));
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
 
     let start_cell = random_cell(grid, mask_with_unmasked_count, &mut rng);
     if start_cell.is_none() {
@@ -292,7 +292,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(
 {
     let unmasked_count = unmasked_cells_count(grid, mask);
     let mask_with_unmasked_count: Option<(&BinaryMask2D, usize)> = mask.map(|m| (m, unmasked_count));
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
 
     let start_cell = random_cell(grid, mask_with_unmasked_count, &mut rng);
     if start_cell.is_none() {
@@ -370,7 +370,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(
                     .iter()
                     .skip_while(|cell| {
                         is_cell_in_visited_set(*cell, &visited_cells, grid)
-                            || mask.map_or(false, |m| m.is_masked(*cell))
+                            || mask.is_some_and(|m| m.is_masked(*cell))
                             || !is_any_neighbour_visited(*cell, &visited_cells, grid)
                     })
                     .take(1)
@@ -386,7 +386,7 @@ pub fn hunt_and_kill<GridIndexType, CellT, Iters>(
                 // Link the hunted_cell to any random neighbour that is visited
                 // Visit the hunted cell and make it the new current cell in the walk
                 let random_visited_neighbour =
-                    hunteds_visited_neighbours[rng.gen::<usize>() % hunteds_visited_neighbours.len()];
+                    hunteds_visited_neighbours[rng.random_range(..hunteds_visited_neighbours.len())];
                 grid.link(hunted_cell, random_visited_neighbour)
                     .expect("Failed to link the hunted cell to a random visited neighbour.");
                 visit_cell(hunted_cell, &mut visited_cells, Some(&mut visited_count), grid);
@@ -408,7 +408,7 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(
     CellT: Cell,
     Iters: GridIterators<CellT>,
 {
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
     let cells_count = grid.size();
     let unmasked_count = unmasked_cells_count(grid, mask);
 
@@ -457,7 +457,7 @@ pub fn recursive_backtracker<GridIndexType, CellT, Iters>(
             let unvisited_count = unvisited.len();
             let next_cell = match unvisited_count {
                 1 => unvisited[0],
-                _ => unvisited[rng.gen::<usize>() % unvisited_count],
+                _ => unvisited[rng.random_range(..unvisited_count)],
             };
 
             grid.link(cell, next_cell)
@@ -487,7 +487,7 @@ pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(
         max_rebuildable_cells
     };
 
-    let mut rng = SmallRng::from_entropy();
+    let mut rng = SmallRng::from_os_rng();
     let mut cells_with_wall_rebuilt: FnvHashSet<CellT::Coord> = utils::fnv_hashset(build_target_count);
 
     while cells_with_wall_rebuilt.len() < build_target_count {
@@ -499,7 +499,7 @@ pub fn rebuild_random_walls<GridIndexType, CellT, Iters>(
                 .expect("Should always have a valid random cell coordinate");
             let adjacents_count = adjacent_linked_cells.len();
             if adjacents_count > 0 {
-                let linked: CellT::Coord = adjacent_linked_cells[rng.gen::<usize>() % adjacents_count];
+                let linked: CellT::Coord = adjacent_linked_cells[rng.random_range(..adjacents_count)];
 
                 if grid.unlink(cell_coord, linked) {
                     cells_with_wall_rebuilt.insert(cell_coord);
@@ -601,7 +601,7 @@ where
     let (visited_set, visited_count) = visited_set_with_count;
     let remaining_unvisited_count = cells_count - visited_count;
     if remaining_unvisited_count > 0 {
-        let n = rng.gen::<usize>() % remaining_unvisited_count;
+        let n = rng.random_range(..remaining_unvisited_count);
 
         let cell_index = (0..cells_count)
             .filter(|bit_index| !visited_set.contains(*bit_index))
@@ -626,7 +626,7 @@ where
 {
     let (mask, unmasked_cells) = mask_with_unmasked_count;
     if unmasked_cells != 0 {
-        let n = rng.gen::<usize>() % unmasked_cells;
+        let n = rng.random_range(..unmasked_cells);
         let cells_count = grid.size();
         let cell_index = (0..cells_count)
             .filter(|i| {
@@ -666,7 +666,7 @@ where
             let remaining_cells = cells_count - visited_count - masked_count;
 
             if remaining_cells != 0 {
-                let n = rng.gen::<usize>() % remaining_cells;
+                let n = rng.random_range(..remaining_cells);
                 let cell_index = (0..cells_count)
                     .filter(|i| {
                         let coord = CellT::Coord::from_row_major_index(*i, grid.dimensions());
@@ -704,7 +704,7 @@ where
         let count = unmasked_neighbours.len();
         let neighbour_cell = match count {
             1 => unmasked_neighbours[0],
-            _ => unmasked_neighbours[rng.gen::<usize>() % count],
+            _ => unmasked_neighbours[rng.random_range(..count)],
         };
         Some(neighbour_cell)
     } else {

@@ -233,6 +233,7 @@ fn generate_maze_on_grid(
 /// - Start and End point markers if supplied else nothing
 /// - Distances from some start cell to all other cells
 /// - Shortest path between a start and end point
+///
 /// Default to finding the start and end point of the longest path in the maze if required to show a path
 /// or asked to find the point furthest away from a start point
 /// Use the start of the longest path if asked to show distances to all other cells but no start provided
@@ -377,7 +378,7 @@ fn as_coordinate_smallvec(coord: Cartesian2DCoordinate) -> <SquareCell as Cell>:
 }
 
 fn load_binary_mask(file_path_str: &str) -> Result<BinaryMask2D> {
-    let img = image::open(&Path::new(file_path_str))?;
+    let img = image::open(Path::new(file_path_str))?;
     Ok(BinaryMask2D::from_image(&img))
 }
 

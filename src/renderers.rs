@@ -238,11 +238,11 @@ fn draw_maze<GridIndexType, Iters>(
         // and no links to the neighbour it shares a wall with then the wall need not be drawn.
         let are_links_count_of_valid_cells_zero =
             |c: Cartesian2DCoordinate, neighbour_direction: CompassPrimary| -> bool {
-                let cell_links_count_is_zero = |c| grid.links(c).map_or(false, |linked_cells| linked_cells.is_empty());
+                let cell_links_count_is_zero = |c| grid.links(c).is_some_and(|linked_cells| linked_cells.is_empty());
 
                 if cell_links_count_is_zero(c) {
                     grid.neighbour_at_direction(c, neighbour_direction)
-                        .map_or(false, cell_links_count_is_zero)
+                        .is_some_and(cell_links_count_is_zero)
                 } else {
                     false
                 }
@@ -482,11 +482,7 @@ fn colour_mul(colour: Color, scale: f32) -> Color {
 
 #[allow(dead_code)] // for now
 fn rainbow_colour(cycle_complete_percent: f32) -> Color {
-    let rainbow_point = match cycle_complete_percent {
-        n if n > 1.0 => 1.0,
-        n if n < 0.0 => 0.0,
-        n => n,
-    };
+    let rainbow_point = cycle_complete_percent.clamp(0.0, 1.0);
     let center = 128.0;
     let width = 127.0;
     let red_frequency = 0.7;

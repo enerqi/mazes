@@ -230,7 +230,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
 
     pub fn is_neighbour_linked(&self, coord: CellT::Coord, direction: CellT::Direction) -> bool {
         self.neighbour_at_direction(coord, direction)
-            .map_or(false, |neighbour_coord| self.is_linked(coord, neighbour_coord))
+            .is_some_and(|neighbour_coord| self.is_linked(coord, neighbour_coord))
     }
 
     /// Convert a grid coordinate to a one dimensional index in the range 0...grid.size().
@@ -255,7 +255,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
         self.iterators.iter_column(&self.dimensions)
     }
 
-    pub fn iter_links(&self) -> LinksIter<CellT, GridIndexType> {
+    pub fn iter_links(&self) -> LinksIter<'_, CellT, GridIndexType> {
         LinksIter {
             graph_edge_iter: self.graph.raw_edges().iter(),
             dimensions: self.dimensions(),
@@ -272,7 +272,7 @@ impl<GridIndexType: IndexType, CellT: Cell, Iters: GridIterators<CellT>> Grid<Gr
     #[allow(dead_code)] // for now
     fn is_neighbour(&self, a: CellT::Coord, b: CellT::Coord) -> bool {
         // For .iter Coord satifies `Deref<Target=[Self::Coord]>`
-        self.neighbours(a).iter().any(|&coord| coord == b)
+        self.neighbours(a).contains(&b)
     }
 
     /// Convert a grid coordinate into petgraph nodeindex
@@ -473,7 +473,7 @@ mod tests {
     fn random_cell() {
         let g = small_grid(4, 4);
         let cells_count = 4 * 4;
-        let mut rng = SmallRng::from_entropy();
+        let mut rng = SmallRng::from_os_rng();
         for _ in 0..1000 {
             let coord = g.random_cell(&mut rng);
             assert!(coord.x < cells_count);

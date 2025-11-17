@@ -26,7 +26,7 @@ impl<CellT: Cell> GridCoordinates<CellT> for RectGridCoordinates {
     }
 
     fn random_cell(&self, rng: &mut SmallRng, dimensions: &Rc<dyn GridDimensions>) -> CellT::Coord {
-        let index = rng.gen::<usize>() % dimensions.size().0;
+        let index = rng.random_range(..dimensions.size().0);
         CellT::Coord::from_row_major_index(index, dimensions.as_ref())
     }
 }
@@ -54,7 +54,7 @@ impl<CellT: Cell> GridCoordinates<CellT> for PolarGridCoordinates {
     }
 
     fn random_cell(&self, rng: &mut SmallRng, dimensions: &Rc<dyn GridDimensions>) -> CellT::Coord {
-        let index = rng.gen::<usize>() % dimensions.size().0;
+        let index = rng.random_range(..dimensions.size().0);
         CellT::Coord::from_row_major_index(index, dimensions.as_ref())
     }
 }

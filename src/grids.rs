@@ -7,7 +7,6 @@ use crate::{
     units::{ColumnLength, RowLength},
 };
 use std::rc::Rc;
-use std::{u16, u32, u8};
 
 pub type SmallRectangularGrid = Grid<u8, SquareCell, RectGridIterators>;
 pub type MediumRectangularGrid = Grid<u16, SquareCell, RectGridIterators>;

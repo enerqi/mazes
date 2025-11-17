@@ -75,7 +75,7 @@ impl<CellT: Cell> StartEndPointsDisplay<CellT> {
 }
 impl<CellT: Cell> GridDisplay<CellT> for StartEndPointsDisplay<CellT> {
     fn render_cell_body(&self, coord: CellT::Coord) -> String {
-        let contains_coordinate = |coordinates: &CellT::CoordinateSmallVec| coordinates.iter().any(|&c| c == coord);
+        let contains_coordinate = |coordinates: &CellT::CoordinateSmallVec| coordinates.contains(&coord);
 
         if contains_coordinate(&self.start_coordinates) {
             String::from(" S ")
@@ -203,10 +203,10 @@ where
                     (false, false) => {
                         let access_se_from_east = self
                             .neighbour_at_direction(cell_coord, CompassPrimary::East)
-                            .map_or(false, |c| self.is_neighbour_linked(c, CompassPrimary::South));
+                            .is_some_and(|c| self.is_neighbour_linked(c, CompassPrimary::South));
                         let access_se_from_south = self
                             .neighbour_at_direction(cell_coord, CompassPrimary::South)
-                            .map_or(false, |c| self.is_neighbour_linked(c, CompassPrimary::East));
+                            .is_some_and(|c| self.is_neighbour_linked(c, CompassPrimary::East));
                         let show_right_section = !access_se_from_east;
                         let show_down_section = !access_se_from_south;
                         let show_up_section = !east_open;
