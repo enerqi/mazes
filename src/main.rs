@@ -80,6 +80,7 @@ struct MazeArgs {
 // We'll put our errors in an `errors` module, and other modules in
 // this crate will `use errors::*;` to get access to everything
 // `error_chain!` creates.
+#[allow(unexpected_cfgs)]
 mod errors {
     // Create the Error, ErrorKind, ResultExt, and Result types
     // Result is a typedef of std `Result` with the error type our own `Error`
