@@ -22,6 +22,7 @@ fn main() {
     // provided in a sub-directory and add them to the Link arguments.
     // We also ensure that the DLLs have been copied to the project root (or SDL_DLLS_RUN_DIR env var dir)
     // so that cargo run can find them.
+    // UPDATE: removed mingw builds on Windows, not testing these anymore - it's not really standard to support mingw
     if cfg!(target_family = "windows") {
         // Assuming cargo always sets this environment variable!
         let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();

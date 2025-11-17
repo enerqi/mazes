@@ -12,7 +12,7 @@ Fun with the [Rust](https://www.rust-lang.org/) programming language - maze gene
 
 ## Build Requirements
 
-- Install Rust 1.56+ (Rust 2021 edition).
+- Install Rust 1.85+ (Rust 2024 edition).
 
 On unix/posix family systems install the C libraries:
 
@@ -25,6 +25,10 @@ On windows and unix/posix install the tool:
 - gcc
 
 GCC is probably already installed on posix! For windows see e.g. [mingw-w64](http://mingw-w64.org/doku.php) or [mingw-w64 chocolatey](https://chocolatey.org/packages/mingw).
+
+Future updates may use the static/bundled compilation feature of the Rust SDL2 create, which requires a C compiler,
+at which point the `build.rs` file and pre-compiled SDL libs for Windows will not be required and neither will these C
+library installations on Linux be required.
 
 ## Run It
 
